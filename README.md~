@@ -1,0 +1,28 @@
+# Dictim
+
+Dictim is a library for representing the d2 language in Clojure/ Clojurescript. It user vectors to represent d2 elements and maps and lists to represent an element's attributes
+
+
+## Installation
+
+Add the following dependency to your `project.clj` file:
+
+    [dictim "1.0.0"]
+
+## Documentation
+
+* [Wiki](https://github.com/judepayne/dictim/wiki)
+
+
+## Basic usage
+
+### From dictim to d2
+
+dictim and d2 have three different types of elements: shapes, connections and containers.
+
+Here's an example 
+
+
+
+
+### From s2 to dictim
