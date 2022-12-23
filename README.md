@@ -2,6 +2,8 @@
 
 Dictim is a library for representing the [d2 language](https://github.com/terrastruct/d2) in Clojure/ Clojurescript. It uses vectors to represent d2 elements and maps and lists to represent an element's attributes.
 
+Dictim is intented to allow d2 diagrams to be produced programmatically, and for d2 diagrams to be read back into your programs as data.
+
 ## Release Information
 
 Latest release:
@@ -54,7 +56,7 @@ When sent to the d2 CLI executable:
 
 The first item in an element is its key. Keys are important in d2 for referring to objects elsewhere in the d2, for example in the source and destination of the connection element above.
 
-The label attribute is supplied in the 2nd position for a shape (or 4th for a connection). It is optional. The final item in the element is its attribute map, also optional. The label may also be specified in this map rather than using the 2nd position shortcut.
+The label attribute is supplied in the 2nd position for a shape (or 4th for a connection). It is optional. The final item in the element is its attribute map of d2 rendering instructions, also optional. The label may also be specified in this map rather than using the 2nd position shortcut.
 
 Layout of shapes from a clojure collection:
 
