@@ -15,13 +15,13 @@
 (def ^:private indentation-counter (atom 0))
 
 
-(def ^:dynamic *tab* 2)
+(def ^:private tab (atom 0))
 
 
-(defn- ind! [] (swap! indentation-counter #(+ *tab* %)) nil)
+(defn- ind! [] (swap! indentation-counter #(+ @tab %)) nil)
 
 
-(defn- outd! [] (swap! indentation-counter #(- % *tab*)) nil)
+(defn- outd! [] (swap! indentation-counter #(- % @tab)) nil)
 
 
 (defn- tabs [] (apply str (repeat @indentation-counter \space)))
@@ -228,6 +228,14 @@
       :ctr   (ctr e))))
 
 
+(defn- handle-opts
+  [{:keys [tab-spacing] :or {tab-spacing 2} :as opts}]
+  ;; actions setting internal compiler options
+  (reset! tab tab-spacing)
+
+  (dissoc opts :tab-spacing))
+
+
 (defn d2
   "Converts dictim elements to d2. Each element can be either:
     - a `shape`  which has the form [<key> <label>(optional) <attribute-map>(optional)
@@ -237,14 +245,21 @@
    *direction can be either \"--\" (undirected) or \"->\" (directed).
    The first argument supplied can be a map of diagram level attributes e.g. {:direction \"right\"}
    Attempts to validate the supplied elements and throws an error for the incorrect element."
-  [& elems]
-   ;; if an elem is a map (i.e. the diagram level options), it  must be first
+  [& [opts & els :as elems]]
+  
+  ;; if an elem is a map (i.e. the diagram level options), it  must be first
   {:pre [(or (and (not (empty? (filter map? elems))) (map? (first elems)))
              (every? vector? elems))]}
-  
-  (mapv valid-element? elems)
 
   ;; counter used to keep track of indentation for well formatted layout.
   (reset! indentation-counter 0)
+  (reset! tab 2)
   
-  (apply str (mapcat element elems)))
+  (if (map? opts)
+    (let [opts (handle-opts opts)]
+      (mapv valid-element? els)
+      (apply str (mapcat element (cons opts els))))
+
+    (do
+      (mapv valid-element? elems)
+      (apply str (mapcat element elems)))))

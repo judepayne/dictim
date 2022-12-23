@@ -31,14 +31,13 @@ Here's an example of producing a d2 specifiction of a diagram with two shapes an
 ```clojure
 user=> (use 'dictim.compiler)
 nil
-user=> (defn print-lines "Print each line separately" [s]
-                   (map println (clojure.string/split s #"\n")))
-#'user/print-lines
-user=> (-> (d2 [:s1 "Shape 1"]
-               [:s2 {:label "Shape 2"}]
-	       [:s1 "->" :s2 {:label "rel'n"}])
-	    print-lines)
-	    
+user=> (d2 [:s1 "Shape 1"]
+           [:s2 {:label "Shape 2"}]
+	   [:s1 "->" :s2 {:label "rel'n"}])
+```
+
+Output with indentation:
+```text
 s1: Shape 1
 s2: {
   label: Shape 2
@@ -53,8 +52,9 @@ When sent to the d2 CLI executable:
 
 <img src="img/ex1.png" width="200">
 
-The first item in an element is its key. Keys are important in d2 for referring to objects elsewhere in the d2. For example, connections between objects must refer to the object's key, not its label.
-As a shortcut, the label attribute can be specified in the second position in a shape (or the fourth position in a connection) rather than in the element's attribute map. d2 understands both ways.
+The first item in an element is its key. Keys are important in d2 for referring to objects elsewhere in the d2, for example in the source and destination of the connection element above.
+
+The label attribute is supplied in the 2nd position for a shape (or 4th for a connection). It is optional. The final item in the element is its attribute map, also optional. The label may also be specified in this map rather than using the 2nd position shortcut.
 
 Layout of shapes from a clojure collection:
 
@@ -66,7 +66,6 @@ user=> (apply d2 (mapv (fn [n] [n (name n)]) nodes))
 ```
 
 <img src="img/ex2.png" width="400">
-
 
 Container elements are like shapes but can nest any number of child elements at their end:
 
