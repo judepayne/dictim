@@ -1,6 +1,5 @@
 (ns dictim.compiler
-  (:require [clojure.string :as str]
-            [dictim.graph :as g]))
+  (:require [clojure.string :as str]))
 
 
 (defn error

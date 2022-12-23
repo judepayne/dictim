@@ -31,8 +31,22 @@ Here's an example of producing a d2 specifiction of a diagram with two shapes an
 ```clojure
 user=> (use 'dictim.compiler)
 nil
-user=> (d2 [:s1 "Shape 1"] [:s2 {:label "Shape 2" :foo true}] [:s1 "->" :s2 {:label "rel'n"}])
-"s1: Shape 1\ns2: {\n  label: Shape 2\n}\n\ns1 -> s2: {\n  label: rel'n\n}\n\n"
+user=> (defn print-lines "Print each line separately" [s]
+                   (map println (clojure.string/split s #"\n")))
+#'user/print-lines
+user=> (-> (d2 [:s1 "Shape 1"]
+               [:s2 {:label "Shape 2" :foo true}]
+	       [:s1 "->" :s2 {:label "rel'n"}])
+	    print-lines)
+	    
+s1: Shape 1
+s2: {
+  label: Shape 2
+}
+
+s1 -> s2: {
+  label: rel'n
+}
 ```
 
 When sent to the d2 CLI executable:
@@ -51,7 +65,7 @@ user=> (apply d2 (mapv (fn [n] [n (name n)]) nodes))
 "a: a\nb: b\nc: c\n"
 ```
 
-<img src="img/ex2.png" width="300">
+<img src="img/ex2.png" width="400">
 
 
 Container elements are like shapes but can nest any number of child elements at their end:
@@ -61,7 +75,7 @@ user=> (d2 [:ctr1 "The nodes" [:a "First Shape"] [:n "Next Shape"]])
 "ctr1: The nodes {\n  a: First Shape\n  n: Next Shape\n}\n"
 ```
 
-<img src="img/ex3.png" width="300">
+<img src="img/ex3.png" width="400">
 
 
 For the full syntax, please see the [wiki](https://github.com/judepayne/dictim/wiki).
