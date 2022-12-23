@@ -36,7 +36,8 @@ user=> (d2 [:s1 "Shape 1"] [:s2 {:label "Shape 2" :foo true}] [:s1 "->" :s2 {:la
 ```
 
 When sent to the d2 CLI executable:
-<img src="img/ex1.png" width="100">
+
+<img src="img/ex1.png" width="200">
 
 The first element of an element is its key. Keys are important in d2. For example a connection between two shape must refer to each shape by its key.
 As a shortcut, the label attribute can be specified in the second position in a shape (or the fourth position in a connection) rather than in the element's attribute map. d2 understands both ways.
@@ -50,7 +51,8 @@ user=> (apply d2 (mapv (fn [n] [n (name n)]) nodes))
 "a: a\nb: b\nc: c\n"
 ```
 
-![](img/ex2.png)
+<img src="img/ex2.png" width="300">
+
 
 Container elements are like shapes but can nest any number of child elements at their end:
 
@@ -59,7 +61,8 @@ user=> (d2 [:ctr1 "The nodes" [:a "First Shape"] [:n "Next Shape"]])
 "ctr1: The nodes {\n  a: First Shape\n  n: Next Shape\n}\n"
 ```
 
-![](img/ex3.png)
+<img src="img/ex3.png" width="300">
+
 
 For the full syntax, please see the [wiki](https://github.com/judepayne/dictim/wiki).
 
