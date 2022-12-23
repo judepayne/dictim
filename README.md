@@ -36,7 +36,7 @@ user=> (d2 [:s1 "Shape 1"] [:s2 {:label "Shape 2" :foo true}] [:s1 "->" :s2 {:la
 ```
 
 When sent to the d2 CLI executable:
-![](img/ex1.png)
+![](img/ex1.png | width=200)
 
 The first element of an element is its key. Keys are important in d2. For example a connection between two shape must refer to each shape by its key.
 As a shortcut, the label attribute can be specified in the second position in a shape (or the fourth position in a connection) rather than in the element's attribute map. d2 understands both ways.
