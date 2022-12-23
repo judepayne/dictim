@@ -35,7 +35,7 @@ user=> (defn print-lines "Print each line separately" [s]
                    (map println (clojure.string/split s #"\n")))
 #'user/print-lines
 user=> (-> (d2 [:s1 "Shape 1"]
-               [:s2 {:label "Shape 2" :foo true}]
+               [:s2 {:label "Shape 2"}]
 	       [:s1 "->" :s2 {:label "rel'n"}])
 	    print-lines)
 	    
