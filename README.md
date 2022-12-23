@@ -53,7 +53,7 @@ When sent to the d2 CLI executable:
 
 <img src="img/ex1.png" width="200">
 
-The first element of an element is its key. Keys are important in d2. For example a connection between two shape must refer to each shape by its key.
+The first item in an element is its key. Keys are important in d2 for referring to objects elsewhere in the d2. For example, connections between objects must refer to the object's key, not its label.
 As a shortcut, the label attribute can be specified in the second position in a shape (or the fourth position in a connection) rather than in the element's attribute map. d2 understands both ways.
 
 Layout of shapes from a clojure collection:
