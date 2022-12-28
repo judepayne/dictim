@@ -3,41 +3,6 @@
             [instaparse.core :as insta]))
 
 
-;; d2 is quite flexible in providing different ways to express the same thing
-;; It's also quite tolerant in how expressions are ended - whether newlines
-;; need to be used or not.
-
-
-;; no way to avoid parser knowing set of d2 reserved keywords
-;; to differentiate between element (e.g. shape) and attributes inside container
-;; {} used as both scope and map
-
-;; what is a sequence diagram? what is the scope - fragile. make container since we can already suppress the label by setting to ''
-
-;; colon and label - don't allow colon if no label
-;; should labels just be regularised inside attr maps
-
-;; foo.fill as previously noted
-;;
-
-;; are multiple edges in a line that useful since lavels & other attributes cant be set
-
-;; should labels have keys? even generated ones? optional keys
-
-
-;; attributes need to be clear what they refer to
-;; shape: sequence_diagram
-;; a -> b
-;; b -> a: hello
-;; shape: person
-;; c
-
-;; is it helpful to have label as a special attribute - especially as creates confusion with attributes
-
-;; style keys are not checked and errors reported
-
-
-
 (def clj
   "a parser for d2"
   (insta/parser
