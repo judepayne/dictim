@@ -56,7 +56,7 @@ When sent to the d2 CLI executable:
 
 The first item in an element is its key. Keys are important in d2 for referring to objects elsewhere in the d2, for example in the source and destination of the connection element above.
 
-The label attribute is supplied in the 2nd position for a shape (or 4th for a connection). It is optional. The final item in the element is its attribute map of d2 rendering instructions, also optional. The label may also be specified in this map rather than using the 2nd position shortcut.
+The label attribute is supplied in the 2nd position for a shape (or 4th for a connection). It is optional. The final item in the element is its attribute map of d2 rendering instructions, also optional. The label may be specified in this map rather than using the 2nd position shortcut, or it doesn't need to be specified at all, in which case the key will be used.
 
 Layout of shapes from a clojure collection:
 
@@ -85,8 +85,22 @@ For the full syntax, please see the [wiki](https://github.com/judepayne/dictim/w
 ### From d2 to dictim
 
 
-*TBD*
+*WIP*
 
+```clojure
+user=> (use 'dictim.parser)
+nil
+user=> (clj "jude payne : Child{shape: Dude\ntris: Guy};")
+([:ctr
+  [:key "jude payne "]
+  [:label "Child"]
+  [:attr [:d2-key [:d2-word "shape"]] [:val "Dude"]]
+  [:shape [:key "tris"] [:label "Guy"]]])
+```
+
+Note - this is not yet dictim, just parsed results. still a ..
+
+*WIP*
 
 ## Licsense
 

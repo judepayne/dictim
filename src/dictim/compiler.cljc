@@ -29,7 +29,7 @@
 
 ;; validation
 
-(defn- valid-direction?
+(defn- direction?
   [s]
   (contains? #{"--" "<->" "->" "<-"} s))
 
@@ -61,10 +61,10 @@
          false)))
 
 
-(defn- valid-connection?
+(defn- valid-single-connection?
   [[k1 dir k2 & opts]]
   (and  (kstr? k1)
-       (valid-direction? dir)
+       (direction? dir)
        (kstr? k2)
        (case (count opts)
          0 true
@@ -74,6 +74,24 @@
              (and (kstr? label)
                   (valid-attrs? attrs)))
          false)))
+
+
+(defn- valid-multiple-connection?
+  [c]
+  (let [conns (partition 2 c)]
+    (every?
+     (fn [[k d]]
+       (and (kstr? k) (direction? d)))
+     conns)))
+
+
+(defn- valid-connection?
+  [c]
+  ;establish whether we have a single connection or multiple
+  (let [num-dirs (count (filter direction? c))]
+    (if (> num-dirs 1)
+      (multi-conn c)
+      (valid-single-connection? c))))
 
 
 (declare valid-element?)
@@ -101,7 +119,7 @@
   (cond
     (not (empty?(filter vector? e)))   :ctr
     (= 1 (count e))                    :shape
-    (valid-direction? (second e))      :conn
+    (direction? (second e))            :conn
     :else                              :shape))
 
 
@@ -190,10 +208,26 @@
   (str (tabs) (name k) colon (optionals opts) \newline))
 
 
-(defn- conn
+(defn- single-conn
   "layout conn(ection) vector."
   [[k1 dir k2 & opts]]
   (str (tabs) (name k1) space dir space (name k2) colon (optionals opts) \newline))
+
+
+(defn- multi-conn
+  "layout multiple connections vector."
+  [c]
+  (str (apply str (interpose space (map (fn [i] (name i)) c))) \newline))
+
+
+(defn- conn
+  "layout connection vector."
+  [c]
+  ;establish whether we have a single connection of multiple
+  (let [num-dirs (count (filter direction? c))]
+    (if (> num-dirs 1)
+      (multi-conn c)
+      (single-conn c))))
 
 
 (declare element)
