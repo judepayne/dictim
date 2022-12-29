@@ -3,7 +3,7 @@
             [instaparse.core :as insta]))
 
 
-(def clj
+(def parse-d2
   "a parser for d2"
   (insta/parser
    "<D2> = elem+   (* d2 is made of multiple elemnts *)
@@ -11,41 +11,42 @@
     <elem> = (attr sep) / shape / conn / ctr 
 
     (* containers *)
-    ctr = spc? key (<':'> | <':'> spc? label)? spc? open elem+ close sep
+    ctr = key (<':'> | <':'> label)? open elem+ close sep
 
     (* shapes *)
-    shape = spc? key (<':'> | <':'> spc? label)? spc? (open attrs close)? sep
+    shape = key (<':'> | <':'> label)? attr-map? sep
 
     (* connections *)
-    <conn> = single-conn / multi-conn
-    single-conn = spc? key spc? dir spc? key spc? (<':'> | <':'> spc? label)?
-                  (open attrs close)? sep
-    multi-conn = spc? edge+ key sep
-    <edge> = key spc? dir spc?
+    conn = single-conn | multi-conn
+    <single-conn> = key dir key (<':'> | <':'> label)? attr-map? sep
+    <multi-conn> = edge+ key sep
+    <edge> = key dir
     dir = '--' | '->' | '<-' | '<>'
 
     (* attributes *)
-    attrs = (attr sep)* attr
-    attr = spc? d2-key <':'> spc? (val | open attrs spc? newline? close)
+    attr-map = open (attr sep)* attr close
+    attr = d2-key <':'> (val | attr-map)
     d2-style = 'style' 
-    d2-key = d2-word | (key dot d2-word) 
-    d2-word = 'shape'|'label'|'source-arrowhead'|'target-arrowhead'|'style'|'near'|
-             'icon'|'width'|'height'|'constraint'|'direction'|'opacity'|'fill'|
-             'stroke'|'stroke-width'|'stroke-dash'|'border-radius'|'font-color'|
-             'shadow'|'multiple'|'3d'|'animated'|'link'
+    d2-key = d2-word | (d2-word dot d2-word) 
+    <d2-word> = 'shape'|'label'|'source-arrowhead'|'target-arrowhead'|
+                'style'|'near'|'icon'|'width'|'height'|'constraint'|
+                'direction'|'opacity'|'fill'|'stroke'|'stroke-width'|
+                'stroke-dash'|'border-radius'|'font-color'|'shadow'|
+                'multiple'|'3d'|'animated'|'link'
    
     (* building blocks *)
-    dot = '.'
+    <dot> = '.'
     <spc> = <#'\\s'*>
     (* sep terminates an element. the lookahead to closing brace option is
        required for the last in a series of nested elements *) 
-    <sep> = <';' | newline | &close>
+    <sep> = <newline | ';' | &close>
     <newline> = <#'\\n'>
     <open> = <'{'>
     <close> = <'}'>
     key = #'[0-9a-zA-Z_.\\s]+'
-    val = #'[0-9a-zA-Z_\"\\'#]+'
-    label = #'^[^-\\s:][0-9a-zA-Z_\\s]+[^\\s\\n{};]'"))
+    label = #'[0-9a-zA-Z ]+'
+    val = #'[0-9a-zA-Z_.\"\\'#]+'"
+   :auto-whitespace :standard))
 
 
 (defn- d2-terminated?
@@ -63,3 +64,27 @@
   (if (d2-terminated? s)
     s
     (str s \newline)))
+
+
+(defn clj
+  ""
+  [s & {:keys [key-fn label-fn]
+        :or   {key-fn identity
+               label-fn str/trim}}]
+  (let [p-trees (parse-d2 (terminate s))
+        key-fn (comp key-fn str/trim)]
+    (map
+     (fn [p-tree]
+       (insta/transform
+        {:key key-fn
+         :label label-fn
+         :dir identity
+         :d2-key (fn [& parts] (key-fn (str/join parts)))
+         :val identity
+         :attr (fn [k v] {k v})
+         :attr-map (fn [& attrs] (into {} attrs))
+         :ctr (fn [& parts] (vec parts))
+         :conn (fn [& parts] (vec parts))
+         :shape (fn [& parts] (vec parts))}
+        p-tree))
+     p-trees)))

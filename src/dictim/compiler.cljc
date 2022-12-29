@@ -1,5 +1,6 @@
 (ns dictim.compiler
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [dictim.format :as f]))
 
 
 (defn error
@@ -90,7 +91,7 @@
   ;establish whether we have a single connection or multiple
   (let [num-dirs (count (filter direction? c))]
     (if (> num-dirs 1)
-      (multi-conn c)
+      (valid-multiple-connection? c)
       (valid-single-connection? c))))
 
 
@@ -126,16 +127,14 @@
 (defn valid-element?
   "Validates the dictim element. Throws an error if not valid."
   [e]
-  (if
-      (and
-       (vector? e)
-       (case (elem-type e)
-         :shape (valid-shape? e)
-         :conn  (valid-connection? e)
-         :ctr   (valid-container? e)
-         false))
-      true
-      (throw (error (str "Element " e " failed to validate.")))))
+  (cond
+    (map? e)       (valid-attrs? e)
+    (vector? e)    (case (elem-type e)
+                     :shape (valid-shape? e)
+                     :conn  (valid-connection? e)
+                     :ctr   (valid-container? e)
+                     false)
+    :else (throw (error (str "Element " e " must be either a map or a vector.")))))
 
 
 ;; Compilation
@@ -143,6 +142,9 @@
 (def colon ": ")
 
 (def space " ")
+
+;; atom to hold the separator. defaulted later in '\n'
+(def sep (atom \newline))
 
 
 (defn- de-key
@@ -178,15 +180,15 @@
   ([m] (attrs m true))
   ([m brackets?]
    (apply str
-          (when brackets? (str "{" \newline (ind!)))
+          (when brackets? "{")
           (apply str
                  (for [[k v] m]
                    (cond
-                     (map? v)   (str (tabs) (name k) colon (attrs v))
-                     (list? v)  (str (tabs) (handle-list k v) \newline)
-                     :else (str (tabs) (name k) colon (de-key v) \newline))))
+                     (map? v)   (str (name k) colon (attrs v))
+                     (list? v)  (str (handle-list k v) @sep)
+                     :else (str (name k) colon (de-key v) @sep))))
           (when brackets?
-            (str (outd!) (tabs) "}" \newline)))))
+            (str "}" @sep)))))
 
 
 (defn- optionals
@@ -205,19 +207,19 @@
 (defn- shape
   "layout shape vector."
   [[k & opts]]
-  (str (tabs) (name k) colon (optionals opts) \newline))
+  (str (name k) colon (optionals opts) @sep))
 
 
 (defn- single-conn
   "layout conn(ection) vector."
   [[k1 dir k2 & opts]]
-  (str (tabs) (name k1) space dir space (name k2) colon (optionals opts) \newline))
+  (str (name k1) space dir space (name k2) colon (optionals opts) @sep))
 
 
 (defn- multi-conn
   "layout multiple connections vector."
   [c]
-  (str (apply str (interpose space (map (fn [i] (name i)) c))) \newline))
+  (str (apply str (interpose space (map (fn [i] (name i)) c))) @sep))
 
 
 (defn- conn
@@ -236,11 +238,10 @@
 (defn- ctr
   "layout ctr (container) vector, which may be nested."
   [[k & opts]]
-  (str (tabs) (name k) colon
+  (str (name k) colon
        (when (kstr? (first opts)) (name (first opts)))
        " {"
-       \newline
-       (ind!)
+       @sep
        (apply str
               (map
                (fn [i]
@@ -248,7 +249,7 @@
                    (map? i)    (attrs i false)
                    (vector? i) (element i)))
                opts))
-       (str (outd!) (tabs) "}" \newline)))
+       (str "}" @sep)))
 
 
 (defn- element
@@ -262,12 +263,27 @@
       :ctr   (ctr e))))
 
 
-(defn- handle-opts
-  [{:keys [tab-spacing] :or {tab-spacing 2} :as opts}]
-  ;; actions setting internal compiler options
-  (reset! tab tab-spacing)
+; --------
 
-  (dissoc opts :tab-spacing))
+
+(defn- options? [m]
+  (and (map? m)
+       (or (contains? m :separator)
+           (contains? m :format?)
+           (contains? m :tab))))
+
+
+(defn- handle-opts-pre
+  [{:keys [separator] :or {separator "\n"} :as opts}]
+  ;; actions setting internal compiler options
+  (reset! sep separator))
+
+
+(defn- post-process
+  [out {:keys [format? tab] :or {format? true tab 2} :as opts}]
+  (if format?
+    (f/fmt out :tab tab)
+    out))
 
 
 (defn d2
@@ -275,25 +291,30 @@
     - a `shape`  which has the form [<key> <label>(optional) <attribute-map>(optional)
     - a `connection` [<src-key> <direction*> <dest-key> <label>(opt) <attribute-map(opt)
     - a `container` [<key> <label>(opt) <attribute-map>(optimal) & further nested elements]
+    - an `attribute-map` {<key1> <val1> .. <keyN> <valN>}}
 
    *direction can be either \"--\" (undirected) or \"->\" (directed).
-   The first argument supplied can be a map of diagram level attributes e.g. {:direction \"right\"}
-   Attempts to validate the supplied elements and throws an error for the incorrect element."
+   The first argument supplied can optionally  be a map of options:
+      :separator default: '\n', the separator to use between d2 terms. Both ';' or '\n' are valid.
+      :format?   default: true, whether the output string should be formatted.
+      :tab       default: 2, the indentation step to use in formatting.
+
+  Attempts to validate the supplied elements and throws an error for the incorrect element.
+
+  Example usage:
+      (d2 [:studentA \"Salacious B. Crumb\" {:style.fill \"red\"}])
+  => 'studentA: Salacious B. Crumb {\n  style.fill: red\n}\n'
+  "
   [& [opts & els :as elems]]
   
   ;; if an elem is a map (i.e. the diagram level options), it  must be first
   {:pre [(or (and (not (empty? (filter map? elems))) (map? (first elems)))
              (every? vector? elems))]}
 
-  ;; counter used to keep track of indentation for well formatted layout.
-  (reset! indentation-counter 0)
-  (reset! tab 2)
+  (if (options? opts)
+    (handle-opts-pre opts))
   
-  (if (map? opts)
-    (let [opts (handle-opts opts)]
-      (mapv valid-element? els)
-      (apply str (mapcat element (cons opts els))))
-
-    (do
-      (mapv valid-element? elems)
-      (apply str (mapcat element elems)))))
+  (let [elems (if (options? opts) els elems)]
+    (mapv valid-element? elems)
+    (-> (apply str (mapcat element elems))
+        (post-process (when (options? opts) opts)))))

@@ -6,6 +6,29 @@
   (testing "FIXME, I fail."
     (is (= 0 1))))
 
+(def ex "direction:right
+         ctr1:CTR1 {
+           style.fill:blue
+           a->b: Hi Jude{label:true}
+         }
+         ctr2: CTR2{
+           a->b: Hi Jude{label:true}
+           simon: SL {style: {fill: blue}; opacity:1.0}
+           a-> simon: random
+         }
+         outside: Outside the circle {
+           bridget: Bridget
+         }")
+
+(def ex-bad "direction:right
+         ctr1:CTR1 {style.fill:blue;a->b: Hi Jude{label:true}}
+         ctr2: CTR2{a->b: Hi Jude{label:true}
+           simon: SL {style: {fill: blue}; opacity:1.0}
+           a-> simon: random}
+         outside: Outside the circle {
+          bridget: Bridget
+         }")
+
 
 (def ex-graph
   [:jude "Friends"
