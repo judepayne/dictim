@@ -13,7 +13,7 @@ Latest release:
 As a git dep:
 
 ```clojure
-io.github.judepayne/dictim {:git/tag "v0.2.0" :git/sha "43ed0c5"}
+io.github.judepayne/dictim {:git/tag "v0.2.1" :git/sha "2ab7af9"}
 ``` 
 
 
