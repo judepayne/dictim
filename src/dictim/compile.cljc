@@ -1,4 +1,4 @@
-(ns dictim.compiler
+(ns dictim.compile
   (:require [clojure.string :as str]
             [dictim.format :as f]))
 
@@ -8,24 +8,6 @@
   [error-string]
   #?(:clj (Exception. ^String error-string)
      :cljs (js/Error. error-string)))
-
-
-;;indentation
-
-
-(def ^:private indentation-counter (atom 0))
-
-
-(def ^:private tab (atom 0))
-
-
-(defn- ind! [] (swap! indentation-counter #(+ @tab %)) nil)
-
-
-(defn- outd! [] (swap! indentation-counter #(- % @tab)) nil)
-
-
-(defn- tabs [] (apply str (repeat @indentation-counter \space)))
 
 
 ;; validation

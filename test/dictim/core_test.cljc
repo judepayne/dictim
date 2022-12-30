@@ -1,6 +1,5 @@
 (ns dictim.core-test
-  (:require [clojure.test :refer :all]
-            [dictim.core :as c]))
+  (:require [clojure.test :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."

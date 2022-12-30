@@ -1,9 +1,9 @@
-(ns dictim.parser
+(ns dictim.parse
   (:require [clojure.string :as str]
             [instaparse.core :as insta]))
 
 
-(def parse-d2
+(def ^:private parse-d2
   "a parser for d2"
   (insta/parser
    "<D2> = elem+   (* d2 is made of multiple elemnts *)
@@ -44,7 +44,7 @@
     <open> = <'{'>
     <close> = <'}'>
     key = #'[0-9a-zA-Z_.\\s]+'
-    label = #'[0-9a-zA-Z ]+'
+    label = #'[0-9a-zA-Z \\'._-]+'
     val = #'[0-9a-zA-Z_.\"\\'#]+'"
    :auto-whitespace :standard))
 
@@ -67,7 +67,10 @@
 
 
 (defn clj
-  ""
+  "Converts a d2 string back in its dictim representation.
+   Two optional functions may be supplied:
+     :key-fn     a modifier applied to each key.
+     :label-fn   a modifier applied to each label."
   [s & {:keys [key-fn label-fn]
         :or   {key-fn identity
                label-fn str/trim}}]
