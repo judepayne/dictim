@@ -59,13 +59,39 @@
          false)))
 
 
+(defn- take-til-last
+  "take until the last match. not every item needs match"
+  [pred coll]
+  (-> (reduce
+         (fn [acc cur]
+           (cond
+             (nil? cur)    (:banked acc)
+             
+             (pred cur)    (-> acc
+                               (update :banked concat (conj (:buffer acc) cur))
+                               (assoc-in [:buffer] []))
+             
+             :else         (update acc :buffer conj cur)))
+         {:banked [] :buffer []}
+         coll)
+      vals))
+
+
 (defn- valid-multiple-connection?
   [c]
-  (let [conns (partition 2 c)]
-    (every?
-     (fn [[k d]]
-       (and (kstr? k) (direction? d)))
-     conns)))
+  (let [[ds [lk & opts]] (take-til-last direction? c)
+        conns (partition 2 ds)]
+    (and
+     (kstr? lk)
+     (every?
+      (fn [[k d]]
+        (and (kstr? k) (direction? d)))
+      conns)
+     (case (count opts)
+       0          true
+       1          (or (kstr? (first opts)) (map? (first opts)))
+       2          (and (kstr? (first opts)) (map? (second opts)))
+       false))))
 
 
 (defn- valid-connection?
@@ -100,6 +126,7 @@
 (defn- elem-type
   [e]
   (cond
+    (map? e)                           :attrs
     (not (empty?(filter vector? e)))   :ctr
     (= 1 (count e))                    :shape
     (direction? (second e))            :conn
@@ -109,14 +136,12 @@
 (defn valid-element?
   "Validates the dictim element. Throws an error if not valid."
   [e]
-  (cond
-    (map? e)       (valid-attrs? e)
-    (vector? e)    (case (elem-type e)
-                     :shape (valid-shape? e)
-                     :conn  (valid-connection? e)
-                     :ctr   (valid-container? e)
-                     false)
-    :else (throw (error (str "Element " e " must be either a map or a vector.")))))
+  (case (elem-type e)
+    :attrs           (valid-attrs? e)
+    :shape           (valid-shape? e)
+    :conn            (valid-connection? e)
+    :ctr             (valid-container? e)
+    (throw (error (str "Element " e " must be either a map or a vector.")))))
 
 
 ;; Compilation
@@ -169,21 +194,20 @@
                      (map? v)   (str (name k) colon (attrs v))
                      (list? v)  (str (handle-list k v) @sep)
                      :else (str (name k) colon (de-key v) @sep))))
-          (when brackets?
-            (str "}" @sep)))))
+          (when brackets? "}"))))
+
+
+(defn item->str [i]
+  (cond
+    (kstr? i) (name i)
+    (map? i)  (attrs i)))
 
 
 (defn- optionals
   "opts is a vector of label and attrs - both optional. converts to string."
   [opts]
   (apply str
-         (interpose space
-                    (map
-                     (fn [i]
-                       (cond
-                         (kstr? i) (name i)
-                         (map? i)  (attrs i)))
-                     opts))))
+         (interpose space (map item->str opts))))
 
 
 (defn- shape
@@ -201,13 +225,17 @@
 (defn- multi-conn
   "layout multiple connections vector."
   [c]
-  (str (apply str (interpose space (map (fn [i] (name i)) c))) @sep))
+  (let [[kds [lk & opts]] (take-til-last direction? c)]
+    (str (apply str (interpose space (map item->str (conj (into [] kds) lk))))
+         (when opts
+           (str ": " (apply str (interpose space (map item->str opts)))))
+         @sep)))
 
 
 (defn- conn
   "layout connection vector."
   [c]
-  ;establish whether we have a single connection of multiple
+  ;establish whether we have a single connection or multiple
   (let [num-dirs (count (filter direction? c))]
     (if (> num-dirs 1)
       (multi-conn c)
@@ -237,31 +265,33 @@
 (defn- element
   "layout element (ctr, shape, conn), which may be nested if ctr (container)."
   [e]
-  (if (map? e)  ;; <-- diagram level options. come as the first element
-    (attrs e false)
-    (case (elem-type e)
-      :shape (shape e)
-      :conn  (conn e)
-      :ctr   (ctr e))))
+  (case (elem-type e)
+    :attrs   (attrs e false)
+    :shape   (shape e)
+    :conn    (conn e)
+    :ctr     (ctr e)))
 
 
 ; --------
 
 
-(defn- options? [m]
+(defn- options?
+  "Is m a map of pre & post processing options, rather than an element?"
+  [m]
   (and (map? m)
        (or (contains? m :separator)
            (contains? m :format?)
            (contains? m :tab))))
 
 
-(defn- handle-opts-pre
+(defn- pre-process
+  "Set the separator for d2 terms."
   [{:keys [separator] :or {separator "\n"} :as opts}]
-  ;; actions setting internal compiler options
   (reset! sep separator))
 
 
 (defn- post-process
+  "Controls formatting post processing step."
   [out {:keys [format? tab] :or {format? true tab 2} :as opts}]
   (if format?
     (f/fmt out :tab tab)
@@ -294,7 +324,7 @@
              (every? vector? elems))]}
 
   (if (options? opts)
-    (handle-opts-pre opts))
+    (pre-process opts))
   
   (let [elems (if (options? opts) els elems)]
     (mapv valid-element? elems)

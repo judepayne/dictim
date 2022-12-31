@@ -25,13 +25,15 @@
 (defn- prep
   [s]
   (-> s
+      (str/replace #"; " ";")
       (str/replace #";" "\n")
       (str/replace #"[ ]{2,}" " ")
       (str/replace #"[\n]{2,}" "\n")
       (str/replace #"\{\n" "{")
       (str/replace #"\n\}" "}")
       (str/replace #": " ":")
-      (str/replace #" \{" "{")))
+      (str/replace #":" ": ")
+      (str/replace #"(\s)+\{" "{")))
 
 
 (defn fmt
@@ -43,10 +45,11 @@
   (reduce
    (fn [acc cur]
      (case cur
-       \{        (do (ind!) (str acc " " \{ \newline (tabs)))
+       \{        (do (ind!) (str acc
+                                 \space
+                                 \{ \newline (tabs)))
        \}        (do (outd!) (str acc \newline (tabs) \}))
-       \:        (str acc cur " ")
        \newline  (str acc \newline (tabs))
        (str acc cur)))
-   ""
+   nil
    (-> d2s trim-lines prep)))

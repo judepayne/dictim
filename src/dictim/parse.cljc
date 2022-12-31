@@ -19,7 +19,7 @@
     (* connections *)
     conn = single-conn | multi-conn
     <single-conn> = key dir key (<':'> | <':'> label)? attr-map? sep
-    <multi-conn> = edge+ key sep
+    <multi-conn> = edge+ key (<':'> | <':'> label)? attr-map? sep
     <edge> = key dir
     dir = '--' | '->' | '<-' | '<>'
 
@@ -43,7 +43,7 @@
     <newline> = <#'\\n'>
     <open> = <'{'>
     <close> = <'}'>
-    key = #'[0-9a-zA-Z_.\\s]+'
+    key = #'[0-9a-zA-Z_. ]+'
     label = #'[0-9a-zA-Z \\'._-]+'
     val = #'[0-9a-zA-Z_.\"\\'#]+'"
    :auto-whitespace :standard))

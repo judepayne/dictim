@@ -59,7 +59,7 @@ user> (clj "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
 For details on dictim syntax, the compile, parse and format operations, please see the wiki.
 
 
-## Licsense
+## License
 
 Copyright © 2023 Jude Payne
 
