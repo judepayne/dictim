@@ -24,7 +24,7 @@
     dir = '--' | '->' | '<-' | '<>'
 
     (* attributes *)
-    attr-map = open (attr sep)* attr close
+    attr-map = open (attr sep)* attr sep? close
     attr = d2-key <':'> (val | attr-map)
     d2-style = 'style' 
     d2-key = d2-word | (d2-word dot d2-word) 
@@ -44,7 +44,9 @@
     <open> = <'{'>
     <close> = <'}'>
     key = #'[0-9a-zA-Z_. ]+'
-    label = #'[0-9a-zA-Z \\'._-]+'
+    <label> = lbl | empty
+    <empty> = <#'[ ]'>
+    lbl = #'[0-9a-zA-Z \\'._-]+'
     val = #'[0-9a-zA-Z_.\"\\'#]+'"
    :auto-whitespace :standard))
 
@@ -66,8 +68,8 @@
     (str s \newline)))
 
 
-(defn clj
-  "Converts a d2 string back in its dictim representation.
+(defn dictim
+  "Converts a d2 string to its dictim representation.
    Two optional functions may be supplied:
      :key-fn     a modifier applied to each key.
      :label-fn   a modifier applied to each label."
@@ -80,7 +82,7 @@
      (fn [p-tree]
        (insta/transform
         {:key key-fn
-         :label label-fn
+         :lbl label-fn
          :dir identity
          :d2-key (fn [& parts] (key-fn (str/join parts)))
          :val identity
