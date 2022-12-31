@@ -51,7 +51,7 @@ let's turn the above d2 string back into dictim.
 ```clojure
 user=> (use 'dictim.parse)
 nil
-user> (clj "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
+user> (dictim "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
 ([:s1 "Shape 1"] [:s2 "Shape 2"] [:s1 "->" :s2 "reln"])
 
 ```
