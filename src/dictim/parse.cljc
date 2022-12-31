@@ -8,7 +8,7 @@
   (insta/parser
    "<D2> = elem+   (* d2 is made of multiple elemnts *)
     (* each element can be one of these four types.. *)
-    <elem> = (attr sep) / shape / conn / ctr 
+    <elem> = (attr sep) / shape / conn / ctr / comment
 
     (* containers *)
     ctr = key (<':'> | <':'> label)? open elem+ close sep
@@ -33,6 +33,9 @@
                 'direction'|'opacity'|'fill'|'stroke'|'stroke-width'|
                 'stroke-dash'|'border-radius'|'font-color'|'shadow'|
                 'multiple'|'3d'|'animated'|'link'
+
+    (* comments *)
+    comment = <'#'> cmt sep
    
     (* building blocks *)
     <dot> = '.'
@@ -47,6 +50,7 @@
     <label> = lbl | empty
     <empty> = <#'[ ]'>
     lbl = #'[0-9a-zA-Z \\'._-]+'
+    <cmt> = #'[0-9a-zA-Z \\'._\\?\\!-]+'
     val = #'[0-9a-zA-Z_.\"\\'#]+'"
    :auto-whitespace :standard))
 
@@ -81,7 +85,8 @@
     (map
      (fn [p-tree]
        (insta/transform
-        {:key key-fn
+        {:comment (fn [c][:comment (str/triml c)])
+         :key key-fn
          :lbl label-fn
          :dir identity
          :d2-key (fn [& parts] (key-fn (str/join parts)))

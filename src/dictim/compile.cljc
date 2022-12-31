@@ -123,10 +123,19 @@
        (nil? opts))))                     ;; empty container (is permitted)
 
 
+(defn- valid-comment?
+  [c]
+  (and (= 2 (count c))
+       (= :comment (first c))
+       (string? (second c))))
+
+
 (defn- elem-type
   [e]
   (cond
     (map? e)                           :attrs
+    (and (= 2 (count e))
+         (= :comment (first e)))       :cmt
     (not (empty?(filter vector? e)))   :ctr
     (= 1 (count e))                    :shape
     (direction? (second e))            :conn
@@ -141,6 +150,7 @@
     :shape           (valid-shape? e)
     :conn            (valid-connection? e)
     :ctr             (valid-container? e)
+    :cmt             (valid-comment? e)
     (throw (error (str "Element " e " must be either a map or a vector.")))))
 
 
@@ -242,6 +252,12 @@
       (single-conn c))))
 
 
+(defn- cmt
+  "layout comment vector"
+  [c]
+  (str "# " (second c) @sep))
+
+
 (declare element)
 
 
@@ -266,6 +282,7 @@
   "layout element (ctr, shape, conn), which may be nested if ctr (container)."
   [e]
   (case (elem-type e)
+    :cmt     (cmt e)
     :attrs   (attrs e false)
     :shape   (shape e)
     :conn    (conn e)
