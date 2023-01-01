@@ -21,7 +21,7 @@
     <single-conn> = key dir key (<':'> | <':'> label)? attr-map? sep
     <multi-conn> = edge+ key (<':'> | <':'> label)? attr-map? sep
     <edge> = key dir
-    dir = '--' | '->' | '<-' | '<>'
+    dir = '--' | '->' | '<-' | '<->'
 
     (* attributes *)
     attr-map = open (attr sep)* attr sep? close
@@ -42,14 +42,14 @@
     <spc> = <#'\\s'*>
     (* sep terminates an element. the lookahead to closing brace option is
        required for the last in a series of nested elements *) 
-    <sep> = <newline | ';' | &close>
+    <sep> = <newline | ';'+ | &close>
     <newline> = <#'\\n'>
     <open> = <'{'>
     <close> = <'}'>
     key = #'[0-9a-zA-Z_. ]+'
     <label> = lbl | empty
     <empty> = <#'[ ]'>
-    lbl = #'[0-9a-zA-Z \\'._-]+'
+    lbl = #'[0-9a-zA-Z \\'._\\$\\£\\@-]+'
     <cmt> = #'[0-9a-zA-Z \\'._\\?\\!-]+'
     val = #'[0-9a-zA-Z_.\"\\'#]+'"
    :auto-whitespace :standard))
