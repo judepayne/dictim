@@ -58,7 +58,7 @@
                      (update-tag next-version))]
       (spit "README.md" readme)
       (shell (str "git -C " path " tag " next-version " " sha))
-      (shell (str "git -C " path "add README.md"))
+      (shell (str "git -C " path " add README.md"))
       (shell (str "git -C " path " commit -m 'bump version'"))
       (shell (str "git -C " path " push origin main"))
       (shell (str "git -C " path " push --tags")))))
