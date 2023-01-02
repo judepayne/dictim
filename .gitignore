@@ -1,2 +1,6 @@
 out*
 deploy*
+*~
+.cpcache
+release*
+boo
