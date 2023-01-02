@@ -39,6 +39,12 @@
       {:args (apply str (interpose " " (:arguments args)))
        :opts (:options args)})))
 
+(defn update-sha [text sha]
+        (str/replace text #"(?<=:git/sha )\"(.*?)\"" (str "\"" sha "\"")))
+
+(defn update-tag [text tag]
+        (str/replace text #"(?<=:git/tag )\"(.*?)\"" (str "\"" tag "\"")))
+
 
 (defn -main []
   (let [args (arguments)
@@ -46,9 +52,16 @@
         next-version (bump-version (version-map path) (-> args :opts :version))]
     (shell (str "git -C " path " add *"))
     (shell (str "git -C " path " commit -m '" (-> args :args) "'"))
-    (let [sha (current-sha path)]
-      sha
-      )))
+    (let [sha (current-sha path)
+          readme (-> (slurp "README.md")
+                     (update-sha sha)
+                     (update-tag next-version))]
+      (spit "README.md" readme)
+      (shell (str "git -C " path " tag " next-version " " sha))
+      (shell (str "git -C " path "add README.md"))
+      (shell (str "git -C " path " commit -m 'bump version'"))
+      (shell (str "git -C " path " push origin main"))
+      (shell (str "git -C " path " push --tags")))))
 
 
 (-main)
