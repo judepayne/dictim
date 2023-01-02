@@ -1,6 +1,7 @@
 (ns dictim.compile
   (:require [clojure.string :as str]
-            [dictim.format :as f]))
+            [dictim.format :as f]
+            [dictim.attributes :as at]))
 
 
 (defn error
@@ -28,7 +29,10 @@
   (and
    (map? m)
    (every? kstr? (keys m))
-   (every? #(or (kstr? %) (list? %) (number? %) (and (map? %) (valid-attrs? %))) (vals m))))
+   (every? at/d2-keyword? (keys m))
+   (every? #(or (kstr? %) (list? %) (number? %)
+                (and (map? %) (valid-attrs? %)))
+           (vals m))))
 
 
 (defn- valid-shape?
@@ -46,7 +50,7 @@
 
 (defn- valid-single-connection?
   [[k1 dir k2 & opts]]
-  (and  (kstr? k1)
+  (and (kstr? k1)
        (direction? dir)
        (kstr? k2)
        (case (count opts)
@@ -145,13 +149,16 @@
 (defn valid-element?
   "Validates the dictim element. Throws an error if not valid."
   [e]
-  (case (elem-type e)
-    :attrs           (valid-attrs? e)
-    :shape           (valid-shape? e)
-    :conn            (valid-connection? e)
-    :ctr             (valid-container? e)
-    :cmt             (valid-comment? e)
-    (throw (error (str "Element " e " must be either a map or a vector.")))))
+  (let [valid?
+        (case (elem-type e)
+          :attrs           (valid-attrs? e)
+          :shape           (valid-shape? e)
+          :conn            (valid-connection? e)
+          :ctr             (valid-container? e)
+          :cmt             (valid-comment? e))]
+    (if valid?
+      true
+      (throw (error (str "Element " e " is not valid."))))))
 
 
 ;; Compilation

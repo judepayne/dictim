@@ -1,12 +1,14 @@
 (ns dictim.parse
   (:require [clojure.string :as str]
-            [instaparse.core :as insta]))
+            [instaparse.core :as insta]
+            [dictim.attributes :as at]))
 
 
 (def ^:private parse-d2
   "a parser for d2"
   (insta/parser
-   "<D2> = elem+   (* d2 is made of multiple elemnts *)
+   (str
+    "<D2> = elem+   (* d2 is made of multiple elemnts *)
     (* each element can be one of these four types.. *)
     <elem> = (attr sep) / shape / conn / ctr / comment
 
@@ -28,13 +30,12 @@
     attr = d2-key <':'> (val | attr-map)
     d2-style = 'style' 
     d2-key = d2-word | (d2-word dot d2-word) 
-    <d2-word> = 'shape'|'label'|'source-arrowhead'|'target-arrowhead'|
-                'style'|'near'|'icon'|'width'|'height'|'constraint'|
-                'direction'|'opacity'|'fill'|'stroke'|'stroke-width'|
-                'stroke-dash'|'border-radius'|'font-color'|'shadow'|
-                'multiple'|'3d'|'animated'|'link'
+    <d2-word> = "
+    
+    (at/d2-keys)       ;; d2 keys separated to make easier to update
 
-    (* comments *)
+    "\n\n"
+    "    (* comments *)
     comment = <'#'> cmt sep
    
     (* building blocks *)
@@ -51,7 +52,7 @@
     <empty> = <#'[ ]'>
     lbl = #'[0-9a-zA-Z \\'._\\$\\£\\@-]+'
     <cmt> = #'[0-9a-zA-Z \\'._\\?\\!-]+'
-    val = #'[0-9a-zA-Z_.\"\\'#]+'"
+    val = #'[0-9a-zA-Z_.\"\\'#]+'")
    :auto-whitespace :standard))
 
 
