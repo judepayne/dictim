@@ -1,5 +1,6 @@
 # Dictim
 
+
 Dictim is a library for representing the [d2 language](https://github.com/terrastruct/d2) in Clojure/ Clojurescript. It uses vectors and maps to represent d2 elements and attributes.
 
 Dictim is intented to allow d2 to be produced programmatically, and for d2 diagrams to be read back into your programs as data. There's also a formatter so that the d2 looks good.

@@ -1,5 +1,10 @@
 #!/usr/bin/env bb
 
+;; Script to git add *, then commit with a commit msg supplied as a first arg
+;; tags the new commit with an updated version
+;; update the README to the latest version tag and sha
+;; and push the whole thing to github
+
 (require '[babashka.process :refer [shell sh process check]]
          '[clojure.tools.cli :refer [parse-opts]]
          '[clojure.string :as str])
