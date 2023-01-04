@@ -236,7 +236,7 @@
 (defn- single-conn
   "layout conn(ection) vector."
   [[k1 dir k2 & opts]]
-  (str (name k1) space dir space (name k2) colon (optionals opts) @sep))
+  (str (name k1) space dir space (name k2) (when opts (str colon (optionals opts))) @sep))
 
 
 (defn- multi-conn
