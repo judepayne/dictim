@@ -1,6 +1,9 @@
-(ns dictim.attributes)
+(ns
+    ^{:author "judepayne"
+      :doc "Namespace for handling d2 reserved keywords."}
+    dictim.attributes)
 
-;; a namespace to hold the set of reserved d2 keywords used as attributes.
+;; keep all d2 reserved keywords in one place to make updating easier
 
 (def d2-attributes
   #{"shape" "label" "source-arrowhead" "target-arrowhead" 

@@ -1,4 +1,7 @@
-(ns dictim.parse
+(ns
+    ^{:author "judepayne"
+      :doc "Namespace for parsing d2 and returning dictim format."}
+    dictim.parse
   (:require [clojure.string :as str]
             [instaparse.core :as insta]
             [dictim.attributes :as at]))
