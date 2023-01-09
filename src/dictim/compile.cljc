@@ -22,9 +22,7 @@
     s))
 
 
-(defn- flat-attrs
-  [m]
-  (str "{" (apply str (interpose "; " (map (fn [[k v]] (str (name k) ": " v)) m))) "}"))
+(declare flat-attrs)
 
 
 (defn- handle-list
@@ -41,6 +39,20 @@
                                                 (map? item) (flat-attrs item)
                                                 :else item))
                                             v))))))
+
+
+(defn- flat-attrs
+  [m]
+  (str "{" (apply str (interpose
+                       "; "
+                       (map (fn [[k v]] (str
+                                         (name k)
+                                         ": "
+                                         (cond
+                                           (map? v) (flat-attrs v)
+                                           (list? v) (str (handle-list k v))
+                                           :else v)))
+                            m))) "}"))
 
 
 (defn- attrs
@@ -77,6 +89,17 @@
   (str (name k) colon (optionals opts) @sep))
 
 
+(defn- list-shape
+  "layout shape vector when in a list - i.e. must be flat."
+  [[k & opts]]
+  (let [item->str (fn [i] (cond
+                            (kstr? i) (name i)
+                            (map? i)  (flat-attrs i)))]
+    (str (name k)
+         (when opts colon)
+         (apply str (interpose space (map item->str opts))))))
+
+
 (defn- single-conn
   "layout conn(ection) vector."
   [[k1 dir k2 & opts]]
@@ -109,6 +132,21 @@
   (str "# " (second c) @sep))
 
 
+(defn- lst
+  "layout list of shapes on one line"
+  [l]
+  (str
+   (apply str
+          (interpose "; "
+                     (map
+                      (fn [item]
+                        (cond
+                          (vector? item)  (list-shape item)
+                          :else           (name item)))
+                      (rest l))))
+   @sep))
+
+
 (declare element)
 
 
@@ -137,7 +175,8 @@
     :attrs   (attrs e false)
     :shape   (shape e)
     :conn    (conn e)
-    :ctr     (ctr e)))
+    :ctr     (ctr e)
+    :lst     (lst e)))
 
 
 ; --------

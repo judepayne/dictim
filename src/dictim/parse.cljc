@@ -4,7 +4,8 @@
     dictim.parse
   (:require [clojure.string :as str]
             [instaparse.core :as insta]
-            [dictim.attributes :as at]))
+            [dictim.attributes :as at]
+            [dictim.utils :refer [error]]))
 
 
 (def ^:private parse-d2
@@ -52,7 +53,7 @@
     <newline> = <#'\\n'>
     <open> = <'{'>
     <close> = <'}'>
-    key = #'[0-9a-zA-Z_. ]+'
+    key = #'[0-9a-zA-Z_. \\-]+'
     <label> = lbl | empty
     <empty> = <#'[ ]'>
     lbl = #'[0-9a-zA-Z \\'.,\\?_\\$\\£\\@-]+'
@@ -88,21 +89,23 @@
                label-fn str/trim}}]
   (let [p-trees (parse-d2 (terminate s))
         key-fn (comp key-fn str/trim)]
-    (map
-     (fn [p-tree]
-       (insta/transform
-        {:comment (fn [c][:comment (str/triml c)])
-         :key key-fn
-         :lbl label-fn
-         :dir identity
-         :d2-key (fn [& parts] (key-fn (str/join parts)))
-         :val identity
-         :attr (fn [k v] {k v})
-         :attr-map (fn [& attrs] (into {} attrs))
-         :ctr (fn [& parts] (vec parts))
-         :conn (fn [& parts] (vec parts))
-         :sh (fn [& parts] (vec parts))
-         :shape (fn [& parts] (first parts))
-         :ordered-shapes (fn [& parts] (into [:list] (vec parts)))}
-        p-tree))
-     p-trees)))
+    (if (insta/failure? p-trees)
+      (throw (error (str "Parse error at: " (-> p-trees last second))))
+      (map
+       (fn [p-tree]
+         (insta/transform
+          {:comment (fn [c][:comment (str/triml c)])
+           :key key-fn
+           :lbl label-fn
+           :dir identity
+           :d2-key (fn [& parts] (key-fn (str/join parts)))
+           :val identity
+           :attr (fn [k v] {k v})
+           :attr-map (fn [& attrs] (into {} attrs))
+           :ctr (fn [& parts] (vec parts))
+           :conn (fn [& parts] (vec parts))
+           :sh (fn [& parts] (vec parts))
+           :shape (fn [& parts] (first parts))
+           :ordered-shapes (fn [& parts] (into [:list] (vec parts)))}
+          p-tree))
+       p-trees))))
