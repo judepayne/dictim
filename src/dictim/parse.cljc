@@ -13,13 +13,15 @@
    (str
     "<D2> = elem+   (* d2 is made of multiple elemnts *)
     (* each element can be one of these four types.. *)
-    <elem> = (attr sep) / shape / conn / ctr / comment
+    <elem> = (attr sep) / ordered-shapes / shape / conn / ctr / comment
 
     (* containers *)
     ctr = key (<':'> | <':'> label)? open elem+ close sep
 
     (* shapes *)
-    shape = key (<':'> | <':'> label)? attr-map? sep
+    ordered-shapes = (sh <';'>)+ sh newline
+    shape = sh sep
+    sh = key (<':'> | <':'> label)? attr-map?
 
     (* connections *)
     conn = single-conn | multi-conn
@@ -38,7 +40,7 @@
     (at/d2-keys)       ;; d2 keys separated to make easier to update
 
     "\n\n"
-    "    (* comments *)
+    "(* comments *)
     comment = <'#'> cmt sep
    
     (* building blocks *)
@@ -99,6 +101,9 @@
          :attr-map (fn [& attrs] (into {} attrs))
          :ctr (fn [& parts] (vec parts))
          :conn (fn [& parts] (vec parts))
-         :shape (fn [& parts] (vec parts))}
+         :sh (fn [& parts] (vec parts))
+         :shape (fn [& parts] (first parts))
+         :ordered-shapes (fn [& parts] (into [:list] (vec parts)))
+         }
         p-tree))
      p-trees)))
