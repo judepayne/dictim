@@ -103,7 +103,6 @@
          :conn (fn [& parts] (vec parts))
          :sh (fn [& parts] (vec parts))
          :shape (fn [& parts] (first parts))
-         :ordered-shapes (fn [& parts] (into [:list] (vec parts)))
-         }
+         :ordered-shapes (fn [& parts] (into [:list] (vec parts)))}
         p-tree))
      p-trees)))
