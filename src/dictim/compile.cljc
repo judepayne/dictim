@@ -27,19 +27,20 @@
   (str "{" (apply str (interpose "; " (map (fn [[k v]] (str (name k) ": " v)) m))) "}"))
 
 
-(defn- value-is-list
-  "handle when the value of an attr map entry is a list."
+(defn- handle-list
   [k v]
-  (str (name k)
-       space
-       (apply str (interpose
-                   space
-                   (map
-                    (fn [item]
-                      (cond
-                        (map? item) (flat-attrs item)
-                        :else item))
-                    v)))))
+  (cond
+    (= "order" (name k))  (apply str (interpose "; " (map name v)))
+    :else                 (str (name k)
+                               space
+                               (apply str (interpose
+                                           space
+                                           (map
+                                            (fn [item]
+                                              (cond
+                                                (map? item) (flat-attrs item)
+                                                :else item))
+                                            v))))))
 
 
 (defn- attrs
@@ -52,7 +53,7 @@
                  (for [[k v] m]
                    (cond
                      (map? v)   (str (name k) colon (attrs v) @sep)
-                     (list? v)  (str (value-is-list k v) @sep)
+                     (list? v)  (str (handle-list k v) @sep)
                      :else (str (name k) colon (de-key v) @sep))))
           (when brackets? "}"))))
 
@@ -108,12 +109,6 @@
   (str "# " (second c) @sep))
 
 
-(defn- lst
-  "layout lst (list) vector, which contains 1 or more shapes."
-  [[_ & shapes]]
-  (str "bob; alice\n"))
-
-
 (declare element)
 
 
@@ -142,8 +137,7 @@
     :attrs   (attrs e false)
     :shape   (shape e)
     :conn    (conn e)
-    :ctr     (ctr e)
-    :lst     (lst e)))
+    :ctr     (ctr e)))
 
 
 ; --------
