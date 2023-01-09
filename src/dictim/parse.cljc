@@ -78,6 +78,13 @@
     (str s \newline)))
 
 
+(defn keyword*
+  "Puts hyphens bewteen words before converting to a keyword."
+  [s]
+  (-> (str/join (interpose "-" (str/split s #" ")))
+      keyword))
+
+
 (defn dictim
   "Converts a d2 string to its dictim representation.
    Two optional functions may be supplied:
@@ -102,7 +109,7 @@
          :ctr (fn [& parts] (vec parts))
          :conn (fn [& parts] (vec parts))
          :sh (fn [& parts] (vec parts))
-         :shape (fn [& parts] (first parts))
+         :shape (fn [shape] shape)
          :ordered-shapes (fn [& parts] (into [:list] (vec parts)))
          }
         p-tree))

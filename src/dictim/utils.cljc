@@ -48,6 +48,7 @@
     (map? e)                           :attrs
     (and (= 2 (count e))
          (= :comment (first e)))       :cmt
+    (= :list (first e))                :lst
     (not (empty? (filter vector? e)))  :ctr
     (= 1 (count e))                    :shape
     (direction? (second e))            :conn
@@ -67,6 +68,9 @@
 
 
 (defn cmt? [e] (= :cmt (elem-type e)))
+
+
+(defn lst? [e] (= :lst (elem-type e)))
 
 
 ;; destructuring elements

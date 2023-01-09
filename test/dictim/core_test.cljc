@@ -22,7 +22,8 @@
 (def ex-sequence
   [:convs "Office Conversations"
    [:conv1 "Office conversation 1"
-    {:shape "sequence_diagram" :order '(:bob :alice)}
+    {:shape "sequence_diagram"}
+    [:list :alice :bob]
     [:alice "Alice" {:shape "person" :style {:fill "orange"}}]
     [:bob "Bobby"]
     ["awkward small talk"

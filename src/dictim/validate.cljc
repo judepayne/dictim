@@ -101,6 +101,12 @@
        (string? (second c))))
 
 
+(defn- valid-list?
+  [l]
+  (and (= :list (first l))
+       (every? valid-shape? (rest l))))
+
+
 (defn valid-element?
   "Validates the dictim element. Throws an error if not valid."
   [e]
@@ -110,7 +116,8 @@
           :shape           (valid-shape? e)
           :conn            (valid-connection? e)
           :ctr             (valid-container? e)
-          :cmt             (valid-comment? e))]
+          :cmt             (valid-comment? e)
+          :lst             (valid-list? e))]
     (if valid?
       true
       (throw (error (str "Element " e " is not valid."))))))

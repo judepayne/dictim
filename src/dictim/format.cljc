@@ -29,7 +29,7 @@
   [s]
   (-> s
       (str/replace #"; " ";")
-      (str/replace #";" "\n")
+      ;(str/replace #";" "\n")
       (str/replace #"[ ]{2,}" " ")
       (str/replace #"[\n]{2,}" "\n")
       (str/replace #"\{\n" "{")
