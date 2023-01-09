@@ -53,7 +53,7 @@
     key = #'[0-9a-zA-Z_. ]+'
     <label> = lbl | empty
     <empty> = <#'[ ]'>
-    lbl = #'[0-9a-zA-Z \\'._\\$\\£\\@-]+'
+    lbl = #'[0-9a-zA-Z \\'.,\\?_\\$\\£\\@-]+'
     <cmt> = #'[0-9a-zA-Z \\'._\\?\\!-]+'
     val = #'[0-9a-zA-Z_.\"\\'#]+'")
    :auto-whitespace :standard))

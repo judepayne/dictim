@@ -39,6 +39,8 @@
       vals))
 
 
+;; element types
+
 (defn elem-type
   "Returns the type of dictim element e."
   [e]
@@ -50,3 +52,82 @@
     (= 1 (count e))                    :shape
     (direction? (second e))            :conn
     :else                              :shape))
+
+
+(defn ctr? [e] (= :ctr (elem-type e)))
+
+
+(defn attrs? [e] (= :attrs (elem-type e)))
+
+
+(defn conn? [e] (= :conn (elem-type e)))
+
+
+(defn shape? [e] (= :shape (elem-type e)))
+
+
+(defn cmt? [e] (= :cmt (elem-type e)))
+
+
+;; destructuring elements
+
+(defn- single-conn?
+  [c]
+  (= (count (filter direction? c)) 1))
+
+
+(defn- conn-key
+  [c]
+  (if (single-conn? c)
+    (into [] (take 3 c))
+    (let [[kds [lk & _]] (take-til-last direction? c)]
+      (conj (into [] kds) lk))))
+
+
+(defn- fs
+  [f s]
+  (if s {:label f :attrs s}
+      (if (map? f) {:attrs f} {:label f})))
+
+
+(defn- conn-meta
+  [c]
+  (if (single-conn? c)
+    (let [[f s] (drop 3 c)]
+      (fs f s))
+    (let [[_ [lk f s]] (take-til-last direction? c)]
+      (fs f s))))
+
+
+(defn- shape-meta
+  [sh]
+  (let [[_ f s] sh]
+    (fs f s)))
+
+
+(defn- ctr-meta
+  [c]
+  (let [[f s] (take-while (complement vector?) (rest c))]
+    (fs f s)))
+
+
+(defn elem-key
+  ([e] (elem-key e (elem-type e)))
+  ([e elem-type]
+   (case elem-type
+     :cmt (second e)
+     :attrs e
+     :shape (first e)
+     :ctr (first e)
+     :conn (conn-key e))))
+
+
+(defn elem-meta
+  ([e] (elem-meta e (elem-type e)))
+  ([e elem-type]
+   (case elem-type
+     :shape (shape-meta e)
+     :ctr (ctr-meta e)
+     :cmt nil
+     :attrs nil
+     :conn (conn-meta e))))

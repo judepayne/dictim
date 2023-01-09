@@ -2,7 +2,8 @@
     ^{:author "judepayne"
       :doc "Namespace for disassembling and assembling dictim."}
     dictim.flat
-  (:require [dictim.utils :refer [kstr? direction? take-til-last elem-type error]]))
+  (:require [dictim.utils :refer [kstr? direction? take-til-last elem-type error
+                                  elem-key elem-meta]]))
 
 ;; This namespace provide functions for taking (nested) dictim elements and then later
 ;; (re)assembling as dictim.
@@ -18,70 +19,14 @@
 
 ;; disassembling
 
-
-(defn- single-conn?
-  [c]
-  (= (count (filter direction? c)) 1))
-
-
-(defn- conn-key
-  [c]
-  (if (single-conn? c)
-    (into [] (take 3 c))
-    (let [[kds [lk & _]] (take-til-last direction? c)]
-      (conj (into [] kds) lk))))
-
-
-(defn- fs
-  [f s]
-  (if s {:label f :attrs s}
-      (if (map? f) {:attrs f} {:label f})))
-
-
-(defn- conn-meta
-  [c]
-  (if (single-conn? c)
-    (let [[f s] (drop 3 c)]
-      (fs f s))
-    (let [[_ [lk f s]] (take-til-last direction? c)]
-      (fs f s))))
-
-
-(defn- shape-meta
-  [sh]
-  (let [[_ f s] sh]
-    (fs f s)))
-
-
-(defn- ctr-meta
-  [c]
-  (let [[f s] (take-while (complement vector?) (rest c))]
-    (fs f s)))
-
-
-;; Ensure consistent mapping of attrs to key
-(def attr-key
-  (fn [at] (hash at)))
-
-
-(defn- elem-meta
-  [e elem-type]
-  (case elem-type
-    :shape (shape-meta e)
-    :ctr (ctr-meta e)
-    :cmt nil
-    :attrs e
-    :conn (conn-meta e)))
-
-
 (defn- describe-elem
   [e]
   (case (elem-type e)
-    :cmt     {:type :cmt :key (second e) :meta (elem-meta e :cmt)}
-    :attrs   {:type :attrs :key (attr-key e) :meta (elem-meta e :attrs)}
-    :shape   {:type :shape :key (first e) :meta (elem-meta e :shape)}
-    :ctr     {:type :ctr :key (first e) :meta (elem-meta e :ctr)}
-    :conn    {:type :conn :key (conn-key e) :meta (elem-meta e :conn)}))
+    :cmt     {:type :cmt :key (elem-key e :cmt) :meta (elem-meta e :cmt)}
+    :attrs   {:type :attrs :key (elem-key e :attrs) :meta (elem-meta e :attrs)}
+    :shape   {:type :shape :key (elem-key e :shape)  :meta (elem-meta e :shape)}
+    :ctr     {:type :ctr :key (elem-key e :ctr)  :meta (elem-meta e :ctr)}
+    :conn    {:type :conn :key (elem-key e :conn) :meta (elem-meta e :conn)}))
 
 
 (defn- contained-elements
@@ -139,7 +84,7 @@
   (case (:type m)
     :shape    (rnil [(:key m) (-> m :meta :label) (-> m :meta :attrs)])
     :cmt      [:comment (:key m)]
-    :attrs    (:meta m)
+    :attrs    (:key m)
     :conn     (rnil (conj (:key m) (-> m :meta :label) (-> m :meta :attrs)))))
 
 
@@ -256,17 +201,15 @@
     (let [[pre post] (split-at-posn posn (sort-by-posn elems) after)
           len (count posn)
           posn (if after (update posn (dec len) inc) posn)]
-      
-      (into []
-            (concat
-             pre
-             (cons (assoc elem :posn posn)
-                   (map
-                    (fn [item]
-                      (if (>= (count (:posn item)) len)
-                        (update-in item [:posn (dec len)] inc)
-                        item))
-                    post)))))
+
+      (into pre
+       (cons (assoc elem :posn posn)
+             (map
+              (fn [item]
+                (if (>= (count (:posn item)) len)
+                  (update-in item [:posn (dec len)] inc)
+                  item))
+              post))))
 
     (throw (error (str "No position specified for insertion of elem " elem)))))
 
@@ -283,27 +226,26 @@
         ctr? (= :ctr (:type elem))
         [pre post] (split-at-posn posn elems)
         len (count posn)]
-    (into []
-          (concat
-           pre
-           (if ctr?
-             
-             (reduce
-              (fn [acc item]
-                (cond
-                  (= (seq posn) (take len (:posn item))) ;; contained element
-                  acc
+           
+    (into pre
+          (if ctr?
+            
+            (reduce
+             (fn [acc item]
+               (cond
+                 (= (seq posn) (take len (:posn item))) ;; contained element
+                 acc
 
-                  (= (butlast posn) (take (dec len) (:posn item))) ;; sibling element
-                  (concat acc [(update-in item [:posn (dec len)] dec)])
+                 (= (butlast posn) (take (dec len) (:posn item))) ;; sibling element
+                 (concat acc [(update-in item [:posn (dec len)] dec)])
 
-                  :else (concat acc [item])))
-              []
-              (rest post))
-             
-             (map
-              (fn [item]
-                (if (>= (count (:posn item)) len)
-                  (update-in item [:posn (dec len)] dec)
-                  item))
-              (rest post)))))))
+                 :else (concat acc [item])))
+             []
+             (rest post))
+            
+            (map
+             (fn [item]
+               (if (>= (count (:posn item)) len)
+                 (update-in item [:posn (dec len)] dec)
+                 item))
+             (rest post))))))

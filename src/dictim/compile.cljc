@@ -52,7 +52,7 @@
           (apply str
                  (for [[k v] m]
                    (cond
-                     (map? v)   (str (name k) colon (attrs v))
+                     (map? v)   (str (name k) colon (attrs v) @sep)
                      (list? v)  (str (handle-list k v) @sep)
                      :else (str (name k) colon (de-key v) @sep))))
           (when brackets? "}"))))
@@ -195,6 +195,6 @@
     (pre-process opts))
   
   (let [elems (if (options? opts) els elems)]
-    (mapv valid-element? elems)
+    (map valid-element? elems)
     (-> (apply str (mapcat element elems))
         (post-process (when (options? opts) opts)))))
