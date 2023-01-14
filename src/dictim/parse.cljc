@@ -61,14 +61,15 @@
    :auto-whitespace :standard))
 
 
-;; parse to recognize ;\n as nothing
-
-
 (defn- preprocess
   [d2]
   (-> d2
       ;; remove edge continuations
-      (str/replace #"--\\[\\s]*\n" "")))
+      (str/replace #"--\\[\\s]*\n" "")
+      ;; remove trailing colons.
+      ;; Getting this out in the parse would have meant abandonning
+      ;; :auto-whitespace
+      (str/replace #":[ ]*\n" "\n")))
 
 
 (defn dictim

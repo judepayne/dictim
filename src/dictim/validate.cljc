@@ -63,18 +63,17 @@
 
 
 ;; the defmethods are defined by the 'check' macro in dictim.macros
-(check :list elem
-        (and (every? valid? (rest elem))
-             (every? (complement list?) (rest elem))))
+(check :list li
+        (and (every? valid? (rest li))
+             (every? (complement list?) (rest li))))
 
-(check :attrs elem
+(check :attrs m
        (and
-         (map? elem)
-         (every? kstr? (keys elem))
-         (every? at/d2-keyword? (keys elem))
+         (map? m)
+         (every? kstr? (keys m))
+         (every? at/d2-keyword? (keys m))
          (every? #(or (kstr? %) (list? %) (number? %)
-                      (and (map? %) (valid? %)))
-                 (vals elem))))
+                      (and (map? %) (valid? %))) (vals m))))
 
 
 (check :shape elem
@@ -93,17 +92,17 @@
 (check :quikshape _ true)
 
 
-(check :conn elem
-       (let [num-dirs (count (filter direction? elem))]
+(check :conn conn
+       (let [num-dirs (count (filter direction? conn))]
          (if (> num-dirs 1)
-           (valid-multiple-connection? elem)
-           (valid-single-connection? elem))))
+           (valid-multiple-connection? conn)
+           (valid-single-connection? conn))))
 
 
-(check :cmt elem
-       (and (= 2 (count elem))
-           (= :comment (first elem))
-           (string? (second elem))))
+(check :cmt cmt
+       (and (= 2 (count cmt))
+           (= :comment (first cmt))
+           (string? (second cmt))))
 
 
 (check :ctr elem
