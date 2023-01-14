@@ -1,7 +1,6 @@
-(ns
-    ^{:author "judepayne"
-      :doc "Namespace for parsing d2 and returning dictim format."}
-    dictim.parse
+(ns dictim.parse
+  {:author "judepayne"
+   :doc "Namespace for parsing d2 and returning dictim format."}
   (:require [clojure.string :as str]
             [instaparse.core :as insta]
             [dictim.attributes :as at]
@@ -12,100 +11,121 @@
   "a parser for d2"
   (insta/parser
    (str
-    "<D2> = elem+   (* d2 is made of multiple elemnts *)
-    (* each element can be one of these four types.. *)
-    <elem> = (attr sep) / ordered-shapes / shape / conn / ctr / comment
+    "<D2> = elements
+    elements = (element sep)* element sep?
+    <element> = list / elem    (* force list to be recognized first *)
 
-    (* containers *)
-    ctr = key (<':'> | <':'> label)? open elem+ close sep
+    list = (elem <';'>)+ elem
+    <elem> = comment | attr | conn | shape | ctr
 
-    (* shapes *)
-    ordered-shapes = (sh <';'>)+ sh newline
-    shape = sh sep
-    sh = key (<':'> | <':'> label)? attr-map?
+    comment = hash comment-text
 
-    (* connections *)
-    conn = single-conn | multi-conn
-    <single-conn> = key dir key (<':'> | <':'> label)? attr-map? sep
-    <multi-conn> = edge+ key (<':'> | <':'> label)? attr-map? sep
+    attrs = <'{'> (attr sep)* attr <sep?> <'}'>
+    attr = d2-word <':'> (label-text | in-attr-label? attrs)
+    d2-word = (d2-key '.')* d2-key
+    in-attr-label = text
+
+    shape = !hash key opts
+
+    conn = single | multi
+    <single> = key dir key opts
+    <multi> = edge+ key opts
     <edge> = key dir
     dir = '--' | '->' | '<-' | '<->'
 
-    (* attributes *)
-    attr-map = open (attr sep)* attr sep? close
-    attr = d2-key <':'> (val | attr-map)
-    d2-style = 'style' 
-    d2-key = d2-word | (d2-word dot d2-word) 
-    <d2-word> = "
+    ctr = !hash key maybe-label <'{'> element+ <'}'>
     
-    (at/d2-keys)       ;; d2 keys separated to make easier to update
+    <opts> = maybe-label attrs?
+    <maybe-label> = (<':'> / <':'> label)? (* choice to stop whitespace label *)
+    <hash> = <'#'>
+    key = text
+    label = label-text | block-text | typescript
+    <sep> =  <#';*\\r?\\n'>
 
-    "\n\n"
-    "(* comments *)
-    comment = <'#'> cmt sep
-   
-    (* building blocks *)
-    <dot> = '.'
-    <spc> = <#'\\s'*>
-    (* sep terminates an element. the lookahead to closing brace option is
-       required for the last in a series of nested elements *) 
-    <sep> = <newline | ';'+ | &close>
-    <newline> = <#'\\n'>
-    <open> = <'{'>
-    <close> = <'}'>
-    key = #'[0-9a-zA-Z_. \\-]+'
-    <label> = lbl | empty
-    <empty> = <#'[ ]'>
-    lbl = #'[0-9a-zA-Z \\'.,\\?_\\$\\£\\@-]+'
-    <cmt> = #'[0-9a-zA-Z \\'._\\?\\!-]+'
-    val = #'[0-9a-zA-Z_.\"\\'#]+'")
+    (* keys - must avoid seps and dirs *)
+    <text> = #'([^:;\n{}|](?!(->|--|<-|<->)))+'
+    (* labels - same to keys but colons are allowed *)
+    label-text =  #'([^;\n{}|](?!(->|--|<-|<->)))+'
+    (* comments are terminated by newlines always, so can take in anything else *)
+    <comment-text> = #'.+'
+    (* blocks must avoid delimiter pipe *)
+    block-text = <'|'> #'[^|]+' <'|'>
+    (* ditto typescript with triple pipe *)
+    typescript = ts-open #'([\\s\\S](?!(\\|\\|\\||`\\|)))+' ts-close
+    ts-open = '|||' | '|`'
+    ts-close = '|||' | '`|'
+    any = #'.+'
+
+    d2-key = "
+    (at/d2-keys))
    :auto-whitespace :standard))
 
 
-(defn- d2-terminated?
-  "Is the string terminated appropriately for d2?"
-  [s]
-  (case (last s)
-    \newline   true
-    \;         true
-    false))
+;; parse to recognize ;\n as nothing
 
 
-(defn- terminate
-  "Terminate the string if necessary."
-  [s]
-  (if (d2-terminated? s)
-    s
-    (str s \newline)))
+(defn- preprocess
+  [d2]
+  (-> d2
+      ;; remove edge continuations
+      (str/replace #"--\\[\\s]*\n" "")))
 
 
 (defn dictim
   "Converts a d2 string to its dictim representation.
-   Two optional functions may be supplied:
+   Each dictim element returned's type is captured in the :tag key
+   of the element's metadata.
+   Three optional functions may be supplied:
      :key-fn     a modifier applied to each key.
-     :label-fn   a modifier applied to each label."
-  [s & {:keys [key-fn label-fn]
+     :label-fn   a modifier applied to each label.
+     :reduce-fn  a reduction function of two arguments, acc & cur which
+   is applied over all elements as a last pass. This is useful, for
+   example, to 'flatten' out elements captured inside of a list:
+      ````
+      (dictim (slurp \"in.d2\")
+              :reduce-fn
+              (fn [acc cur]
+                (if (= :list (-> cur meta :tag))
+                  (vec (concat acc (rest cur)))
+                  (conj acc cur)))
+              :key-fn keyword)
+      ````"
+  [s & {:keys [key-fn label-fn reduce-fn]
         :or   {key-fn identity
-               label-fn str/trim}}]
-  (let [p-trees (parse-d2 (terminate s))
-        key-fn (comp key-fn str/trim)]
+               label-fn str/trim
+               reduce-fn nil}}]
+  (let [p-trees (-> s preprocess parse-d2)
+        key-fn (comp key-fn str/trim)
+        contents (fn [tag & parts] (with-meta (vec parts) {:tag tag}))]
     (if (insta/failure? p-trees)
       (throw (error (str "Parse error at: " (-> p-trees last second))))
-      (map
+      (mapcat
        (fn [p-tree]
          (insta/transform
-          {:comment (fn [c][:comment (str/triml c)])
+          {:comment (fn [c] (with-meta [:comment (str/triml c)] {:tag :comment}))
            :key key-fn
-           :lbl label-fn
+           :label-text label-fn
+           :label label-fn
+           :block-text (fn [t] (str "|" t "|"))
            :dir identity
-           :d2-key (fn [& parts] (key-fn (str/join parts)))
-           :val identity
-           :attr (fn [k v] {k v})
-           :attr-map (fn [& attrs] (into {} attrs))
-           :ctr (fn [& parts] (vec parts))
-           :conn (fn [& parts] (vec parts))
-           :sh (fn [& parts] (vec parts))
-           :shape (fn [& parts] (first parts))
-           :ordered-shapes (fn [& parts] (into [:list] (vec parts)))}
+           :d2-key identity
+           :d2-word (fn [& parts] (key-fn (str/join parts)))
+           :in-attr-label identity
+           :attr (fn
+                   ([k v] (with-meta {k v} {:tag :attrs}))
+                   ([k lbl m] ;; in-attr-label
+                    (with-meta {k (assoc m (key-fn "label") (str/trim lbl))} {:tag :attrs})))
+           :attrs (fn [& attrs] (with-meta (into {} attrs) {:tag :attrs}))
+           :ts-open identity
+           :ts-close (fn [c] (str "\n" c))
+           :typescript (fn [& parts] (str/join parts))
+           :ctr (partial contents :ctr)
+           :conn (partial contents :conn)
+           :shape (partial contents :shape)
+           :list (fn [& elems] (with-meta (into [:list] elems) {:tag :list}))
+           :elements (fn [& elems]
+                       (if reduce-fn
+                         (reduce reduce-fn [] elems)
+                         (vec elems)))}
           p-tree))
        p-trees))))

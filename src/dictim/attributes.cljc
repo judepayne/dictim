@@ -10,7 +10,8 @@
     "style" "near" "icon" "width" "height" "constraint" 
     "direction" "opacity" "fill" "stroke" "stroke-width" 
     "stroke-dash" "border-radius" "font-color" "shadow" 
-    "multiple" "3d" "animated" "link"})
+    "multiple" "3d" "animated" "link" "font-size" "tooltip"
+    "filled"})
 
 
 (defn d2-keyword?

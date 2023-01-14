@@ -1,18 +1,23 @@
 (ns dictim.compile
-  {:author "Jude Payne"
-   :doc "Namespace for transpiling dictim to d2"}
+  ^{:Author "Jude Payne"
+    :doc "Namespace for transpiling dictim to d2"}
   (:require [clojure.string :as str]
             [dictim.format :as f]
             [dictim.utils :refer [kstr? direction? take-til-last elem-type]]
-            [dictim.validate :refer [valid-element?]]))
+            [dictim.validate :refer [valid?]])
+  (:refer-clojure :exclude [list]))
 
 
 (def colon ": ")
 
-(def space " ")
+(def spc " ")
 
-;; atom to hold the separator. defaulted later in '\n'
-(def sep (atom \newline))
+
+;; sep the separator between elements
+(def ^:dynamic sep)
+
+;; ml = multiline, i.e. not compressed into a line (as in a list).
+(defn ml? [] (= \newline sep))
 
 
 (defn- de-key
@@ -22,51 +27,21 @@
     s))
 
 
-(declare flat-attrs)
-
-
-(defn- handle-list
-  [k v]
-  (cond
-    (= "order" (name k))  (apply str (interpose "; " (map name v)))
-    :else                 (str (name k)
-                               space
-                               (apply str (interpose
-                                           space
-                                           (map
-                                            (fn [item]
-                                              (cond
-                                                (map? item) (flat-attrs item)
-                                                :else item))
-                                            v))))))
-
-
-(defn- flat-attrs
-  [m]
-  (str "{" (apply str (interpose
-                       "; "
-                       (map (fn [[k v]] (str
-                                         (name k)
-                                         ": "
-                                         (cond
-                                           (map? v) (flat-attrs v)
-                                           (list? v) (str (handle-list k v))
-                                           :else v)))
-                            m))) "}"))
-
-
 (defn- attrs
-  "layout attrs (to be supplied as a map)."
+  "layout the map of attrs. m may be nested."
   ([m] (attrs m true))
   ([m brackets?]
    (apply str
           (when brackets? "{")
+          (when (ml?) \newline)
           (apply str
-                 (for [[k v] m]
-                   (cond
-                     (map? v)   (str (name k) colon (attrs v) @sep)
-                     (list? v)  (str (handle-list k v) @sep)
-                     :else (str (name k) colon (de-key v) @sep))))
+                 (->>
+                  (for [[k v] m]
+                    (cond
+                      (map? v)   (str (name k) colon (attrs v))
+                      :else      (str (name k) colon (de-key v))))
+                  (interpose sep)))
+          (if (ml?) \newline sep)
           (when brackets? "}"))))
 
 
@@ -80,160 +55,88 @@
   "opts is a vector of label and attrs - both optional. converts to string."
   [opts]
   (apply str
-         (interpose space (map item->str opts))))
-
-
-(defn- shape
-  "layout shape vector."
-  [[k & opts]]
-  (str (name k) colon (optionals opts) @sep))
-
-
-(defn- list-shape
-  "layout shape vector when in a list - i.e. must be flat."
-  [[k & opts]]
-  (let [item->str (fn [i] (cond
-                            (kstr? i) (name i)
-                            (map? i)  (flat-attrs i)))]
-    (str (name k)
-         (when opts colon)
-         (apply str (interpose space (map item->str opts))))))
+         (interpose spc (map item->str opts))))
 
 
 (defn- single-conn
   "layout conn(ection) vector."
   [[k1 dir k2 & opts]]
-  (str (name k1) space dir space (name k2) (when opts (str colon (optionals opts))) @sep))
+  (str (name k1) spc dir spc (name k2)
+       (when opts (str colon (optionals opts))) sep))
 
 
 (defn- multi-conn
   "layout multiple connections vector."
   [c]
   (let [[kds [lk & opts]] (take-til-last direction? c)]
-    (str (apply str (interpose space (map item->str (conj (into [] kds) lk))))
-         (when opts
-           (str ": " (apply str (interpose space (map item->str opts)))))
-         @sep)))
+    (str (apply str (interpose spc (map item->str (conj (into [] kds) lk))))
+         (when opts (str colon (apply str (interpose spc (map item->str opts)))))
+         sep)))
 
 
-(defn- conn
-  "layout connection vector."
-  [c]
+(defmulti ^:private layout elem-type)
+
+
+(defmethod layout :attrs [el] (attrs el false))
+
+
+(defmethod layout :shape [[k & opts]]
+  (str (name k) (when opts colon) (optionals opts) sep))
+
+
+(defmethod layout :quikshape [el]
+  (str (name el) sep))
+
+
+(defmethod layout :conn [el]
   ;establish whether we have a single connection or multiple
-  (let [num-dirs (count (filter direction? c))]
+  (let [num-dirs (count (filter direction? el))]
     (if (> num-dirs 1)
-      (multi-conn c)
-      (single-conn c))))
+      (multi-conn el)
+      (single-conn el))))
 
 
-(defn- cmt
-  "layout comment vector"
-  [c]
-  (str "# " (second c) @sep))
+(defmethod layout :cmt [el]
+  (str "# " (second el) sep))
 
 
-(defn- lst
-  "layout list of shapes on one line"
-  [l]
+(defmethod layout :list [li]
   (str
-   (apply str
-          (interpose "; "
-                     (map
-                      (fn [item]
-                        (cond
-                          (vector? item)  (list-shape item)
-                          :else           (name item)))
-                      (rest l))))
-   @sep))
+   (binding [sep \;]
+     (apply str (map layout (butlast (rest li)))))
+   (binding [sep ""]
+     (layout (last li)))
+   sep))
 
 
-(declare element)
-
-
-(defn- ctr
-  "layout ctr (container) vector, which may be nested."
-  [[k & opts]]
+(defmethod layout :ctr [[k & opts]]
   (str (name k) colon
        (when (kstr? (first opts)) (name (first opts)))
        " {"
-       @sep
+       sep
        (apply str
               (map
                (fn [i]
                  (cond
                    (map? i)    (attrs i false)
-                   (vector? i) (element i)))
+                   (vector? i) (layout i)))
                opts))
-       (str "}" @sep)))
+       (str "}" sep)))
 
-
-(defn- element
-  "layout element (ctr, shape, conn), which may be nested if ctr (container)."
-  [e]
-  (case (elem-type e)
-    :cmt     (cmt e)
-    :attrs   (attrs e false)
-    :shape   (shape e)
-    :conn    (conn e)
-    :ctr     (ctr e)
-    :lst     (lst e)))
-
-
-; --------
-
-
-(defn- options?
-  "Is m a map of pre & post processing options, rather than an element?"
-  [m]
-  (and (map? m)
-       (or (contains? m :separator)
-           (contains? m :format?)
-           (contains? m :tab))))
-
-
-(defn- pre-process
-  "Set the separator for d2 terms."
-  [{:keys [separator] :or {separator "\n"} :as opts}]
-  (reset! sep separator))
-
-
-(defn- post-process
-  "Controls formatting post processing step."
-  [out {:keys [format? tab] :or {format? true tab 2} :as opts}]
-  (if format?
-    (f/fmt out :tab tab)
-    out))
 
 
 (defn d2
-  "Converts dictim elements to d2. Each element can be either:
-    - a `shape`  which has the form [<key> <label>(optional) <attribute-map>(optional)
-    - a `connection` [<src-key> <direction*> <dest-key> <label>(opt) <attribute-map(opt)
-    - a `container` [<key> <label>(opt) <attribute-map>(optimal) & further nested elements]
-    - an `attribute-map` {<key1> <val1> .. <keyN> <valN>}}
+  "Converts dictim elements to a well formatted d2 string.
+   Validates each element, throws an error if invalid."
+  [& elems]
 
-   *direction can be either \"--\" (undirected) or \"->\" (directed).
-   The first argument supplied can optionally  be a map of options:
-      :separator default: '\n', the separator to use between d2 terms. Both ';' or '\n' are valid.
-      :format?   default: true, whether the output string should be formatted.
-      :tab       default: 2, the indentation step to use in formatting.
+  (run! valid? elems)
 
-  Attempts to validate the supplied elements and throws an error for the incorrect element.
+  (binding [sep \newline]
+    (-> (apply str (mapcat layout elems))
+        (f/fmt :tab 2))))
 
-  Example usage:
-      (d2 [:studentA \"Salacious B. Crumb\" {:style.fill \"red\"}])
-  => 'studentA: Salacious B. Crumb {\n  style.fill: red\n}\n'
-  "
-  [& [opts & els :as elems]]
-  
-  ;; if an elem is a map (i.e. the diagram level options), it  must be first
-  {:pre [(or (and (not (empty? (filter map? elems))) (map? (first elems)))
-             (every? vector? elems))]}
 
-  (if (options? opts)
-    (pre-process opts))
-  
-  (let [elems (if (options? opts) els elems)]
-    (map valid-element? elems)
-    (-> (apply str (mapcat element elems))
-        (post-process (when (options? opts) opts)))))
+(comment (time (dotimes [n 1000000] (binding [sep \newline] (apply str (mapcat element ex))))))
+;; 54185 ms for ex
+

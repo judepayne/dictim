@@ -3,34 +3,31 @@
       :doc "Namespace for validating dictim."}
     dictim.validate
   (:require [dictim.attributes :as at]
-            [dictim.utils :refer [kstr? direction? take-til-last elem-type error]]))
+            [dictim.utils :refer [kstr? direction? take-til-last elem-type error list?]])
+  (:refer-clojure :exclude [list?])
+  #?(:cljs (:require-macros [dictim.validate :refer [check]])))
 
 
 ;; validation
 
 
-(defn- valid-attrs?
-  [m]
-  (and
-   (map? m)
-   (every? kstr? (keys m))
-   (every? at/d2-keyword? (keys m))
-   (every? #(or (kstr? %) (list? %) (number? %)
-                (and (map? %) (valid-attrs? %)))
-           (vals m))))
+(defn err [msg]
+  (throw (error (str msg " is invalid."))))
 
 
-(defn- valid-shape?
-  [[k & opts]]
-  (and (kstr? k)
-       (case (count opts)
-         0 true
-         1 (or (kstr? (first opts))
-               (valid-attrs? (first opts)))
-         2 (let [[label attrs] opts]
-             (and (kstr? label)
-                  (valid-attrs? attrs)))
-         false)))
+(defmulti valid? elem-type)
+
+
+#?(:clj
+   (defmacro check
+     "Creates a multimethod of name `valid?` with dispatch-val.
+   condition should check the symbol `elem` for validity."
+     [dispatch-val arg-name condition]
+     (let [arg (symbol arg-name)]
+       `(defmethod ~(symbol "valid?") ~dispatch-val [~arg]
+          (if ~condition
+            true
+            (dictim.validate/err ~arg))))))
 
 
 (defn- valid-single-connection?
@@ -41,10 +38,10 @@
        (case (count opts)
          0 true
          1 (or (kstr? (first opts))
-               (valid-attrs? (first opts)))
+               (valid? (first opts)))
          2 (let [[label attrs] opts]
              (and (kstr? label)
-                  (valid-attrs? attrs)))
+                  (valid? attrs)))
          false)))
 
 
@@ -65,59 +62,62 @@
        false))))
 
 
-(defn- valid-connection?
-  [c]
-  ;establish whether we have a single connection or multiple
-  (let [num-dirs (count (filter direction? c))]
-    (if (> num-dirs 1)
-      (valid-multiple-connection? c)
-      (valid-single-connection? c))))
+;; the defmethods are defined by the 'check' macro in dictim.macros
+(check :list elem
+        (and (every? valid? (rest elem))
+             (every? (complement list?) (rest elem))))
+
+(check :attrs elem
+       (and
+         (map? elem)
+         (every? kstr? (keys elem))
+         (every? at/d2-keyword? (keys elem))
+         (every? #(or (kstr? %) (list? %) (number? %)
+                      (and (map? %) (valid? %)))
+                 (vals elem))))
 
 
-(declare valid-element?)
+(check :shape elem
+       (let [[k & opts] elem]
+         (and (kstr? k)
+              (case (count opts)
+                0 true
+                1 (or (kstr? (first opts))
+                      (valid? (first opts)))
+                2 (let [[label attrs] opts]
+                    (and (kstr? label)
+                         (valid? attrs)))
+                false))))
 
 
-(defn- valid-container?
-  [[k & opts]]
-  (and
-   (kstr? k)
-   (or (and (kstr? (first opts))           ;; label & attrs
-            (valid-attrs? (second opts))
-            (or (nil? (rest (rest opts)))
-                (every? valid-element? (rest (rest opts)))))
-       (and (kstr? (first opts))          ;; just the label
-            (or (nil? (rest opts))
-                (every? valid-element? (rest opts))))
-       (and (valid-attrs? (first opts))   ;; just the attrs
-            (every? valid-element? (rest opts)))
-       (every? valid-element? opts)       ;; no label or attrs
-       (nil? opts))))                     ;; empty container (is permitted)
+(check :quikshape _ true)
 
 
-(defn- valid-comment?
-  [c]
-  (and (= 2 (count c))
-       (= :comment (first c))
-       (string? (second c))))
+(check :conn elem
+       (let [num-dirs (count (filter direction? elem))]
+         (if (> num-dirs 1)
+           (valid-multiple-connection? elem)
+           (valid-single-connection? elem))))
 
 
-(defn- valid-list?
-  [l]
-  (and (= :list (first l))
-       (every? valid-shape? (rest l))))
+(check :cmt elem
+       (and (= 2 (count elem))
+           (= :comment (first elem))
+           (string? (second elem))))
 
 
-(defn valid-element?
-  "Validates the dictim element. Throws an error if not valid."
-  [e]
-  (let [valid?
-        (case (elem-type e)
-          :attrs           (valid-attrs? e)
-          :shape           (valid-shape? e)
-          :conn            (valid-connection? e)
-          :ctr             (valid-container? e)
-          :cmt             (valid-comment? e)
-          :lst             (valid-list? e))]
-    (if valid?
-      true
-      (throw (error (str "Element " e " is not valid."))))))
+(check :ctr elem
+       (let [[k & opts] elem]
+        (and
+         (kstr? k)
+         (or (and (kstr? (first opts)) ;; label & attrs
+                  (valid? (second opts))
+                  (or (nil? (rest (rest opts)))
+                      (every? valid? (rest (rest opts)))))
+             (and (kstr? (first opts)) ;; just the label
+                  (or (nil? (rest opts))
+                      (every? valid? (rest opts))))
+             (and (valid? (first opts)) ;; just the attrs
+                  (every? valid? (rest opts)))
+             (every? valid? opts) ;; no label or attrs
+             (nil? opts)))))

@@ -1,0 +1,63 @@
+direction: right
+Before and after becoming friends: {
+  2007: Office chatter in 2007 {
+    shape: sequence_diagram
+    alice: Alice
+    bob: Bobby
+    awkward small talk: {
+      alice -> bob: uhm, hi
+      bob -> alice: oh, hello
+      icebreaker attempt: {
+        alice -> bob: what did you have for lunch?
+      }
+      unfortunate outcome: {
+        bob -> alice: that's personal
+      }
+    }
+  }
+
+  2012: Office chatter in 2012 {
+    shape: sequence_diagram
+    alice: Alice
+    bob: Bobby
+    alice -> bob: Want to play with ChatGPT?
+    bob -> alice: Yes!
+    bob -> alice.play: Write a play...
+    alice.play -> bob.play: about 2 friends...
+    bob.play -> alice.play: who find love...
+    alice.play -> bob.play: in a sequence diagram
+  }
+
+  2007 -> 2012: Five\nyears\nlater
+}
+
+Office chatter: {
+  shape: sequence_diagram
+  alice: Alice
+  bob: Bobby
+  awkward small talk: {
+    alice -> bob: uhm, hi
+    bob -> alice: oh, hello
+    icebreaker attempt: {
+      alice -> bob: what did you have for lunch?
+    }
+    unfortunate outcome: {
+      bob -> alice: that's personal
+    }
+  }
+}
+
+
+shape: sequence_diagram
+alice -> bob: What does it mean\nto be well-adjusted?
+bob -> alice: The ability to play bridge or\ngolf as if they were games.
+
+
+shape: sequence_diagram
+# Remember that semicolons allow multiple objects to be defined in one line
+# Actors will appear from left-to-right as a, b, c, d...
+a; b; c; d
+# ... even if the connections are in a different order
+c -> d
+d -> a
+b -> d
