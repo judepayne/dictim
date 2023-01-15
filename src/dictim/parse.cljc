@@ -7,59 +7,58 @@
             [dictim.utils :refer [error]]))
 
 
-(def ^:private parse-d2
+(def ^:private whitespace
+  "a parser for whitespace"
+  (insta/parser
+   "whitespace = #'[ \t]+'"))  ;; don't absorb line endings
+
+
+(def ^:priavte permitted-chars
+  "a-zA-Z0-9 -_$£@\\[\\]+\\'`~\"()?!,*\\\\/<>")
+
+
+(def ^:private p-d2
   "a parser for d2"
   (insta/parser
    (str
     "<D2> = elements
-    elements = (element sep)* element sep?
-    <element> = list / elem    (* force list to be recognized first *)
+    <elements> = <sep?> (element <sep>)* element <sep?>
+    <element> = list | elem
+
+    sep = #'\\r?\\n'+; colon = ':'; hash = '#'
 
     list = (elem <';'>)+ elem
-    <elem> = comment | attr | conn | shape | ctr
+    <elem> = conn | shape | comment | attr | ctr
 
-    comment = hash comment-text
+    conn = (key dir)+ key <colon?> !hash label? attrs?
+    dir = <contd?> direction
+    contd = #'--\\\\\n'
+    <direction> = '--' | '->' | '<-' | '<->'
 
-    attrs = <'{'> (attr sep)* attr <sep?> <'}'>
-    attr = d2-word <':'> (label-text | in-attr-label? attrs)
-    d2-word = (d2-key '.')* d2-key
-    in-attr-label = text
+    shape = key <colon?> !hash label-plus? attrs?
 
-    shape = !hash key opts
+    comment = <hash> label
 
-    conn = single | multi
-    <single> = key dir key opts
-    <multi> = edge+ key opts
-    <edge> = key dir
-    dir = '--' | '->' | '<-' | '<->'
+    attrs = <'{'> <sep?> (attr <sep?>)* attr <sep?> <'}'>
+    attr = d2-word <':'> (val | in-attr-label? attrs)
+    d2-word = (label '.')* d2-key
+    in-attr-label = label
+    val = label
 
-    ctr = !hash key maybe-label <'{'> element+ <'}'>
+   (* ctr attrs are inside { } *)
+   ctr = key <colon?> !hash label? <'{'> elements <'}'>
+
+    label-plus = label | block | typescript
+    block = '|' #'[^|]+' '|'
+    typescript = ts-open #'(.*(?!(\\|\\|\\||`\\|)))' ts-close
+    ts-open = '|||' | '|`'; ts-close = '|||' | '`|'
+
+    key = #'[a-zA-Z0-9 ]+'
+    label = #'[a-zA-Z0-9 ]+'
     
-    <opts> = maybe-label attrs?
-    <maybe-label> = (<':'> / <':'> label)? (* choice to stop whitespace label *)
-    <hash> = <'#'>
-    key = text
-    label = label-text | block-text | typescript
-    <sep> =  <#';*\\r?\\n'>
-
-    (* keys - must avoid seps and dirs *)
-    <text> = #'([^:;\n{}|](?!(->|--|<-|<->)))+'
-    (* labels - same to keys but colons are allowed *)
-    label-text =  #'([^;\n{}|](?!(->|--|<-|<->)))+'
-    (* comments are terminated by newlines always, so can take in anything else *)
-    <comment-text> = #'.+'
-    (* blocks must avoid delimiter pipe *)
-    block-text = <'|'> #'[^|]+' <'|'>
-    (* ditto typescript with triple pipe *)
-    typescript = ts-open #'([\\s\\S](?!(\\|\\|\\||`\\|)))+' ts-close
-    ts-open = '|||' | '|`'
-    ts-close = '|||' | '`|'
-    any = #'.+'
-
-    d2-key = "
-    (at/d2-keys))
-   :auto-whitespace :standard))
-
+    
+    d2-key = " (at/d2-keys))
+   :auto-whitespace whitespace))
 
 (defn- preprocess
   [d2]
