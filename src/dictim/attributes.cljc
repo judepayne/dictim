@@ -21,3 +21,7 @@
 
 (defn d2-keys []
   (apply str (interpose "|" (map #(str "'" % "'")d2-attributes))))
+
+
+(defn d2-keys-r []
+  (apply str (interpose "|" d2-attributes)))
