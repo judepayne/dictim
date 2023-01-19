@@ -38,7 +38,7 @@
   (reg-gen
    at/d2-attributes
    '("--" "->" "<-")
-   ":;.\n>"
+   ":;.\n>'\""
    false))
 
 
@@ -46,7 +46,7 @@
   (reg-gen
    at/d2-attributes
    nil
-   ".\\-<>\n"
+   ".\\-<>\n'\""
    true))
 
 ;; Notes on parsing d2
@@ -84,7 +84,7 @@
 ;; ambiguity in the parse tree, and a faster parse.
 
 (insta/defparser
-  ^:private
+;  ^:private
   p-d2
   (str
    "<D2> = elements
@@ -97,7 +97,7 @@
 
     ctr = key colon-label? <curlyo> elements <s> <curlyc>
     shape = key colon-label-plus? attrs?
-    comment = <hash> label
+    comment = <s> <hash> label
 
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr = <s> at-key <s> <colon> <s> (val | attr-label? attrs)
@@ -105,23 +105,24 @@
     <val> = label
 
     conn = <s> (ekey dir)+ <s> key colon-label? attrs?
-    dir = <contd?> direction
+    dir = <contd?> <s> direction
     contd = #'--\\\\\n'
     <direction> = '--' | '->' | '<-' | '<->'
  
     (* keys *)
     K = key | at-key
     key = !hash (key-part period)* key-part-last
-    <key-part> = #'^(?!.*(?:-[>-]|<-))[^;:.\\n]+'
+    <key-part> = #'^(?!.*(?:-[>-]|<-))[^\\'\\\";:.\\n]+'
     <key-part-last> = <s> #'" key-reg "'
     at-key = (at-part period)* at-part-last
     <at-part> = key-part | d2-keyword
     <at-part-last> = d2-keyword
     ekey = !hash (ekey-part period)* ekey-part-last
-    ekey-part = #'^[^;:.\\n-<]+'
+    ekey-part = #'^[^\\'\\\";:.\\n-<]+'
     ekey-part-last = <s> #'" ekey-reg "'
 
-    sh = key colon label-plus
+    single-quoted-key-section = single-quote key-part single-quote
+    double-quoted-key-section = double-quote key-part double-quote
 
     (* labels *)
     <label-plus> = label | block | typescript
@@ -143,6 +144,8 @@
     curlyo = '{'
     curlyc = '}'
     <period> = '.'
+    <single-quote> = '\\''
+    <double-quote> = '\\\"'
     s = #' *'
     <d2-keyword> =" (at/d2-keys)))
 

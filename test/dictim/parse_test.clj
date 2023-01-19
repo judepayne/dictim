@@ -1,6 +1,7 @@
 (ns dictim.parse-test
   (:require [clojure.test :refer :all]
-            [dictim.parse :as p]))
+            [dictim.parse :as p]
+            [instaparse.core :as insta]))
 
 ;; parsing
 
@@ -9,321 +10,324 @@
 
 (deftest shapes
   (testing "https://d2lang.com/tour/shapes"
-    (is (= (p/dictim (slurp "test/dictim/d2/shapes.d2"))
-           '(["imAShape"]
-             ["im_a_shape"]
-             ["im a shape"]
-             ["i'm a shape"]
-             [:comment "notice that one-hyphen is not a connection"]
-             [:comment "whereas, `a--shape` would be a connection"]
-             ["a-shape"]
-             [:list ["SQLite"] ["Cassandra"]]
-             ["pg" "PostgreSQL"]
-             ["Cloud" "my cloud"]
-             ["Cloud.shape" "cloud"]
-             ["pg" "PostgreSQL"]
-             ["Cloud" "my cloud"]
-             ["Cloud.shape" "cloud"]
-             [:list ["SQLite"] ["Cassandra"]])))))
+    (is (= (p/p-d2 (slurp "test/dictim/d2/shapes.d2"))
+           '([:shape [:key "imAShape"]]
+            [:shape [:key "im_a_shape"]]
+            [:shape [:key "im a shape"]]
+            [:shape [:key "i'm a shape"]]
+            [:comment [:label "notice that one-hyphen is not a connection"]]
+            [:comment [:label "whereas, `a--shape` would be a connection"]]
+            [:shape [:key "a-shape"]]
+            [:list [:shape [:key "SQLite"]] [:shape [:key "Cassandra"]]]
+            [:shape [:key "pg"] [:label "PostgreSQL"]]
+            [:shape [:key "Cloud"] [:label "my cloud"]]
+            [:attr [:at-key "Cloud" "." "shape"] [:label "cloud"]])))
+    (is (= 1 (count (insta/parses p/p-d2 (slurp "test/dictim/d2/shapes.d2")))))))
 
 
-(deftest connections
-  (testing "https://d2lang.com/tour/connections"
-    (is (= (p/dictim (slurp "test/dictim/d2/connections.d2"))
-           '(["Write Replica Canada" "<->" "Write Replica Australia"]
-             ["Read Replica" "<-" "Master"]
-             ["Write Replica" "->" "Master"]
-             ["Read Replica 1" "--" "Read Replica 2"]
-             ["Read Replica 1" "--" "Read Replica 2" "Kept in sync"]
-             ["be" "Backend"]
-             ["fe" "Frontend"]
-             [:comment "This would create new shapes"]
-             ["Backend" "->" "Frontend"]
-             [:comment "This would define a connection over existing labels"]
-             ["be" "->" "fe"]
-             ["Write Replica Canada" "<->" "Write Replica Australia"]
-             ["Read Replica" "<-" "Master"]
-             ["x" "--" "y"]
-             ["super long shape id here"
-              "->"
-              "super long shape id even longer here"]
-             ["Database" "->" "S3" "backup"]
-             ["Database" "->" "S3"]
-             ["Database" "->" "S3" "backup"]
-             ["High Mem Instance"
-              "->"
-              "EC2"
-              "<-"
-              "High CPU Instance"
-              "Hosted By"]
-             ["Stage One" "->" "Stage Two" "->" "Stage Three" "->" "Stage Four"]
-             ["Stage Four" "->" "Stage One" "repeat"]
-             ["a"
-              "The best way to avoid responsibility is to say, \"I've got responsibilities\""]
-             ["b" "Whether weary or unweary, O man, do not rest"]
-             ["c"
-              "I still maintain the point that designing a monolithic kernel in 1991 is a"]
-             ["a"
-              "->"
-              "b"
-              "To err is human, to moo bovine"
-              {"source-arrowhead" "1",
-               "target-arrowhead" {"shape" "diamond", "label" "*"}}]
-             ["b"
-              "<->"
-              "c"
-              "\"Reality is just a crutch for people who can't handle science fiction\""
-              {"source-arrowhead.label" "1",
-               "target-arrowhead"
-               {"shape" "diamond", "style.filled" "true", "label" "*"}}]
-             ["d"
-              "A black cat crossing your path signifies that the animal is going somewhere"]
-             ["d" "->" "a" "->" "c"])))))
+(deftest style
+  (testing "https://d2lang.com/tour/style"
+    (is (= (p/p-d2 (slurp "test/dictim/d2/style.d2"))
+           '([:shape
+              [:key "x"]
+              [:attrs
+               [:attr
+                [:at-key "style"]
+                [:attrs
+                 [:attr [:at-key "opacity"] [:label "0.6"]]
+                 [:attr [:at-key "fill"] [:label "orange"]]
+                 [:attr [:at-key "stroke"] [:label "\"#53C0D8\""]]
+                 [:attr [:at-key "stroke-width"] [:label "5"]]
+                 [:attr [:at-key "shadow"] [:label "true"]]]]]]
+             [:shape
+              [:key "y"]
+              [:attrs
+               [:attr
+                [:at-key "style"]
+                [:attrs
+                 [:attr [:at-key "opacity"] [:label "0.6"]]
+                 [:attr [:at-key "fill"] [:label "red"]]
+                 [:attr [:at-key "3d"] [:label "true"]]
+                 [:attr [:at-key "stroke"] [:label "black"]]]]]]
+             [:conn
+              [:ekey [:ekey-part-last "x "]]
+              [:dir "->"]
+              [:key "y"]
+              [:attrs
+               [:attr
+                [:at-key "style"]
+                [:attrs
+                 [:attr [:at-key "stroke"] [:label "green"]]
+                 [:attr [:at-key "opacity"] [:label "0.5"]]
+                 [:attr [:at-key "stroke-width"] [:label "2"]]
+                 [:attr [:at-key "stroke-dash"] [:label "5"]]]]]]
+             [:comment [:label "Float between 0 and 1"]]
+             [:attr [:at-key "opacity"] [:label "0.6"]]
+             [:comment [:label "CSS color or hex code"]]
+             [:attr [:at-key "fill"] [:label "orange"]]
+             [:comment [:label "CSS color or hex code"]]
+             [:attr [:at-key "stroke"] [:label "\"#53C0D8\""]]
+             [:comment [:label "Integer betwen 1 and 15"]]
+             [:attr [:at-key "stroke-width"] [:label "5"]]
+             [:comment [:label "Integer betwen 0 and 10"]]
+             [:attr [:at-key "stroke-dash"] [:label "5"]]
+             [:comment [:label "Only applicable to shapes, except ovals"]]
+             [:comment [:label "Integer betwen 0 and 20"]]
+             [:attr [:at-key "border-radius"] [:label "4"]]
+             [:comment [:label "CSS color or hex code"]]
+             [:attr [:at-key "font-color"] [:label "red"]]
+             [:comment [:label "Only applicable to shapes"]]
+             [:comment [:label "true or false"]]
+             [:attr [:at-key "shadow"] [:label "true"]]
+             [:comment [:label "Only applicable to shapes"]]
+             [:comment [:label "true or false"]]
+             [:attr [:at-key "multiple"] [:label "true"]]
+             [:comment [:label "Only applicable to squares"]]
+             [:comment [:label "true or false"]]
+             [:attr [:at-key "3d"] [:label "true"]]
+             [:comment [:label "Only applicable to edges"]]
+             [:attr [:at-key "animated"] [:label "false"]]
+             [:comment [:label "Only applicable to shapes"]]
+             [:comment [:label "Can be an external URL"]]
+             [:attr [:at-key "link"] [:label "https://google.com"]]
+             [:comment [:label "Or an internal board"]]
+             [:attr [:at-key "link"] [:label "Overview.Untitled Board 2"]])))
+    (is (= 4 (count (insta/parses p/p-d2 (slurp "test/dictim/d2/style.d2")))))))
 
 
 (deftest containers
   (testing "https://d2lang.com/tour/containers"
-    (is (= (p/dictim (slurp "test/dictim/d2/containers.d2"))
-           '(["server"]
-             [:comment "Declares a shape inside of another shape"]
-             ["server.process"]
-             [:comment "Can declare the container and child in same line"]
-             ["im a parent.im a child"]
-             [:comment "Since connections can also declare keys, this works too"]
-             ["apartment.Bedroom.Bathroom"
-              "->"
-              "office.Spare Room.Bathroom"
-              "Portal"]
-             ["clouds"
-              ["aws" ["load_balancer" "->" "api"] ["api" "->" "db"]]
-              ["gcloud" ["auth" "->" "db"]]
-              ["gcloud" "->" "aws"]]
-             ["clouds"
-              ["aws" "AWS" ["load_balancer" "->" "api"] ["api" "->" "db"]]
-              ["gcloud" "Google Cloud" ["auth" "->" "db"]]
-              ["gcloud" "->" "aws"]]
-             ["users" "->" "clouds.aws.load_balancer"]
-             ["users" "->" "clouds.gcloud.auth"]
-             ["ci.deploys" "->" "clouds"]
-             ["christmas" ["presents"]]
-             ["birthdays"
-              ["presents"]
-              ["_.christmas.presents" "->" "presents" "regift"]
-              ["_.christmas.style.fill" "\"#ACE1AF\""]])))))
-
-
-(deftest text-and-code
-  (testing "https://d2lang.com/tour/text"
-    (is (= (p/dictim (slurp "test/dictim/d2/textandcode.d2"))
-           '(["explanation"
-              "|md\n  # I can do headers\n  - lists\n  - lists\n\n  And other normal markdown stuff\n|"]
-             ["my_code"
-              "|||ts\n  declare function getSmallPet(): Fish | Bird;\n  const works = (a > 1) || (b < 2)\n|||"]
-             ["my_code"
-              "|`ts\n  declare function getSmallPet(): Fish | Bird;\n  const works = (a > 1) || (b < 2)\n`|"]
-             ["amscd plugin"
-              ["ex"
-               "|tex\n\\\\begin{CD} B @>{\\\\text{very long label}}>> C S^{{\\\\mathcal{W}}_\\\\Lambda}\\\\otimes T @>j>> T\\\\\\\\ @VVV V \\\\end{CD}\n|"]]
-             ["multilines"
-              ["ex"
-               "|tex\n\\\\displaylines{x = a + b \\\\\\\\ y = b + c}\n\\\\sum_{k=1}^{n} h_{k} \\\\int_{0}^{1} \\\\bigl(\\\\partial_{k} f(x_{k-1}+t h_{k} e_{k}) -\\\\partial_{k} f(a)\\\\bigr) \\\\,dt\n|"]]
-             ["title"
-              "A winning strategy"
-              {"shape" "text"}
-              {"near" "top-center"}
-              ["style" {"font-size" "55"} ["italic" "true"]]]
-             ["poll the people" "->" "results"]
-             ["results" "->" "unfavorable" "->" "poll the people"]
-             ["results" "->" "favorable" "->" "will of the people"])))))
-
-
-(deftest sql
-  (testing "https://d2lang.com/tour/sql-tables"
-    (is (= (p/dictim (slurp "test/dictim/d2/sql.d2"))
-           '(["my_table"
-              {"shape" "sql_table"}
-              [:comment
-               "This is defined using the shorthand syntax for labels discussed in the containers section."]
-              [:comment "But here it's for the type of a constraint."]
-              [:comment
-               "The id field becomes a map that looks like {type: int; constraint: primary_key}"]
-              ["id" "int" {"constraint" "primary_key"}]
-              ["last_updated" "timestamp with time zone"]]
-             ["objects"
-              {"shape" "sql_table"}
-              ["id" "int" {"constraint" "primary_key"}]
-              ["disk" "int" {"constraint" "foreign_key"}]
-              ["json" "jsonb" {"constraint" "unique"}]
-              ["last_updated" "timestamp with time zone"]]
-             ["disks"
-              {"shape" "sql_table"}
-              ["id" "int" {"constraint" "primary_key"}]]
-             ["objects.disk" "->" "disks.id"]
-             ["cloud"
-              ["disks"
-               {"shape" "sql_table"}
-               ["id" "int" {"constraint" "primary_key"}]]
-              ["blocks"
-               {"shape" "sql_table"}
-               ["id" "int" {"constraint" "primary_key"}]
-               ["disk" "int" {"constraint" "foreign_key"}]
-               ["blob" "blob"]]
-              ["blocks.disk" "->" "disks.id"]
-              ["AWS S3 Vancouver" "->" "disks"]])))))
-
-
-(deftest classes
-  (testing "https://d2lang.com/tour/classes"
-    (is (= (p/dictim (slurp "test/dictim/d2/classes.d2"))
-           '(["MyClass"
-              {"shape" "class"}
-              ["field" "\"[]string\""]
-              ["method(a uint64)" "(x, y int)"]]
-             ["D2 Parser"
-              {"shape" "class"}
-              [:comment "Default visibility is + so no need to specify."]
-              ["+reader" "io.RuneReader"]
-              ["readerPos" "d2ast.Position"]
-              [:comment "Private field."]
-              ["-lookahead" "\"[]rune\""]
-              [:comment "Protected field."]
-              [:comment
-               "We have to escape the # to prevent the line from being parsed as a comment."]
-              ["\\#lookaheadPos" "d2ast.Position"]
-              ["+peek()" "(r rune, eof bool)"]
-              ["rewind()"]
-              ["commit()"]
-              ["\\#peekn(n int)" "(s string, eof bool)"]]
-             ["\"github.com/terrastruct/d2parser.git\"" "->" "D2 Parser"])))))
-
-
-(deftest sequence-diagrams
-  (testing "https://d2lang.com/tour/sequence-diagrams"
-    (is (= (p/dictim (slurp "test/dictim/d2/sequence.d2"))
-           '({"direction" "right"}
-             ["Before and after becoming friends"
-              ["2007"
-               "Office chatter in 2007"
-               {"shape" "sequence_diagram"}
-               ["alice" "Alice"]
-               ["bob" "Bobby"]
-               ["awkward small talk"
-                ["alice" "->" "bob" "uhm, hi"]
-                ["bob" "->" "alice" "oh, hello"]
-                ["icebreaker attempt"
-                 ["alice" "->" "bob" "what did you have for lunch?"]]
-                ["unfortunate outcome" ["bob" "->" "alice" "that's personal"]]]]
-              ["2012"
-               "Office chatter in 2012"
-               {"shape" "sequence_diagram"}
-               ["alice" "Alice"]
-               ["bob" "Bobby"]
-               ["alice" "->" "bob" "Want to play with ChatGPT?"]
-               ["bob" "->" "alice" "Yes!"]
-               ["bob" "->" "alice.play" "Write a play..."]
-               ["alice.play" "->" "bob.play" "about 2 friends..."]
-               ["bob.play" "->" "alice.play" "who find love..."]
-               ["alice.play" "->" "bob.play" "in a sequence diagram"]]
-              ["2007" "->" "2012" "Five\\nyears\\nlater"]]
-             ["Office chatter"
-              {"shape" "sequence_diagram"}
-              ["alice" "Alice"]
-              ["bob" "Bobby"]
-              ["awkward small talk"
-               ["alice" "->" "bob" "uhm, hi"]
-               ["bob" "->" "alice" "oh, hello"]
-               ["icebreaker attempt"
-                ["alice" "->" "bob" "what did you have for lunch?"]]
-               ["unfortunate outcome" ["bob" "->" "alice" "that's personal"]]]]
-             {"shape" "sequence_diagram"}
-             ["alice" "->" "bob" "What does it mean\\nto be well-adjusted?"]
-             ["bob"
-              "->"
-              "alice"
-              "The ability to play bridge or\\ngolf as if they were games."]
-             {"shape" "sequence_diagram"}
+    (is (= (p/p-d2 (slurp "test/dictim/d2/containers.d2"))
+           '([:shape [:key "server"]]
+             [:comment [:label "Declares a shape inside of another shape"]]
+             [:shape [:key "server" "." "process"]]
              [:comment
-              "Remember that semicolons allow multiple objects to be defined in one line"]
-             [:comment "Actors will appear from left-to-right as a, b, c, d..."]
-             [:list ["a"] ["b"] ["c"] ["d"]]
-             [:comment "... even if the connections are in a different order"]
-             ["c" "->" "d"]
-             ["d" "->" "a"]
-             ["b" "->" "d"])))))
+              [:label "Can declare the container and child in same line"]]
+             [:shape [:key "im a parent" "." "im a child"]]
+             [:comment
+              [:label "Since connections can also declare keys, this works too"]]
+             [:conn
+              [:ekey
+               [:ekey-part "apartment"]
+               "."
+               [:ekey-part "Bedroom"]
+               "."
+               [:ekey-part-last "Bathroom "]]
+              [:dir "->"]
+              [:key "office" "." "Spare Room" "." "Bathroom"]
+              [:label "Portal"]]
+             [:ctr
+              [:key "clouds"]
+              [:ctr
+               [:key "aws"]
+               [:conn
+                [:ekey [:ekey-part-last "load_balancer "]]
+                [:dir "->"]
+                [:key "api"]]
+               [:conn [:ekey [:ekey-part-last "api "]] [:dir "->"] [:key "db"]]]
+              [:ctr
+               [:key "gcloud"]
+               [:conn [:ekey [:ekey-part-last "auth "]] [:dir "->"] [:key "db"]]]
+              [:conn
+               [:ekey [:ekey-part-last "gcloud "]]
+               [:dir "->"]
+               [:key "aws"]]]
+             [:ctr
+              [:key "clouds"]
+              [:ctr
+               [:key "aws"]
+               [:label "AWS "]
+               [:conn
+                [:ekey [:ekey-part-last "load_balancer "]]
+                [:dir "->"]
+                [:key "api"]]
+               [:conn [:ekey [:ekey-part-last "api "]] [:dir "->"] [:key "db"]]]
+              [:ctr
+               [:key "gcloud"]
+               [:label "Google Cloud "]
+               [:conn [:ekey [:ekey-part-last "auth "]] [:dir "->"] [:key "db"]]]
+              [:conn
+               [:ekey [:ekey-part-last "gcloud "]]
+               [:dir "->"]
+               [:key "aws"]]]
+             [:conn
+              [:ekey [:ekey-part-last "users "]]
+              [:dir "->"]
+              [:key "clouds" "." "aws" "." "load_balancer"]]
+             [:conn
+              [:ekey [:ekey-part-last "users "]]
+              [:dir "->"]
+              [:key "clouds" "." "gcloud" "." "auth"]]
+             [:conn
+              [:ekey [:ekey-part "ci"] "." [:ekey-part-last "deploys "]]
+              [:dir "->"]
+              [:key "clouds"]]
+             [:ctr [:key "christmas"] [:shape [:key "presents"]]]
+             [:ctr
+              [:key "birthdays"]
+              [:shape [:key "presents"]]
+              [:conn
+               [:ekey
+                [:ekey-part "_"]
+                "."
+                [:ekey-part "christmas"]
+                "."
+                [:ekey-part-last "presents "]]
+               [:dir "->"]
+               [:key "presents"]
+               [:label "regift"]]
+              [:attr
+               [:at-key "_" "." "christmas" "." "style" "." "fill"]
+               [:label "\"#ACE1AF\""]]])))
+    (is (= 1 (count (insta/parses p/p-d2 (slurp "test/dictim/d2/containers.d2")))))))
 
 
-(deftest styles
-  (testing "https://d2lang.com/tour/style"
-    (is (= (p/dictim (slurp "test/dictim/d2/style.d2"))
-           '(["x"
-              {"style"
-               {"opacity" "0.6",
-                "fill" "orange",
-                "stroke" "\"#53C0D8\"",
-                "stroke-width" "5",
-                "shadow" "true"}}]
-             ["y"
-              {"style"
-               {"opacity" "0.6", "fill" "red", "3d" "true", "stroke" "black"}}]
-             ["x"
-              "->"
-              "y"
-              {"style"
-               {"stroke" "green",
-                "opacity" "0.5",
-                "stroke-width" "2",
-                "stroke-dash" "5"}}]
-             [:comment "Float between 0 and 1"]
-             {"opacity" "0.6"}
-             [:comment "CSS color or hex code"]
-             {"fill" "orange"}
-             [:comment "CSS color or hex code"]
-             {"stroke" "\"#53C0D8\""}
-             [:comment "Integer betwen 1 and 15"]
-             {"stroke-width" "5"}
-             [:comment "Integer betwen 0 and 10"]
-             {"stroke-dash" "5"}
-             [:comment "Only applicable to shapes, except ovals"]
-             [:comment "Integer betwen 0 and 20"]
-             {"border-radius" "4"}
-             [:comment "CSS color or hex code"]
-             {"font-color" "red"}
-             [:comment "Only applicable to shapes"]
-             [:comment "true or false"]
-             {"shadow" "true"}
-             [:comment "Only applicable to shapes"]
-             [:comment "true or false"]
-             {"multiple" "true"}
-             [:comment "Only applicable to squares"]
-             [:comment "true or false"]
-             {"3d" "true"}
-             [:comment "Only applicable to edges"]
-             {"animated" "false"}
-             [:comment "Only applicable to shapes"]
-             [:comment "Can be an external URL"]
-             {"link" "https://google.com"}
-             [:comment "Or an internal board"]
-             {"link" "Overview.Untitled Board 2"})))))
-
-
-(deftest interactive
-  (testing "https://d2lang.com/tour/interactive"
-    (is (= (p/dictim (slurp "test/dictim/d2/interactive.d2"))
-           '(["x"
-              {"tooltip" "Total abstinence is easier than perfect moderation"}]
-             ["y"
-              {"tooltip"
-               "Gee, I feel kind of LIGHT in the head now,\\nknowing I can't make my satellite dish PAYMENTS!"}]
-             ["x" "->" "y"]
-             ["x" "I'm a Mac" {"link" "https://apple.com"}]
-             ["y" "And I'm a PC" {"link" "https://microsoft.com"}]
-             ["x" "->" "y" "gazoontite"])))))
+(deftest connections
+  (testing "https://d2lang.com/tour/connections"
+    (is (= (p/p-d2 (slurp "test/dictim/d2/connections.d2"))
+           '([:conn
+              [:ekey [:ekey-part-last "Write Replica Canada "]]
+              [:dir "<->"]
+              [:key "Write Replica Australia"]]
+             [:conn
+              [:ekey [:ekey-part-last "Read Replica "]]
+              [:dir "<-"]
+              [:key "Master"]]
+             [:conn
+              [:ekey [:ekey-part-last "Write Replica "]]
+              [:dir "->"]
+              [:key "Master"]]
+             [:conn
+              [:ekey [:ekey-part-last "Read Replica 1 "]]
+              [:dir "--"]
+              [:key "Read Replica 2"]]
+             [:conn
+              [:ekey [:ekey-part-last "Read Replica 1 "]]
+              [:dir "--"]
+              [:key "Read Replica 2"]
+              [:label "Kept in sync"]]
+             [:shape [:key "be"] [:label "Backend"]]
+             [:shape [:key "fe"] [:label "Frontend"]]
+             [:comment [:label "This would create new shapes"]]
+             [:conn
+              [:ekey [:ekey-part-last "Backend "]]
+              [:dir "->"]
+              [:key "Frontend"]]
+             [:comment
+              [:label "This would define a connection over existing labels"]]
+             [:conn [:ekey [:ekey-part-last "be "]] [:dir "->"] [:key "fe"]]
+             [:conn
+              [:ekey [:ekey-part-last "Write Replica Canada "]]
+              [:dir "<->"]
+              [:key "Write Replica Australia"]]
+             [:conn
+              [:ekey [:ekey-part-last "Read Replica "]]
+              [:dir "<-"]
+              [:key "Master"]]
+             [:conn [:ekey [:ekey-part-last "x "]] [:dir "--"] [:key "y"]]
+             [:conn
+              [:ekey [:ekey-part-last "super long shape id here "]]
+              [:dir "->"]
+              [:key "super long shape id even longer here"]]
+             [:conn
+              [:ekey [:ekey-part-last "Database "]]
+              [:dir "->"]
+              [:key "S3"]
+              [:label "backup"]]
+             [:conn
+              [:ekey [:ekey-part-last "Database "]]
+              [:dir "->"]
+              [:key "S3"]]
+             [:conn
+              [:ekey [:ekey-part-last "Database "]]
+              [:dir "->"]
+              [:key "S3"]
+              [:label "backup"]]
+             [:conn
+              [:ekey [:ekey-part-last "High Mem Instance "]]
+              [:dir "->"]
+              [:ekey [:ekey-part-last "EC2 "]]
+              [:dir "<-"]
+              [:key "High CPU Instance"]
+              [:label "Hosted By"]]
+             [:conn
+              [:ekey [:ekey-part-last "Stage One "]]
+              [:dir "->"]
+              [:ekey [:ekey-part-last "Stage Two "]]
+              [:dir "->"]
+              [:ekey [:ekey-part-last "Stage Three "]]
+              [:dir "->"]
+              [:key "Stage Four"]]
+             [:conn
+              [:ekey [:ekey-part-last "Stage Four "]]
+              [:dir "->"]
+              [:key "Stage One"]
+              [:label "repeat"]]
+             [:shape
+              [:key "a"]
+              [:label
+               "The best way to avoid responsibility is to say, \"I've got responsibilities\""]]
+             [:shape
+              [:key "b"]
+              [:label "Whether weary or unweary, O man, do not rest"]]
+             [:shape
+              [:key "c"]
+              [:label
+               "I still maintain the point that designing a monolithic kernel in 1991 is a"]]
+             [:conn
+              [:ekey [:ekey-part-last "a "]]
+              [:dir "->"]
+              [:key "b"]
+              [:label "To err is human, to moo bovine "]
+              [:attrs
+               [:attr [:at-key "source-arrowhead"] [:label "1"]]
+               [:attr
+                [:at-key "target-arrowhead"]
+                [:attr-label [:label "* "]]
+                [:attrs [:attr [:at-key "shape"] [:label "diamond"]]]]]]
+             [:conn
+              [:ekey [:ekey-part-last "b "]]
+              [:dir "<->"]
+              [:key "c"]
+              [:label
+               "\"Reality is just a crutch for people who can't handle science fiction\" "]
+              [:attrs
+               [:attr [:at-key "source-arrowhead" "." "label"] [:label "1"]]
+               [:attr
+                [:at-key "target-arrowhead"]
+                [:attr-label [:label "* "]]
+                [:attrs
+                 [:attr [:at-key "shape"] [:label "diamond"]]
+                 [:attr [:at-key "style" "." "filled"] [:label "true"]]]]]]
+             [:shape
+              [:key "d"]
+              [:label
+               "A black cat crossing your path signifies that the animal is going somewhere"]]
+             [:conn
+              [:ekey [:ekey-part-last "d "]]
+              [:dir "->"]
+              [:ekey [:ekey-part-last "a "]]
+              [:dir "->"]
+              [:key "c"]])))
+    (is (= 1 (count (insta/parses p/p-d2 (slurp "test/dictim/d2/connections.d2")))))))
 
 
 (deftest lineendings
-  (testing "; followed by \n"
-    (is (= (p/dictim (slurp "test/dictim/d2/lineendings.d2"))
-           '([:list ["a"] ["b"] ["c"] ["d"]]
-             ["hello"]
-             [:list ["e"] ["f"] ["g"] ["h"]]
-             ["goodbye"])))))
+  (testing "Can parse various messy line endings"
+    (is (= (p/p-d2 (slurp "test/dictim/d2/lineendings.d2"))
+           '([:list
+              [:shape [:key "a"]]
+              [:shape [:key "b"]]
+              [:shape [:key "c"]]
+              [:shape [:key "d"]]]
+             [:shape [:key "hello"]]
+             [:list
+              [:shape [:key "e"]]
+              [:shape [:key "f"]]
+              [:shape [:key "g"]]
+              [:shape [:key "h"]]]
+             [:shape [:key "goodbye"]])))
+    (is (= 1 (count (insta/parses p/p-d2 (slurp "test/dictim/d2/lineendings.d2")))))))
+
+
+
