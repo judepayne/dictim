@@ -8,19 +8,55 @@
             [dictim.utils :refer [error]]))
 
 
-(defn- not-reg
-  "Returns a regex (string) which won't match anything in the coll 'nots'."
-  [nots]
-  (let [repeat-fn
-        (fn [n] (str "(?!^" n "[ ]*$)"))]
-    (str "^(?:" (apply str (map repeat-fn nots)) ")^.")))
+(defn- reg-gen
+  "Generates a regex (for matching keys) where the string:
+   - can't be one of not-in - a sequence of strings
+   - can't contain any of the substrings cant-contain
+   - matches up until any of the delim-chars"
+  [not-in cant-contain delim-chars edge?]
+  (let [not-fn (fn [ns]
+                 (apply str
+                        (interpose
+                         "|"(map
+                             #(if edge?
+                                (str % "|" % "[ ].*")
+                                (str % "|" % "[" (str delim-chars) "][\\s\\S]*"))
+                             ns))))
+        cant-fn (fn [ns] (apply str (interpose "|" (map #(str %) ns))))]
+    (str
+     "^(?!(?:"
+     (not-fn not-in)
+     ")$"
+     (when cant-contain
+       (str "|.*(?:" (cant-fn cant-contain) ")"))
+     ")[^"
+     delim-chars
+     "]+")))
+
+
+(def key-reg
+  (reg-gen
+   at/d2-attributes
+   '("--" "->" "<-")
+   ":;.\n>"
+   false))
+
+
+(def ekey-reg
+  (reg-gen
+   at/d2-attributes
+   nil
+   ".\\-<>\n"
+   true))
 
 ;; Notes on parsing d2
-;; d2 is not that strict of a language and quite 'texty' so
-;; not all that easy to parse. e.g. containers have the same
-;; syntax as shapes, but happen to have other elements inside.
+;; d2 is a pretty free in ita syntax and quite 'texty' so
+;; not all that easy to parse.
+;; e.g. containers have the same syntax as shapes, but happen
+;; to have other elements inside.
 ;; e.g. many parts of the structure are entirely optional.
 ;; Tokens are not particularly easy to recognize with regexes.
+;;
 ;; The approach I've taken below to focus on getting keys to be
 ;; perfectly parsed each time.. since getting keys right and being
 ;; able to differentiate between a key that belongs to a shape
@@ -36,10 +72,12 @@
 ;; the structure of the language itself is not sufficient to
 ;; parse it. Since d2-keys will no doubt be extended in future,
 ;; I've elected to keep them in just one one place (attributes ns).
+;; 
 ;; I've tried as much as possible to avoid the use of complex
 ;; regexes to parse d2, keep as much of the description of the
-;; language in the EBNF(+) notation of instaparse below. Partly
-;; to get out of the regex hell of the first version of this parser!
+;; language in the EBNF(+) notation of instaparse below.
+;; Unfortunately for such a flexible syntax language, this was
+;; an intention rather than the outcome!
 ;; Finally, rather than use the :auto-whitespace feature of d2,
 ;; I've elected to explicitly mark where white space can be
 ;; eliminated (the 's' token) as this resulted in (much) less
@@ -57,36 +95,39 @@
 
     list = (elem <semi>+)+ elem <semi>*
 
-    ctr = key colon-label? <curlyo> elements <curlyc>
+    ctr = key colon-label? <curlyo> elements <s> <curlyc>
     shape = key colon-label-plus? attrs?
     comment = <hash> label
 
-    attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <curlyc>
+    attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr = <s> at-key <s> <colon> <s> (val | attr-label? attrs)
     attr-label = label
     <val> = label
 
-    conn = (key dir)+ key colon-label? attrs?
+    conn = <s> (ekey dir)+ <s> key colon-label? attrs?
     dir = <contd?> direction
     contd = #'--\\\\\n'
     <direction> = '--' | '->' | '<-' | '<->'
  
     (* keys *)
     K = key | at-key
-    key = (key-part period)* key-part-last
-    <key-part> = (!key-stops any)+
-    <key-part-last> = (!key-stops #'" (not-reg at/d2-attributes) "')+
+    key = !hash (key-part period)* key-part-last
+    <key-part> = #'^(?!.*(?:-[>-]|<-))[^;:.\\n]+'
+    <key-part-last> = <s> #'" key-reg "'
     at-key = (at-part period)* at-part-last
     <at-part> = key-part | d2-keyword
-    <at-part-last> = d2-keyword 
-    key-stops = colon | curlyo | semi | dir | '.'
+    <at-part-last> = d2-keyword
+    ekey = !hash (ekey-part period)* ekey-part-last
+    ekey-part = #'^[^;:.\\n-<]+'
+    ekey-part-last = <s> #'" ekey-reg "'
+
+    sh = key colon label-plus
 
     (* labels *)
     <label-plus> = label | block | typescript
-    label = #'^([^;{\\n])+'
-    label-stop = semi | curlyo | sep
-    <colon-label> = (<colon> <s> | <colon> <s> label)
-    <colon-label-plus> = (<colon> <s> | <colon> <s> label-plus)
+    label = <s> #'^(?!^\\s*$)[^;{}\\n]+'
+    <colon-label> = (<colon> <s> | <colon> label)
+    <colon-label-plus> = (<colon> <s> | <colon> label-plus)
     block = '|' #'[^|]+' '|'
     typescript = ts-open #'(.*(?!(\\|\\|\\||`\\|)))' ts-close
     ts-open = '|||' | '|`'; ts-close = '|||' | '`|'
@@ -103,7 +144,22 @@
     curlyc = '}'
     <period> = '.'
     s = #' *'
-    <d2-keyword> ="  (at/d2-keys)))
+    <d2-keyword> =" (at/d2-keys)))
+
+
+(defn- line-by-line
+  [a b]
+  (dorun (map-indexed
+      (fn [index item] (let [same? (= (nth b index) item)]
+                         (if (not same?)
+                           (do (println "-- Mismtach in form " index "-----")
+                               (println "-- first:")
+                               (println item)
+                               (println "-- second:")
+                               (println (nth b index))
+                               (println "--------------------------------")))))
+      a))
+  nil)
 
 
 (defn dict [d2]
