@@ -2,7 +2,8 @@
     ^{:author "Jude payne"
       :doc "Namespace for validating dictim."}
     dictim.validate
-  (:require [dictim.attributes :as at]
+  (:require [clojure.string :as str]
+            [dictim.attributes :as at]
             [dictim.utils :refer [kstr? direction? take-til-last elem-type error list?]])
   (:refer-clojure :exclude [list?])
   #?(:cljs (:require-macros [dictim.validate :refer [check]])))
@@ -67,13 +68,22 @@
         (and (every? valid? (rest li))
              (every? (complement list?) (rest li))))
 
+
+(defn- last-d2-keyword? [k]
+  (let [k' (if (keyword? k) (name k) k)]
+    (-> k'
+        (str/split #"\.")
+        last
+        at/d2-keyword?)))
+
+
 (check :attrs m
        (and
-         (map? m)
-         (every? kstr? (keys m))
-         (every? at/d2-keyword? (keys m))
-         (every? #(or (kstr? %) (list? %) (number? %)
-                      (and (map? %) (valid? %))) (vals m))))
+        (map? m)
+        (every? kstr? (keys m))
+        (every? last-d2-keyword? (keys m))
+        (every? #(or (kstr? %) (list? %) (number? %)
+                     (and (map? %) (valid? %))) (vals m))))
 
 
 (check :shape elem
@@ -120,3 +130,11 @@
                   (every? valid? (rest opts)))
              (every? valid? opts) ;; no label or attrs
              (nil? opts)))))
+
+
+(defn all-valid?
+  "Validates a collection of dictim elements.
+   Throws an error at the first non valid element. Returns nil
+   if all elements pass validation."
+  [elems]
+  (every? valid? elems))

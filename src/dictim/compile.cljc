@@ -4,7 +4,7 @@
   (:require [clojure.string :as str]
             [dictim.format :as f]
             [dictim.utils :refer [kstr? direction? take-til-last elem-type]]
-            [dictim.validate :refer [valid?]])
+            [dictim.validate :refer [all-valid?]])
   (:refer-clojure :exclude [list]))
 
 
@@ -130,13 +130,8 @@
    Validates each element, throws an error if invalid."
   [& elems]
 
-  (run! valid? elems)
+  (all-valid? elems)
 
   (binding [sep \newline]
     (-> (apply str (mapcat layout elems))
         (f/fmt :tab 2))))
-
-
-(comment (time (dotimes [n 1000000] (binding [sep \newline] (apply str (mapcat element ex))))))
-;; 54185 ms for ex
-

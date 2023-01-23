@@ -7,6 +7,7 @@
             [dictim.attributes :as at]
             [dictim.utils :refer [error]]))
 
+;; regexes required to parse d2
 
 (defn- reg-gen
   "Generates a regex (for matching keys) where the string:
@@ -14,15 +15,19 @@
    - can't contain any of the substrings cant-contain
    - matches up until any of the delim-chars"
   [not-in cant-contain delim-chars edge?]
-  (let [not-fn (fn [ns]
-                 (apply str
-                        (interpose
-                         "|"(map
-                             #(if edge?
-                                (str % "|" % "[ ].*")
-                                (str % "|" % "[" (str delim-chars) "][\\s\\S]*"))
-                             ns))))
-        cant-fn (fn [ns] (apply str (interpose "|" (map #(str %) ns))))]
+  (let [not-fn
+        (fn [ns]
+          (apply
+           str
+           (interpose
+            "|"(map
+                #(if edge?
+                   (str % "|" % "[ ].*")
+                   (str % "|" % "[" (str delim-chars) "][\\s\\S]*"))
+                ns))))
+        cant-fn
+        (fn [ns]
+          (apply str (interpose "|" (map #(str %) ns))))]
     (str
      "^(?!(?:"
      (not-fn not-in)
@@ -38,7 +43,7 @@
   (reg-gen
    at/d2-attributes
    '("--" "->" "<-")
-   ":;.\n>'\""
+   ":;.\n>"
    false))
 
 
@@ -46,57 +51,46 @@
   (reg-gen
    at/d2-attributes
    nil
-   ".\\-<>\n'\""
+   ".\\-<>\n"
    true))
 
 ;; Notes on parsing d2
-;; d2 is a pretty free in ita syntax and quite 'texty' so
-;; not all that easy to parse.
-;; e.g. containers have the same syntax as shapes, but happen
-;; to have other elements inside.
-;; e.g. many parts of the structure are entirely optional.
+;; d2 is a pretty free in its syntax, has some ambiguity in the
+;; grammar and is quite 'texty' so not all that easy to parse.
+
 ;; Tokens are not particularly easy to recognize with regexes.
 ;;
-;; The approach I've taken below to focus on getting keys to be
-;; perfectly parsed each time.. since getting keys right and being
-;; able to differentiate between a key that belongs to a shape
-;; and a key of an attribute ultimately leads to being able to
-;; differentiate between shapes and containers (with their similar
-;; structure). Since d2 permits almost anything in a key, the
-;; answer is to focus on the few delimiter/ 'key-stop' characters
-;; that cannot be part of a key and use those to recognize when
-;; a key has ended.
-;; In addition, d2 cannot be parsed without knowledge of the set
-;; of possible attribute keys. This is required to differentiate
-;; betwen an attribute and a shape nested inside a container -
-;; the structure of the language itself is not sufficient to
-;; parse it. Since d2-keys will no doubt be extended in future,
-;; I've elected to keep them in just one one place (attributes ns).
-;; 
-;; I've tried as much as possible to avoid the use of complex
-;; regexes to parse d2, keep as much of the description of the
-;; language in the EBNF(+) notation of instaparse below.
-;; Unfortunately for such a flexible syntax language, this was
-;; an intention rather than the outcome!
-;; Finally, rather than use the :auto-whitespace feature of d2,
-;; I've elected to explicitly mark where white space can be
-;; eliminated (the 's' token) as this resulted in (much) less
-;; ambiguity in the parse tree, and a faster parse.
+;; A particular source of ambiguity is the similarity between
+;; shapes and containers. containers being shapes that happen to
+;; have other elements than attr's in them. I've elected to parse
+;; shapes and containers in the grammar below as one thing, 'ctr'
+;; and them in the dictim function detect whether a shape or
+;; container and set the :tag in metadata accordingly. This helped
+;; to produce a simpler grmmar.
+;; I've tried rewriting the parse a number of times trying to get as
+;; much logic out of regexes and into instaparse, but since d2 is so
+;; free and essentially terminates tokens (which can be anything) by
+;; a few delimiter chars/ strings, unfortunately quite a bit of logic
+;; has had to end up in negative lookahead regexes.
+;; The only way to tell the difference between a shape e.g. a: A and
+;; an attribute e.g. link: A is to know the set of d2 (attribute)
+;; keywords rather than by the structure of the language, then to parse
+;; the language requires to know the set of (attribute) keywords.
+;; This coupling is perhaps not ideal and could be eliminated if
+;; d2 were to change its language spec to always have attributes inside
+;; their own braces e.g. <link: 42>. 
 
-(insta/defparser
-;  ^:private
-  p-d2
+(defn- grammar []
   (str
    "<D2> = elements
-    <elements> = <sep*> (element <sep+>)* element <sep*>
+    elements = <sep*> (element <sep+>)* element <sep*>
+    <contained> = <sep*> (element <sep+>)* element <sep*>
     <element> = list | elem
 
-    <elem> = shape | comment | ctr | attr | conn
+    <elem> = ctr |comment | attr | conn
 
     list = (elem <semi>+)+ elem <semi>*
-
-    ctr = key colon-label? <curlyo> elements <s> <curlyc>
-    shape = key colon-label-plus? attrs?
+    ctr = key colon-label? (<curlyo> <sep*> contained <s> <curlyc>)?
     comment = <s> <hash> label
 
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
@@ -118,20 +112,18 @@
     <at-part> = key-part | d2-keyword
     <at-part-last> = d2-keyword
     ekey = !hash (ekey-part period)* ekey-part-last
-    ekey-part = #'^[^\\'\\\";:.\\n-<]+'
-    ekey-part-last = <s> #'" ekey-reg "'
-
-    single-quoted-key-section = single-quote key-part single-quote
-    double-quoted-key-section = double-quote key-part double-quote
+    <ekey-part> = #'^[^;:.\\n\\-<]+'
+    <ekey-part-last> = <s> #'" ekey-reg "'
 
     (* labels *)
-    <label-plus> = label | block | typescript
-    label = <s> #'^(?!^\\s*$)[^;{}\\n]+'
-    <colon-label> = (<colon> <s> | <colon> label)
-    <colon-label-plus> = (<colon> <s> | <colon> label-plus)
-    block = '|' #'[^|]+' '|'
-    typescript = ts-open #'(.*(?!(\\|\\|\\||`\\|)))' ts-close
-    ts-open = '|||' | '|`'; ts-close = '|||' | '`|'
+    <labels> = label | block | typescript
+    label = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
+    <colon-label> = (<colon> <s> | <colon> labels)
+    block = <s> '|' #'[^|]+' '|'
+    typescript = <s> ts-open ts ts-close <s>
+    <ts> = #'[\\s\\S]+?(?=\\|\\|\\||`\\|)'
+    ts-open = '|||' | '|`'
+    ts-close = '|||' | '`|'
  
     (* building blocks *)
     <any> = #'.'
@@ -144,42 +136,25 @@
     curlyo = '{'
     curlyc = '}'
     <period> = '.'
-    <single-quote> = '\\''
-    <double-quote> = '\\\"'
+
     s = #' *'
     <d2-keyword> =" (at/d2-keys)))
 
 
-(defn- line-by-line
-  [a b]
-  (dorun (map-indexed
-      (fn [index item] (let [same? (= (nth b index) item)]
-                         (if (not same?)
-                           (do (println "-- Mismtach in form " index "-----")
-                               (println "-- first:")
-                               (println item)
-                               (println "-- second:")
-                               (println (nth b index))
-                               (println "--------------------------------")))))
-      a))
-  nil)
+(insta/defparser
+  ^{:doc "A parser for d2"
+    :private true}
+  parse-d2
+  (grammar))
 
 
-(defn dict [d2]
-  (insta/transform
-   {:label (fn [& parts] (str/join parts))
-    :key (fn [& parts] (str/join parts))}
-   d2))
+(defn- num-parses [d2]
+  (count (insta/parses parse-d2 d2)))
 
-(defn- preprocess
-  [d2]
-  (-> d2
-      ;; remove edge continuations
-      (str/replace #"--\\[\\s]*\n" "")
-      ;; remove trailing colons.
-      ;; Getting this out in the parse would have meant abandonning
-      ;; :auto-whitespace
-      (str/replace #":[ ]*\n" "\n")))
+
+;; think about always capturing in :attrs in the parse phase. eliminate :attr
+;; so attrs would be ::= attr| current multi-attr definition inside {}
+;; they would mean in transform phase that attr always came through attrs
 
 
 (defn dictim
@@ -187,56 +162,59 @@
    Each dictim element returned's type is captured in the :tag key
    of the element's metadata.
    Three optional functions may be supplied:
-     :key-fn     a modifier applied to each key.
-     :label-fn   a modifier applied to each label.
-     :reduce-fn  a reduction function of two arguments, acc & cur which
-   is applied over all elements as a last pass. This is useful, for
-   example, to 'flatten' out elements captured inside of a list:
-      ````
-      (dictim (slurp \"in.d2\")
-              :reduce-fn
-              (fn [acc cur]
-                (if (= :list (-> cur meta :tag))
-                  (vec (concat acc (rest cur)))
-                  (conj acc cur)))
-              :key-fn keyword)
-      ````"
-  [s & {:keys [key-fn label-fn reduce-fn]
-        :or   {key-fn identity
-               label-fn str/trim
-               reduce-fn nil}}]
-  (let [p-trees (-> s preprocess p-d2)
+     :key-fn          a modifier applied to each key.
+     :label-fn        a modifier applied to each label.
+     :flatten-lists?  if true, flattens lists where every element is a shape
+                      with just a key, & no label or attrs"
+  
+  [d2 & {:keys [key-fn label-fn flatten-lists?]
+         :or {key-fn identity
+              label-fn str/trim
+              flatten-lists? false}}]
+  (let [p-trees (parse-d2 d2)
         key-fn (comp key-fn str/trim)
-        contents (fn [tag & parts] (with-meta (vec parts) {:tag tag}))]
+        with-tag (fn [obj tag] (with-meta obj {:tag tag}))]
+
     (if (insta/failure? p-trees)
-      (throw (error (str "Parse error at: " (-> p-trees last second))))
+      (throw (error (str "Could not parse: " (-> p-trees last second))))
       (mapcat
        (fn [p-tree]
          (insta/transform
-          {:comment (fn [c] (with-meta [:comment (str/triml c)] {:tag :comment}))
-           :key key-fn
-           :label-text label-fn
-           :label label-fn
-           :block-text (fn [t] (str "|" t "|"))
-           :dir identity
-           :d2-key identity
-           :d2-word (fn [& parts] (key-fn (str/join parts)))
-           :in-attr-label identity
-           :attr (fn
-                   ([k v] (with-meta {k v} {:tag :attrs}))
-                   ([k lbl m] ;; in-attr-label
-                    (with-meta {k (assoc m (key-fn "label") (str/trim lbl))} {:tag :attrs})))
-           :attrs (fn [& attrs] (with-meta (into {} attrs) {:tag :attrs}))
-           :ts-open identity
-           :ts-close (fn [c] (str "\n" c))
+
+          {:label (fn [& parts] (label-fn (str/join parts)))
+           :block (fn [& parts] (str/join parts))
+           :key (fn [& parts] (key-fn (str/join parts)))
+           :at-key (fn [& parts] (key-fn (str/join parts)))
+           :ekey (fn [& parts] (key-fn (str/join parts)))
+           :dir (fn [dir] dir)
+           :ts-open (fn [o] o)
+           :ts-close (fn [c] c)
            :typescript (fn [& parts] (str/join parts))
-           :ctr (partial contents :ctr)
-           :conn (partial contents :conn)
-           :shape (partial contents :shape)
-           :list (fn [& elems] (with-meta (into [:list] elems) {:tag :list}))
-           :elements (fn [& elems]
-                       (if reduce-fn
-                         (reduce reduce-fn [] elems)
-                         (vec elems)))}
+           :attr-label identity
+           :attr (fn
+                   ([k v] (with-tag {k v} :attrs))
+                   ([k lbl m] ;; in-attr-label
+                    (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
+           :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
+           :comment (fn [c] (with-tag [:comment (str/triml c)] :comment))
+           :ctr (fn [& parts]
+                  (let [tag (cond
+                              (str/includes? (first parts) ".")    :ctr
+                              (every? (complement vector?) parts)  :shape
+                              :else :ctr)]
+                    (if (= :shape tag)
+                      (let [[kl ms] (split-with (complement map?) parts)
+                            attrs (apply merge ms)]
+                        (with-tag (if attrs (conj (into [] kl) attrs) (into [] kl)) tag))
+                      (with-tag (vec parts) tag))))
+           :conn (fn [& parts] (with-tag (vec parts) :conn))
+           :list (fn [& elems] (let [elems' (if (and flatten-lists?
+                                                     (every? (fn [item] (= 1 (count item))) elems))
+                                              (map first elems)
+                                              elems)]
+                                 (with-tag (into [:list] elems') :list)))
+           :elements (fn [& elems] (vec elems))
+           :contained (fn [& elems] (vec elems))}
+
           p-tree))
        p-trees))))

@@ -75,7 +75,22 @@
 
 
 
-(defn prn-d2-repl
-  "Prints d2 nicely in the repl"
+(defn prn-repl
+  "Prints multiline strings nicely in the repl"
   [d2]
   (run! println (str/split d2 #"\\n")))
+
+
+(defn line-by-line
+  [a b]
+  (dorun (map-indexed
+          (fn [index item] (let [same? (= (nth b index) item)]
+                             (if (not same?)
+                               (do (println "-- Mismtach in form " index "-----")
+                                   (println "-- first:")
+                                   (println item)
+                                   (println "-- second:")
+                                   (println (nth b index))
+                                   (println "--------------------------------")))))
+          a))
+  nil)

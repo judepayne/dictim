@@ -11,7 +11,7 @@
     "direction" "opacity" "fill" "stroke" "stroke-width" 
     "stroke-dash" "border-radius" "font-color" "shadow" 
     "multiple" "3d" "animated" "link" "font-size" "tooltip"
-    "filled"})
+    "filled" "italic"})
 
 
 (defn d2-keyword?
