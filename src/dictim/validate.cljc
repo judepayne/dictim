@@ -132,6 +132,13 @@
              (nil? opts)))))
 
 
+(check :empty-lines elem
+       (and (= 2 (count elem))
+           (= :empty-lines (first elem))
+           (integer? (second elem))
+           (> (second elem) 0)))
+
+
 (defn all-valid?
   "Validates a collection of dictim elements.
    Throws an error at the first non valid element. Returns nil

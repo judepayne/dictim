@@ -5,14 +5,23 @@
   (:require [clojure.string :as str]))
 
 
+;; atom to hold current number of spaces to indent at beginning of line
 (def ^:private indentation-counter (atom 0))
 
+
+;; atom to hold the current indentation step
 (def ^:private tab-value (atom 0))
 
+
+;; indent: i.e. increase indentation counter by tab-value
 (defn- ind! [] (swap! indentation-counter #(+ @tab-value %)) nil)
 
+
+;; outdent: i.e. decrease indentation counter by tab-value
 (defn- outd! [] (swap! indentation-counter #(- % @tab-value)) nil)
 
+
+;; returns an empty substring with length of counter. pads new lines
 (defn- tabs [] (apply str (repeat @indentation-counter \space)))
 
 
@@ -25,18 +34,9 @@
    str/join))
 
 
-(defn- prep
-  [s]
-  (-> s
-;      (str/replace #"; " ";")
-;      (str/replace #";" "\n")
-      (str/replace #"[ ]{2,}" " ")
-      (str/replace #"[\n]{2,}" "\n")
-      (str/replace #"\{\n" "{")
-      (str/replace #"\n\}" "}")
-      (str/replace #": " ":")
-      (str/replace #":" ": ")
-      (str/replace #"(\s)+\{" "{")))
+(defn- remove-n [s n]
+  (let [c (count s)]
+    (.substring s 0 (- c n))))
 
 
 (defn fmt
@@ -50,9 +50,9 @@
      (case cur
        \{        (do (ind!) (str acc
                                  \space
-                                 \{ \newline (tabs)))
-       \}        (do (outd!) (str acc \newline (tabs) \}))
+                                 \{))
+       \}        (do (outd!) (str (remove-n acc @tab-value) \}))
        \newline  (str acc \newline (tabs))
        (str acc cur)))
    nil
-   (-> d2s trim-lines prep)))
+   (-> d2s trim-lines)))

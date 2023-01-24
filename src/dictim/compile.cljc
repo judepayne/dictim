@@ -19,6 +19,8 @@
 ;; ml = multiline, i.e. not compressed into a line (as in a list).
 (defn ml? [] (= \newline sep))
 
+(def inside-ctr? (atom false))
+
 
 (defn- de-key
   [s]
@@ -32,17 +34,15 @@
   ([m] (attrs m true))
   ([m brackets?]
    (apply str
-          (when brackets? "{")
-          (when (ml?) \newline)
-          (apply str
+          (when brackets? "{\n")
+           (apply str
                  (->>
                   (for [[k v] m]
                     (cond
                       (map? v)   (str (name k) colon (attrs v))
                       :else      (str (name k) colon (de-key v))))
                   (interpose sep)))
-          (if (ml?) \newline sep)
-          (when brackets? "}"))))
+          (if brackets? "\n}" "\n"))))
 
 
 (defn item->str [i]
@@ -118,10 +118,14 @@
               (map
                (fn [i]
                  (cond
-                   (map? i)    (attrs i false)
-                   (vector? i) (layout i)))
+                   (map? i)      (attrs i false)
+                   (vector? i)   (layout i)))
                opts))
        (str "}" sep)))
+
+
+(defmethod layout :empty-lines [[em c]]
+  (apply str (repeat c sep)))
 
 
 

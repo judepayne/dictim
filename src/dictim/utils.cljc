@@ -47,6 +47,7 @@
   "Returns the type of dictim element e."
   [e]
   (cond
+    (= :empty-lines (first e))         :empty-lines
     (map? e)                           :attrs
     (kstr? e)                          :quikshape
     (= :comment (first e))             :cmt

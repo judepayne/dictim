@@ -71,7 +71,8 @@
      :shape (if (vector? e) (first e) e)  ;; allow for 'quick shape'
      :ctr (first e)
      :conn (conn-key e)
-     :list (map elem-key (rest e)))))
+     :list (map elem-key (rest e))
+     :empty-lines (second e))))
 
 
 (defn- elem-meta
@@ -83,7 +84,8 @@
      :cmt nil
      :attrs nil
      :conn (conn-meta e)
-     :list nil)))
+     :list nil
+     :empty-lines nil)))
 
 
 ;; flattening
@@ -143,7 +145,8 @@
     :attrs    (:key m)
     :conn     (rnil (conj (:key m) (-> m :meta :label) (-> m :meta :attrs)))
     :ctr      (rnil [(:key m) (-> m :meta :label) (-> m :meta :attrs)])
-    :list     [:list]))
+    :list     [:list]
+    :empty-lines [:empty-lines (:key m)]))
 
 
 (defn build

@@ -83,8 +83,8 @@
 (defn- grammar []
   (str
    "<D2> = elements
-    elements = <sep*> (element <sep+>)* element <sep*>
-    <contained> = <sep*> (element <sep+>)* element <sep*>
+    elements = <sep*> (element (empty-lines | <sep>))* element <sep*>
+    <contained> = <sep*> (element (empty-lines | <sep>))* element <sep*>
     <element> = list | elem
 
     <elem> = ctr |comment | attr | conn
@@ -128,7 +128,8 @@
     (* building blocks *)
     <any> = #'.'
     <any-key> = #'[^.:;{\\n]'
-    <sep> = #'\\r?\\n'
+    empty-lines = sep sep+
+    sep = <#'[^\\S\\r\\n]*\\r?\\n'>
     <at-sep> = sep | semi
     colon = ':'
     <semi> = ';'
@@ -162,18 +163,26 @@
    Each dictim element returned's type is captured in the :tag key
    of the element's metadata.
    Three optional functions may be supplied:
-     :key-fn          a modifier applied to each key.
-     :label-fn        a modifier applied to each label.
-     :flatten-lists?  if true, flattens lists where every element is a shape
-                      with just a key, & no label or attrs"
+     :key-fn             a modifier applied to each key.
+     :label-fn           a modifier applied to each label.
+     :flatten-lists?     if true, flattens lists where every element is a shape
+                         with just a key, & no label or attrs.
+     :show-empty-lines?  If true, empty lines are hidden into the dictim output."
   
-  [d2 & {:keys [key-fn label-fn flatten-lists?]
+  [d2 & {:keys [key-fn label-fn flatten-lists? show-empty-lines?]
          :or {key-fn identity
               label-fn str/trim
-              flatten-lists? false}}]
+              flatten-lists? false
+              show-empty-lines? false}}]
   (let [p-trees (parse-d2 d2)
         key-fn (comp key-fn str/trim)
-        with-tag (fn [obj tag] (with-meta obj {:tag tag}))]
+        with-tag (fn [obj tag] (with-meta obj {:tag tag}))
+        handle-empty-lines (fn [elems] (filter
+                                        (fn [item]
+                                          (not (and (not show-empty-lines?)
+                                                        (seq item)
+                                                        (= :empty-lines (first item)))))
+                                        elems))]
 
     (if (insta/failure? p-trees)
       (throw (error (str "Could not parse: " (-> p-trees last second))))
@@ -206,15 +215,16 @@
                       (let [[kl ms] (split-with (complement map?) parts)
                             attrs (apply merge ms)]
                         (with-tag (if attrs (conj (into [] kl) attrs) (into [] kl)) tag))
-                      (with-tag (vec parts) tag))))
+                      (with-tag (vec (handle-empty-lines parts)) tag))))
            :conn (fn [& parts] (with-tag (vec parts) :conn))
            :list (fn [& elems] (let [elems' (if (and flatten-lists?
                                                      (every? (fn [item] (= 1 (count item))) elems))
                                               (map first elems)
                                               elems)]
                                  (with-tag (into [:list] elems') :list)))
-           :elements (fn [& elems] (vec elems))
-           :contained (fn [& elems] (vec elems))}
+           :empty-lines (fn [& seps] (into [:empty-lines (dec (count seps))]))
+           :elements (fn [& elems] (vec (handle-empty-lines elems)))
+           :contained (fn [& elems] (println elems) (vec (handle-empty-lines elems)))}
 
           p-tree))
        p-trees))))
