@@ -16,11 +16,6 @@
 ;; sep the separator between elements
 (def ^:dynamic sep)
 
-;; ml = multiline, i.e. not compressed into a line (as in a list).
-(defn ml? [] (= \newline sep))
-
-(def inside-ctr? (atom false))
-
 
 (defn- de-key
   [s]

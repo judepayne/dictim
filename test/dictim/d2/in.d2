@@ -1,21 +1,103 @@
-# Actors
-hans: Hans Niemann
-
-defendants: {
-  mc: Magnus Carlsen
-  playmagnus: Play Magnus Group
-  chesscom: Chess.com
-  naka: Hikaru Nakamura
-  
-  mc -> playmagnus: Owns majority
-  playmagnus <-> chesscom: Merger talks
-  chesscom -> naka: Sponsoring
+bank:   {
+  style.fill: white
+  Wendy:   {
+    style.fill: white
+    app14496: Globe-X\ntco:      900,000\nowner: Wendy  {
+      style:  {
+        fill: '#f4b76c'
+      }
+    }
+  }
+  Lowri:   {
+    style.fill: white
+    app14516: Booking Flash\ntco:      200,000\nowner: Lowri  {
+      style:  {
+        fill: '#fce7c6'
+      }
+    }
+  }
+  Darcie:   {
+    app14518: Trade Aid\ntco:    1,100,000\nowner: Darcie  {
+      style:  {
+        fill: '#f1a64f'
+      }
+    }
+    app14519: Flame minor\ntco:    1,800,000\nowner: Darcie  {
+      style:  {
+        fill: '#b35e04'
+      }
+    }
+    app14521: ARC3\ntco:    1,000,000\nowner: Darcie  {
+      style:  {
+        fill: '#f1a64f'
+      }
+    }
+  }
+  Tomos:   {
+    style.fill: white
+    app14500: Acmaze\ntco:      100,000\nowner: Tomos  {
+      style:  {
+        fill: '#fce7c6'
+      }
+    }
+    app14512: Data Source\ntco:    1,100,000\nowner: Tomos  {
+      style:  {
+        fill: '#f1a64f'
+      }
+    }
+  }
+  Lakshmi:   {
+    style.fill: white
+    app14494: Book Relay\ntco:    1,400,000\nowner: Lakshmi  {
+      style:  {
+        fill: '#ef9332'
+      }
+    }
+  }
+  Deepak:   {
+    style.fill: white
+    app14505: Book good\ntco:      300,000\nowner: Deepak  {
+      style:  {
+        fill: '#f9d8a7'
+      }
+    }
+  }
 }
-
-# Accusations
-hans -> defendants: 'sueing for $100M'
-
-# Offense
-defendants.naka -> hans: Accused of cheating on his stream
-defendants.mc -> hans: Lost then withdrew with accusations
-defendants.chesscom -> hans: 72 page report of cheating
+bank.Lakshmi.app14494 -> bank.Darcie.app14521: orders  {
+  style:  {
+    stroke-dash: 5
+    animated: false
+    stroke: green
+  }
+}
+bank.Darcie.app14519 -> bank.Tomos.app14512: trades  {
+  style:  {
+    stroke-dash: 5
+    animated: false
+    stroke: blue
+  }
+}
+bank.Darcie.app14519 -> bank.Deepak.app14505: quotes  {
+  style:  {
+    
+  }
+}
+bank.Darcie.app14519 -> bank.Lowri.app14516: positions  {
+  style:  {
+    
+  }
+}
+bank.Darcie.app14521 -> bank.Tomos.app14500: trades  {
+  style:  {
+    stroke-dash: 5
+    animated: false
+    stroke: blue
+  }
+}
+bank.Darcie.app14518 -> bank.Wendy.app14496: orders  {
+  style:  {
+    stroke-dash: 5
+    animated: false
+    stroke: green
+  }
+}

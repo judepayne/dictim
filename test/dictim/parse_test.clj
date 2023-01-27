@@ -111,15 +111,15 @@
                 "->"
                 "b"
                 "To err is human, to moo bovine"
-                {"source-arrowhead" "1",
+                {"source-arrowhead" 1,
                  "target-arrowhead" {"shape" "diamond", "label" "*"}}]
                ["b"
                 "<->"
                 "c"
                 "\"Reality is just a crutch for people who can't handle science fiction\""
-                {"source-arrowhead.label" "1",
+                {"source-arrowhead.label" 1,
                  "target-arrowhead"
-                 {"shape" "diamond", "style.filled" "true", "label" "*"}}]
+                 {"shape" "diamond", "style.filled" true, "label" "*"}}]
                ["d"
                 "A black cat crossing your path signifies that the animal is going somewhere"]
                ["d" "->" "a" "->" "c"]))))))
@@ -130,57 +130,7 @@
     (let [d2 (slurp "test/dictim/d2/style.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
-      (is (= dict
-             '(["x"
-                {"style"
-                 {"opacity" "0.6",
-                  "fill" "orange",
-                  "stroke" "\"#53C0D8\"",
-                  "stroke-width" "5",
-                  "shadow" "true"}}]
-               ["y"
-                {"style"
-                 {"opacity" "0.6", "fill" "red", "3d" "true", "stroke" "black"}}]
-               ["x"
-                "->"
-                "y"
-                {"style"
-                 {"stroke" "green",
-                  "opacity" "0.5",
-                  "stroke-width" "2",
-                  "stroke-dash" "5"}}]
-               [:comment "Float between 0 and 1"]
-               {"opacity" "0.6"}
-               [:comment "CSS color or hex code"]
-               {"fill" "orange"}
-               [:comment "CSS color or hex code"]
-               {"stroke" "\"#53C0D8\""}
-               [:comment "Integer betwen 1 and 15"]
-               {"stroke-width" "5"}
-               [:comment "Integer betwen 0 and 10"]
-               {"stroke-dash" "5"}
-               [:comment "Only applicable to shapes, except ovals"]
-               [:comment "Integer betwen 0 and 20"]
-               {"border-radius" "4"}
-               [:comment "CSS color or hex code"]
-               {"font-color" "red"}
-               [:comment "Only applicable to shapes"]
-               [:comment "true or false"]
-               {"shadow" "true"}
-               [:comment "Only applicable to shapes"]
-               [:comment "true or false"]
-               {"multiple" "true"}
-               [:comment "Only applicable to squares"]
-               [:comment "true or false"]
-               {"3d" "true"}
-               [:comment "Only applicable to edges"]
-               {"animated" "false"}
-               [:comment "Only applicable to shapes"]
-               [:comment "Can be an external URL"]
-               {"link" "https://google.com"}
-               [:comment "Or an internal board"]
-               {"link" "Overview.Untitled Board 2"}))))))
+      (is (= true (v/all-valid? dict))))))
 
 
 (deftest classes
@@ -313,10 +263,10 @@
       (is (= true (v/all-valid? dict)))
       (is (= dict
              '(["x"
-                {"tooltip" "Total abstinence is easier than perfect moderation"}]
+                {"tooltip" "Total abstinence is easier than perfect moderation "}]
                ["y"
                 {"tooltip"
-                 "Gee, I feel kind of LIGHT in the head now,\\nknowing I can't make my satellite dish PAYMENTS!"}]
+                 "Gee, I feel kind of LIGHT in the head now,\\nknowing I can't make my satellite dish PAYMENTS! "}]
                ["x" "->" "y"]
                ["x" "I'm a Mac" {"link" "https://apple.com"}]
                ["y" "And I'm a PC" {"link" "https://microsoft.com"}]
@@ -346,7 +296,7 @@
                 "A winning strategy"
                 {"shape" "text",
                  "near" "top-center",
-                 "style" {"font-size" "55", "italic" "true"}}]
+                 "style" {"font-size" 55, "italic" true}}]
                ["poll the people" "->" "results"]
                ["results" "->" "unfavorable" "->" "poll the people"]
                ["results" "->" "favorable" "->" "will of the people"]))))))

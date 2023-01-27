@@ -5,7 +5,7 @@
             #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
             [dictim.attributes :as at]
-            [dictim.utils :refer [error]]))
+            [dictim.utils :refer [error try-parse-primitive]]))
 
 ;; regexes required to parse d2
 
@@ -96,8 +96,7 @@
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr = <s> at-key <s> <colon> <s> (val | attr-label? attrs)
     attr-label = label
-    <val> = label
-
+ 
     conn = <s> (ekey dir)+ <s> key colon-label? attrs?
     dir = <contd?> <s> direction
     contd = #'--\\\\\n'
@@ -118,6 +117,7 @@
     (* labels *)
     <labels> = label | block | typescript
     label = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
+    val = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
     <colon-label> = (<colon> <s> | <colon> labels)
     block = <s> '|' #'[^|]+' '|'
     typescript = <s> ts-open ts ts-close <s>
@@ -151,11 +151,6 @@
 
 (defn- num-parses [d2]
   (count (insta/parses parse-d2 d2)))
-
-
-;; think about always capturing in :attrs in the parse phase. eliminate :attr
-;; so attrs would be ::= attr| current multi-attr definition inside {}
-;; they would mean in transform phase that attr always came through attrs
 
 
 (defn dictim
@@ -199,10 +194,11 @@
            :ts-open (fn [o] o)
            :ts-close (fn [c] c)
            :typescript (fn [& parts] (str/join parts))
+           :val (fn [v] (try-parse-primitive v))
            :attr-label identity
            :attr (fn
                    ([k v] (with-tag {k v} :attrs))
-                   ([k lbl m] ;; in-attr-label
+                   ([k lbl m]   ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
            :comment (fn [c] (with-tag [:comment (str/triml c)] :comment))

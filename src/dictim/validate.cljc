@@ -82,8 +82,8 @@
         (map? m)
         (every? kstr? (keys m))
         (every? last-d2-keyword? (keys m))
-        (every? #(or (kstr? %) (list? %) (number? %)
-                     (and (map? %) (valid? %))) (vals m))))
+        (every? #(or (and (map? %) (valid? %))
+                     (kstr? %) (number? %) (boolean? %)) (vals m))))
 
 
 (check :shape elem

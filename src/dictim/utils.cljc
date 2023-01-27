@@ -75,6 +75,50 @@
 (defn list? [e] (= :list (elem-type e)))
 
 
+(defn- parse-int [s]
+  #?(:clj
+     (try
+       (let [n (Integer/parseInt s)]
+         n)
+       (catch Exception e nil))
+     :cljs
+     (let [n (js/parseInt s 10)]
+       (if (js/Number.isNan n)
+         nil
+         n))))
+
+
+(defn- parse-float [s]
+  #?(:clj
+     (try
+       (let [f (Float/parseFloat s)]
+         f)
+       (catch Exception e nil))
+     :cljs
+     (let [f (js/parseFloat s 10)]
+       (if (js/Number.isNan f)
+         nil
+         n))))
+
+
+(defn- parse-bool [s]
+  (let [s' (str/trim s)]
+    (if (or (= "true" s') (= "false" s'))
+      #?(:clj (clojure.edn/read-string s')
+         :cljs (cljs.reader/read-string s'))
+      nil)))
+
+
+(defn try-parse-primitive [p]
+  (if-let [i (parse-int p)]
+    i
+    (if-let [f (parse-float p)]
+      f
+      (let [b (parse-bool p)]
+        (if (nil? b)
+          p
+          b)))))
+
 
 (defn prn-repl
   "Prints multiline strings nicely in the repl"
