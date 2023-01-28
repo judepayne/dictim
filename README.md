@@ -56,7 +56,9 @@ user> (dictim "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
 
 ```
 
-For details on dictim syntax, the compile, parse and format operations, please see the wiki.
+For details on dictim syntax, the compile, parse and format operations, please see the [wiki](https://github.com/judepayne/dictim/wiki).
+
+For examples of dictim in action, please see the [dictim.cookbook](https://github.com/judepayne/dictim.cookbook)
 
 
 ## License
