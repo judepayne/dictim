@@ -1,6 +1,6 @@
-(ns dictim.compile-test
+(ns dictim.d2.compile-test
   (:require [clojure.test :refer :all]
-            [dictim.compile :as c]))
+            [dictim.d2.compile :as c]))
 
 ;; compilation
 

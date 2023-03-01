@@ -1,4 +1,4 @@
-(ns dictim.compile
+(ns dictim.d2.compile
   ^{:Author "Jude Payne"
     :doc "Namespace for transpiling dictim to d2"}
   (:require [clojure.string :as str]
@@ -125,11 +125,11 @@
 
 
 (defn d2
-  "Converts dictim elements to a well formatted d2 string.
+  "Converts dictim elements to a (formatted) d2 string.
    Validates each element, throws an error if invalid."
   [& elems]
 
-  (all-valid? elems)
+  (all-valid? elems :d2)
 
   (binding [sep \newline]
     (-> (apply str (mapcat layout elems))

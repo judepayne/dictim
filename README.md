@@ -1,8 +1,8 @@
 # Dictim
 
-Dictim is a library for representing the [d2 language](https://github.com/terrastruct/d2) in Clojure/ Clojurescript. It uses vectors and maps to represent d2 elements and attributes.
+Dictim is a library for representing Terrastruct's [d2](https://github.com/terrastruct/d2) and Graphviz's [dot](https://graphviz.org/doc/info/lang.html) languages in Clojure/ Clojurescript. It uses vectors and maps to represent d2 elements and attributes.
 
-Dictim is intented to allow d2 to be produced programmatically, and for d2 diagrams to be read back into your programs as data. There's also a formatter so that the d2 looks good.
+Dictim allows d2 and dot to be produced programmatically, and for d2 diagrams to be read back into your programs as data.
 
 ## Release Information
 
@@ -33,7 +33,7 @@ dictim and d2 have three principle types of elements: shapes, connections and co
 Here's an example of producing a d2 specifiction of a diagram with two shapes and a connection:
 
 ```clojure
-user=> (use 'dictim.compile)
+user=> (use 'dictim.d2.compile)
 nil
 user=> (d2 [:s1 "Shape 1"][:s2 "Shape 2"][:s1 "->" :s2 "reln"])
 "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln"
@@ -49,7 +49,7 @@ When sent to the d2 CLI executable:
 let's turn the above d2 string back into dictim.
 
 ```clojure
-user=> (use 'dictim.parse)
+user=> (use 'dictim.d2.parse)
 nil
 user> (dictim "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
 ([:s1 "Shape 1"] [:s2 "Shape 2"] [:s1 "->" :s2 "reln"])

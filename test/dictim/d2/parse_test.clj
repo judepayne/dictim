@@ -1,6 +1,6 @@
-(ns dictim.parse-test
+(ns dictim.d2.parse-test
   (:require [clojure.test :refer :all]
-            [dictim.parse :as p]
+            [dictim.d2.parse :as p]
             [dictim.validate :as v]
             [instaparse.core :as insta]))
 
@@ -14,7 +14,7 @@
 
 (deftest shapes
   (testing "Shapes"
-    (let [d2 (slurp "test/dictim/d2/shapes.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/shapes.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict)))
@@ -34,7 +34,7 @@
 
 (deftest containers
   (testing "Containers"
-    (let [d2 (slurp "test/dictim/d2/containers.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/containers.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict)))
@@ -69,7 +69,7 @@
 
 (deftest connections
   (testing "Connections"
-    (let [d2 (slurp "test/dictim/d2/connections.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/connections.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict)))
@@ -127,7 +127,7 @@
 
 (deftest styles
   (testing "Styles"
-    (let [d2 (slurp "test/dictim/d2/style.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/style.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict))))))
@@ -135,7 +135,7 @@
 
 (deftest classes
   (testing "Classes"
-    (let [d2 (slurp "test/dictim/d2/classes.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/classes.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict)))
@@ -164,7 +164,7 @@
 
 (deftest sql
   (testing "Sql Tables"
-    (let [d2 (slurp "test/dictim/d2/sql.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/sql.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict)))
@@ -198,7 +198,7 @@
 
 (deftest sequence-digrams
   (testing "Sequence Diagrams"
-    (let [d2 (slurp "test/dictim/d2/sequence.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/sequence.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict)))
@@ -257,7 +257,7 @@
 
 (deftest interactive
   (testing "Interactive features"
-    (let [d2 (slurp "test/dictim/d2/interactive.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/interactive.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict)))
@@ -275,7 +275,7 @@
 
 (deftest textandcode
   (testing "Text and Code"
-    (let [d2 (slurp "test/dictim/d2/textandcode.d2")
+    (let [d2 (slurp "test/dictim/d2/samples/textandcode.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict)))

@@ -11,6 +11,9 @@
 
 ;; validation
 
+;; a dynamic var to hold whether :d2 or :dot is the output format.
+(def ^:dynamic output nil)
+
 
 (defn err [msg]
   (throw (error (str msg " is invalid."))))
@@ -21,12 +24,13 @@
 
 #?(:clj
    (defmacro check
-     "Creates a multimethod of name `valid?` with dispatch-val.
-   condition should check the symbol `elem` for validity."
-     [dispatch-val arg-name condition]
+     "Creates a multimethod with name `valid?` for the dispatch value
+      `dispatch-val`. The body should return true/ false depending on
+       whether the element defined by `arg-name` is valid."
+     [dispatch-val arg-name body]
      (let [arg (symbol arg-name)]
        `(defmethod ~(symbol "valid?") ~dispatch-val [~arg]
-          (if ~condition
+          (if ~body
             true
             (dictim.validate/err ~arg))))))
 
@@ -81,7 +85,9 @@
        (and
         (map? m)
         (every? kstr? (keys m))
-        (every? last-d2-keyword? (keys m))
+        (if (= :d2 output)
+          (every? last-d2-keyword? (keys m))
+          true)      ;; Graphviz keywords are not checked at this point.
         (every? #(or (and (map? %) (valid? %))
                      (kstr? %) (number? %) (boolean? %)) (vals m))))
 
@@ -142,6 +148,10 @@
 (defn all-valid?
   "Validates a collection of dictim elements.
    Throws an error at the first non valid element. Returns nil
-   if all elements pass validation."
-  [elems]
-  (every? valid? elems))
+   if all elements pass validation.
+   output-format is either :d2 or :dot"
+  [elems output-format]
+  {:pre [(contains? #{:d2 :dot} output-format)]}
+
+  (binding [output output-format]
+    (every? valid? elems)))

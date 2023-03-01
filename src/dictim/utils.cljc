@@ -88,7 +88,7 @@
          n))))
 
 
-(defn- parse-float [s]
+(defn parse-float [s]
   #?(:clj
      (try
        (let [f (Float/parseFloat s)]
