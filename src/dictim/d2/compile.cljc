@@ -24,6 +24,12 @@
     s))
 
 
+(defn empty-single-entry? [m]
+  (and (= 1 (count m))
+       (map? (second (first m)))
+       (empty? (second (first m)))))
+
+
 (defn- attrs
   "layout the map of attrs. m may be nested."
   ([m] (attrs m true))
@@ -34,23 +40,19 @@
                  (->>
                   (for [[k v] m]
                     (cond
+                      (and (map? v) (empty? v)) nil
                       (map? v)   (str (name k) colon (attrs v))
                       :else      (str (name k) colon (de-key v))))
+                  (remove nil?)
                   (interpose sep)))
           (if brackets? "\n}" "\n"))))
-
-
-(defn empty-single-entry? [m]
-  (and (= 1 (count m))
-       (map? (second (first m)))
-       (empty? (second (first m)))))
 
 
 (defn item->str [i]
   (cond
     (kstr? i) (name i)
     (and (map? i)
-         (not (empty-single-entry? i)))     (attrs i)))
+         (not (empty-single-entry? i)))      (attrs i)))
 
 
 (defn- optionals

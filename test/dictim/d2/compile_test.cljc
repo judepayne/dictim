@@ -77,3 +77,87 @@
 (deftest complex-compilation
   (testing "Compiling a complex sequence diagram to d2."
     (is (= (c/d2 ex-sequence) ex-sequence-d2))))
+
+
+(def process-diagram
+  '(["Process View"
+     {:style.fill "'#f7f6f5'"}
+     ["p113"
+      {:style.fill "'#f5f0e1'"}
+      ["app14148" "Flame" {:shape "hexagon", :style {:fill "green"}}]
+      ["app14154" "Data Solar" {:shape "hexagon", :style {}}]
+      ["app14156" "Data sky" {:shape "hexagon", :style {}}]]
+     ["p114"
+      {:style.fill "'#f5f0e1'"}
+      ["app14149"
+       "Data Solar"
+       {:shape "hexagon", :style {:fill "pink"}}]
+      ["app14150"
+       "Flame minor"
+       {:shape "hexagon", :style {:fill "pink"}}]
+      ["app14153" "ARC3" {:shape "hexagon", :style {:fill "pink"}}]
+      ["app14155"
+       "Risk Sheet"
+       {:shape "hexagon", :style {:fill "pink"}}]]
+     ["p112"
+      {:style.fill "'#f5f0e1'"}
+      ["app14147" "ARC3" {:shape "hexagon", :style {:fill "orange"}}]
+      ["app14151" "Booking Flash" {:shape "hexagon", :style {}}]
+      ["app14152" "Book Relay" {:shape "hexagon", :style {}}]]]
+    ["Process View.p114.app14155"
+     "->"
+     "Process View.p114.app14153"
+     "client master"
+     {:style.stroke "'#4eb8ed'",
+      :style.stroke-width "4",
+      :style.font-size "16",
+      :style.font-color "red"}]
+    ["Process View.p113.app14154"
+     "->"
+     "Process View.p114.app14149"
+     "client master"
+     {:style.stroke "'#4eb8ed'",
+      :style.stroke-width "4",
+      :style.font-size "16",
+      :style.font-color "red"}]
+    ["Process View.p114.app14155"
+     "->"
+     "Process View.p113.app14148"
+     "client master"
+     {:style.stroke "'#4eb8ed'",
+      :style.stroke-width "4",
+      :style.font-size "16",
+      :style.font-color "red"}]
+    ["Process View.p113.app14156"
+     "->"
+     "Process View.p112.app14152"
+     "client master"
+     {:style.stroke "'#4eb8ed'",
+      :style.stroke-width "4",
+      :style.font-size "16",
+      :style.font-color "red"}]
+    ["Process View.p114.app14155"
+     "->"
+     "Process View.p112.app14147"
+     "client master"
+     {:style.stroke "'#4eb8ed'",
+      :style.stroke-width "4",
+      :style.font-size "16",
+      :style.font-color "red"}]
+    ["Process View.p114.app14155"
+     "->"
+     "Process View.p112.app14147"
+     "client master"
+     {:style.stroke "'#4eb8ed'",
+      :style.stroke-width "4",
+      :style.font-size "16",
+      :style.font-color "red"}]))
+
+
+(def process-diagram-d2
+  "Process View:   {\n  style.fill: '#f7f6f5'\n  p113:   {\n    style.fill: '#f5f0e1'\n    app14148: Flame  {\n      shape: hexagon\n      style:  {\n        fill: green\n      }\n    }\n    app14154: Data Solar  {\n      shape: hexagon\n    }\n    app14156: Data sky  {\n      shape: hexagon\n    }\n  }\n  p114:   {\n    style.fill: '#f5f0e1'\n    app14149: Data Solar  {\n      shape: hexagon\n      style:  {\n        fill: pink\n      }\n    }\n    app14150: Flame minor  {\n      shape: hexagon\n      style:  {\n        fill: pink\n      }\n    }\n    app14153: ARC3  {\n      shape: hexagon\n      style:  {\n        fill: pink\n      }\n    }\n    app14155: Risk Sheet  {\n      shape: hexagon\n      style:  {\n        fill: pink\n      }\n    }\n  }\n  p112:   {\n    style.fill: '#f5f0e1'\n    app14147: ARC3  {\n      shape: hexagon\n      style:  {\n        fill: orange\n      }\n    }\n    app14151: Booking Flash  {\n      shape: hexagon\n    }\n    app14152: Book Relay  {\n      shape: hexagon\n    }\n  }\n}\nProcess View.p114.app14155 -> Process View.p114.app14153: client master  {\n  style.stroke: '#4eb8ed'\n  style.stroke-width: 4\n  style.font-size: 16\n  style.font-color: red\n}\nProcess View.p113.app14154 -> Process View.p114.app14149: client master  {\n  style.stroke: '#4eb8ed'\n  style.stroke-width: 4\n  style.font-size: 16\n  style.font-color: red\n}\nProcess View.p114.app14155 -> Process View.p113.app14148: client master  {\n  style.stroke: '#4eb8ed'\n  style.stroke-width: 4\n  style.font-size: 16\n  style.font-color: red\n}\nProcess View.p113.app14156 -> Process View.p112.app14152: client master  {\n  style.stroke: '#4eb8ed'\n  style.stroke-width: 4\n  style.font-size: 16\n  style.font-color: red\n}\nProcess View.p114.app14155 -> Process View.p112.app14147: client master  {\n  style.stroke: '#4eb8ed'\n  style.stroke-width: 4\n  style.font-size: 16\n  style.font-color: red\n}\nProcess View.p114.app14155 -> Process View.p112.app14147: client master  {\n  style.stroke: '#4eb8ed'\n  style.stroke-width: 4\n  style.font-size: 16\n  style.font-color: red\n}")
+
+
+(deftest removing-empty-maps-compilation
+  (testing "Compiling dicitm with empty maps that must be filtered out."
+    (is (= (apply c/d2 process-diagram) process-diagram-d2))))
