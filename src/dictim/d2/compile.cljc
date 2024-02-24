@@ -30,7 +30,7 @@
   ([m brackets?]
    (apply str
           (when brackets? "{\n")
-           (apply str
+          (apply str
                  (->>
                   (for [[k v] m]
                     (cond
@@ -40,10 +40,17 @@
           (if brackets? "\n}" "\n"))))
 
 
+(defn empty-single-entry? [m]
+  (and (= 1 (count m))
+       (map? (second (first m)))
+       (empty? (second (first m)))))
+
+
 (defn item->str [i]
   (cond
     (kstr? i) (name i)
-    (map? i)  (attrs i)))
+    (and (map? i)
+         (not (empty-single-entry? i)))     (attrs i)))
 
 
 (defn- optionals
@@ -121,7 +128,6 @@
 
 (defmethod layout :empty-lines [[em c]]
   (apply str (repeat c sep)))
-
 
 
 (defn d2

@@ -17,7 +17,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/shapes.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
+      (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["imAShape"]
                ["im_a_shape"]
@@ -37,7 +37,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/containers.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
+      (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["server"]
                [:comment "Declares a shape inside of another shape"]
@@ -72,7 +72,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/connections.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
+      (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["Write Replica Canada" "<->" "Write Replica Australia"]
                ["Read Replica" "<-" "Master"]
@@ -130,7 +130,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/style.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict))))))
+      (is (= true (v/all-valid? dict :d2))))))
 
 
 (deftest classes
@@ -138,7 +138,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/classes.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
+      (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["MyClass"
                 {"shape" "class"}
@@ -167,7 +167,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/sql.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
+      (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["my_table"
                 {"shape" "sql_table"}
@@ -201,7 +201,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/sequence.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
+      (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '({"direction" "right"}
                ["Before and after becoming friends"
@@ -260,7 +260,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/interactive.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
+      (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["x"
                 {"tooltip" "Total abstinence is easier than perfect moderation "}]
@@ -278,7 +278,7 @@
     (let [d2 (slurp "test/dictim/d2/samples/textandcode.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict)))
+      (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["explanation"
                 "|md\n  # I can do headers\n  - lists\n  - lists\n\n  And other normal markdown stuff\n|"]

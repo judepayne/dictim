@@ -142,18 +142,25 @@
     <d2-keyword> =" (at/d2-keys)))
 
 
-(insta/defparser
-  ^{:doc "A parser for d2"
-    :private true}
-  parse-d2
-  (grammar))
+#?(:bb (defn parse-d2 [d2] (insta/parse (insta/parser (grammar)) d2))
+   :clj (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
+   :cljs (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar)))
+
+(defmacro dbg [body]
+  `(let [x# ~body]
+     (println "dbg:" '~body "=" x#)
+     x#))
+
+(defn cond-keyword
+  "Converts to keyword where possible."
+  [item]
+  (cond
+    (and (string? item) (str/includes? item " "))    item
+    (string? item)                                   (keyword item)
+    :otherwise item))
 
 
-(defn- num-parses [d2]
-  (count (insta/parses parse-d2 d2)))
-
-
-(defn dictim
+#_(defn dictim
   "Converts a d2 string to its dictim representation.
    Each dictim element returned's type is captured in the :tag key
    of the element's metadata.
@@ -175,8 +182,8 @@
         handle-empty-lines (fn [elems] (filter
                                         (fn [item]
                                           (not (and (not show-empty-lines?)
-                                                        (seq item)
-                                                        (= :empty-lines (first item)))))
+                                                    (seqable? item)
+                                                    (= :empty-lines (first item)))))
                                         elems))]
 
     (if (insta/failure? p-trees)
@@ -198,7 +205,7 @@
            :attr-label identity
            :attr (fn
                    ([k v] (with-tag {k v} :attrs))
-                   ([k lbl m]   ;; in-attr-label
+                   ([k lbl m] ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
            :comment (fn [c] (with-tag [:comment (str/triml c)] :comment))
