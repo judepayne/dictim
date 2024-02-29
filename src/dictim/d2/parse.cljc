@@ -160,7 +160,7 @@
     :otherwise item))
 
 
-#_(defn dictim
+(defn dictim
   "Converts a d2 string to its dictim representation.
    Each dictim element returned's type is captured in the :tag key
    of the element's metadata.
