@@ -12,7 +12,6 @@
 
 (def spc " ")
 
-
 ;; sep the separator between elements
 (def ^:dynamic sep)
 
