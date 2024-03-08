@@ -17,10 +17,6 @@
 (def ^:dynamic sep)
 
 
-(defn- single-quote [v]
-  (str "'" v "'"))
-
-
 (defn- de-key
   [s]
   (if (keyword? s)
@@ -46,7 +42,7 @@
                     (cond
                       (and (map? v) (empty? v)) nil
                       (map? v)   (str (name k) colon (attrs v))
-                      :else      (str (name k) colon (single-quote (de-key v)))))
+                      :else      (str (name k) colon  (de-key v))))
                   (remove nil?)
                   (interpose sep)))
           (if brackets? "\n}" "\n"))))
