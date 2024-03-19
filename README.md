@@ -70,6 +70,6 @@ This project is the base project for a number of other projects:
 
 ## License
 
-Copyright © 2023 Jude Payne
+Copyright © 2024 Jude Payne
 
 Distributed under the [MIT License](http://opensource.org/licenses/MIT)
