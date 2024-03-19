@@ -1,0 +1,62 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/clojure:1.11.1-openjdk-17.0
+
+    working_directory: ~/project
+    steps:
+      # Checkout the code as the first step.
+      - checkout
+      - restore_cache:
+         keys:
+           - v1-dependencies-{{ checksum "deps.edn" }}
+           # fallback to using the latest cache if no exact match is found
+           - v1-dependencies-
+      - run:
+          name: Install Clojure
+          command: |
+            wget -nc https://download.clojure.org/install/linux-install-1.11.1.1149.sh
+            chmod +x linux-install-1.11.1.1149.sh
+            sudo ./linux-install-1.11.1.1149.sh
+      - run:
+          name: Install d2
+          command: |
+            curl -fsSL https://d2lang.com/install.sh | sh -s --
+      - run:
+          name: build JAR
+          command: |
+            clojure -T:build uber
+      - run:
+          name: run JAR
+          command: |
+            java -jar target/dictimserver-standalone.jar
+          background: true
+      - run:
+          name: install babashka
+          command: |
+            sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
+      # give the webserver time to start ..
+      - run:
+          name: sleep 5 seconds
+          command: sleep 5
+      - run:
+          name: check status is 200
+          command: |
+            bb script/test-webserver.bb
+      - run:
+          name: run tests
+          command: |
+            clojure -X:test
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "deps.edn" }}
+      
+
+workflows:
+  test-workflow:
+    jobs:
+      - test
