@@ -15,7 +15,7 @@
 (defn kstr?
   "Value is either a keyword or a string?"
   [v]
-  (or (keyword? v) (string? v)))
+  (or (number? v) (keyword? v) (string? v)))
 
 
 (defn direction?

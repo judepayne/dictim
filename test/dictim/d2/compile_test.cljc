@@ -161,3 +161,9 @@
 (deftest removing-empty-maps-compilation
   (testing "Compiling dicitm with empty maps that must be filtered out."
     (is (= (apply c/d2 process-diagram) process-diagram-d2))))
+
+
+(deftest shape-keys-can-be-numbers
+  (testing "Compiling dictim shapes with keys that are numbers."
+    (is (= (c/d2 [1 "Person A"] [4 "Person C"] [1 "->" 2] [3 "->" 4 "->" 5])
+           "1: Person A\n4: Person C\n1 -> 2\n3 -> 4 -> 5"))))

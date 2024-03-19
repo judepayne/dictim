@@ -47,9 +47,16 @@
           (if brackets? "\n}" "\n"))))
 
 
+(defn- convert-key [k]
+  (cond
+    (number? k) (str k)
+    (keyword? k) (name k)
+    :else k))
+
+
 (defn item->str [i]
   (cond
-    (kstr? i) (name i)
+    (kstr? i) (convert-key i)
     (and (map? i)
          (not (empty-single-entry? i)))      (attrs i)))
 
@@ -60,11 +67,10 @@
   (apply str
          (interpose spc (map item->str opts))))
 
-
 (defn- single-conn
   "layout conn(ection) vector."
   [[k1 dir k2 & opts]]
-  (str (name k1) spc dir spc (name k2)
+  (str (convert-key k1) spc dir spc (convert-key k2)
        (when opts (str colon (optionals opts))) sep))
 
 
@@ -84,7 +90,7 @@
 
 
 (defmethod layout :shape [[k & opts]]
-  (str (name k) (when opts colon) (optionals opts) sep))
+  (str (convert-key k) (when opts colon) (optionals opts) sep))
 
 
 (defmethod layout :quikshape [el]

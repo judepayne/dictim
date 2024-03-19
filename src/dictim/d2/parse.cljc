@@ -160,6 +160,14 @@
     :otherwise item))
 
 
+;; a function that is only uses by the parse-test namespace
+#?(:clj
+   (defn num-parses [d2]
+     (-> (insta/parser (grammar))
+         (insta/parse d2)
+         count)))
+
+
 (defn dictim
   "Converts a d2 string to its dictim representation.
    Each dictim element returned's type is captured in the :tag key
