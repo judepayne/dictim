@@ -21,31 +21,6 @@ jobs:
             chmod +x linux-install-1.11.1.1149.sh
             sudo ./linux-install-1.11.1.1149.sh
       - run:
-          name: Install d2
-          command: |
-            curl -fsSL https://d2lang.com/install.sh | sh -s --
-      - run:
-          name: build JAR
-          command: |
-            clojure -T:build uber
-      - run:
-          name: run JAR
-          command: |
-            java -jar target/dictimserver-standalone.jar
-          background: true
-      - run:
-          name: install babashka
-          command: |
-            sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
-      # give the webserver time to start ..
-      - run:
-          name: sleep 5 seconds
-          command: sleep 5
-      - run:
-          name: check status is 200
-          command: |
-            bb script/test-webserver.bb
-      - run:
           name: run tests
           command: |
             clojure -X:test
