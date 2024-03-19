@@ -62,9 +62,10 @@ For details on dictim syntax, the compile, parse and format operations, please s
 
 
 This project is the base project for a number of other projects:
-[dictim.graph](https://github.com/judepayne/dictim.graph) Convert a representation of a graph into dictim: ideal for boxes and arrows/ network diagrams
-[dictim.cookbook](https://github.com/judepayne/dictim.cookbook) Examples of dictim in action!
-[dictim.server](https://github.com/judepayne/dictim.server) A easy-to-deploy microservice for converting dictim into d2 diagrams.
+
+- [dictim.graph](https://github.com/judepayne/dictim.graph) Convert a representation of a graph into dictim: ideal for boxes and arrows/ network diagrams
+- [dictim.cookbook](https://github.com/judepayne/dictim.cookbook) Examples of dictim in action!
+- [dictim.server](https://github.com/judepayne/dictim.server) A easy-to-deploy microservice for converting dictim into d2 diagrams.
 
 
 ## License
