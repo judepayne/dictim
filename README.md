@@ -67,6 +67,11 @@ This project is the base project for a number of other projects:
 - [dictim.cookbook](https://github.com/judepayne/dictim.cookbook) Examples of dictim in action!
 - [dictim.server](https://github.com/judepayne/dictim.server) A easy-to-deploy microservice for converting dictim into d2 diagrams.
 
+## d2 version compatibility
+
+dictim is currently compatible with d2 v0.2.4 (and earlier).
+We plan to bring this up to d2 v0.6.3 soon!
+
 
 ## License
 
