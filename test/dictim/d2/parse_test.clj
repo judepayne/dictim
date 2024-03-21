@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [dictim.d2.parse :as p]
             [dictim.validate :as v]
-            [instaparse.core :as insta]))
+            [instaparse.core :as insta]
+            [dictim.d2.compile :as c]))
 
 ;; parsing
 
@@ -131,35 +132,6 @@
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict :d2))))))
-
-
-(deftest classes
-  (testing "Classes"
-    (let [d2 (slurp "test/dictim/d2/samples/classes.d2")
-          dict (p/dictim d2)]
-      (is (= 1 (num-parses d2)))
-      (is (= true (v/all-valid? dict :d2)))
-      (is (= dict
-             '(["MyClass"
-                {"shape" "class"}
-                ["field" "\"[]string\""]
-                ["method(a uint64)" "(x, y int)"]]
-               ["D2 Parser"
-                {"shape" "class"}
-                [:comment "Default visibility is + so no need to specify."]
-                ["+reader" "io.RuneReader"]
-                ["readerPos" "d2ast.Position"]
-                [:comment "Private field."]
-                ["-lookahead" "\"[]rune\""]
-                [:comment "Protected field."]
-                [:comment
-                 "We have to escape the # to prevent the line from being parsed as a comment."]
-                ["\\#lookaheadPos" "d2ast.Position"]
-                ["+peek()" "(r rune, eof bool)"]
-                ["rewind()"]
-                ["commit()"]
-                ["\\#peekn(n int)" "(s string, eof bool)"]]
-               ["\"github.com/terrastruct/d2parser.git\"" "--" "D2 Parser"]))))))
 
 
 (deftest sql
@@ -307,3 +279,79 @@
     (is (= (p/dictim
             "1 -> 2:  {\n  style:  {\n    fill-pattern: lines\n  }\n}")
            '(["1" "->" "2" {"style" {"fill-pattern" "lines"}}])))))
+
+
+(deftest classes
+  (testing "Software Classes"
+    (let [d2 (slurp "test/dictim/d2/samples/classes.d2")
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["MyClass"
+                {"shape" "class"}
+                ["field" "\"[]string\""]
+                ["method(a uint64)" "(x, y int)"]]
+               ["D2 Parser"
+                {"shape" "class"}
+                [:comment "Default visibility is + so no need to specify."]
+                ["+reader" "io.RuneReader"]
+                ["readerPos" "d2ast.Position"]
+                [:comment "Private field."]
+                ["-lookahead" "\"[]rune\""]
+                [:comment "Protected field."]
+                [:comment
+                 "We have to escape the # to prevent the line from being parsed as a comment."]
+                ["\\#lookaheadPos" "d2ast.Position"]
+                ["+peek()" "(r rune, eof bool)"]
+                ["rewind()"]
+                ["commit()"]
+                ["\\#peekn(n int)" "(s string, eof bool)"]]
+               ["\"github.com/terrastruct/d2parser.git\"" "--" "D2 Parser"])))))
+  (testing "d2 Classes: arrays"
+    (let [d2 (slurp "test/dictim/d2/samples/classes3.d2")
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"direction" "right"}
+               ["classes"
+                ["load balancer"
+                 {"label" "load\\nbalancer",
+                  "width" 100,
+                  "height" 200,
+                  "style"
+                  {"stroke-width" 0,
+                   "fill" "\"#44C7B1\"",
+                   "shadow" true,
+                   "border-radius" 5}}]
+                ["unhealthy"
+                 {"style" {"fill" "\"#FE7070\"", "stroke" "\"#F69E03\""}}]]
+               ["web traffic" "->" "web lb"]
+               {"web lb.class" "load balancer"}
+               ["web lb" "->" "api1"]
+               ["web lb" "->" "api2"]
+               ["web lb" "->" "api3"]
+               {"api2.class" "unhealthy"}
+               ["api1" "->" "cache lb"]
+               ["api3" "->" "cache lb"]
+               {"cache lb.class" "load balancer"}))))))
+
+
+
+(deftest globs
+  (testing (str "glob in dotted word but not in end position -> attribute \n"
+                "glob in dotted word in end position -> shape or container.")
+    (let [d2 (slurp "test/dictim/d2/samples/globs.d2")
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["foods"
+                ["pizzas"
+                 ["cheese"]
+                 ["sausage"]
+                 ["pineapple"]
+                 {"*.shape" "circle"}]
+                ["humans" ["john"] ["james"] {"*.shape" "person"}]
+                ["humans.*" "->" "pizzas.pineapple" "eats"]]))))))

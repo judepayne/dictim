@@ -173,3 +173,45 @@
   (testing "fill-pattern"
     (is (= (c/d2 [1 "->" 2 {:style {:fill-pattern "lines"}}])
            "1 -> 2:  {\n  style:  {\n    fill-pattern: lines\n  }\n}"))))
+
+
+(deftest classes
+  (testing ".class key endings"
+    (is (= (apply c/d2 '({"direction" "right"}
+                         ["classes"
+                          ["load balancer"
+                           {"label" "load\\nbalancer",
+                            "width" 100,
+                            "height" 200,
+                            "style"
+                            {"stroke-width" 0,
+                             "fill" "\"#44C7B1\"",
+                             "shadow" true,
+                             "border-radius" 5}}]
+                          ["unhealthy"
+                           {"style" {"fill" "\"#FE7070\"", "stroke" "\"#F69E03\""}}]]
+                         ["web traffic" "->" "web lb"]
+                         ["web lb.class" "load balancer"]
+                         ["web lb" "->" "api1"]
+                         ["web lb" "->" "api2"]
+                         ["web lb" "->" "api3"]
+                         ["api2.class" "unhealthy"]
+                         ["api1" "->" "cache lb"]
+                         ["api3" "->" "cache lb"]
+                         ["cache lb.class" "load balancer"]))
+           "direction: right\nclasses:   {\n  load balancer:  {\n    label: load\\nbalancer\n    width: 100\n    height: 200\n    style:  {\n      stroke-width: 0\n      fill: \"#44C7B1\"\n      shadow: true\n      border-radius: 5\n    }\n  }\n  unhealthy:  {\n    style:  {\n      fill: \"#FE7070\"\n      stroke: \"#F69E03\"\n    }\n  }\n}\nweb traffic -> web lb\nweb lb.class: load balancer\nweb lb -> api1\nweb lb -> api2\nweb lb -> api3\napi2.class: unhealthy\napi1 -> cache lb\napi3 -> cache lb\ncache lb.class: load balancer")))
+
+  )
+
+
+(deftest globs
+  (testing "glob compilation"
+    (is (= (apply c/d2 '(["foods"
+                          ["pizzas"
+                           ["cheese"]
+                           ["sausage"]
+                           ["pineapple"]
+                           {"*.shape" "circle"}]
+                          ["humans" ["john"] ["james"] {"*.shape" "person"}]
+                          ["humans.*" "->" "pizzas.pineapple" "eats"]]))
+           "foods:   {\n  pizzas:   {\n    cheese\n    sausage\n    pineapple\n    *.shape: circle\n  }\n  humans:   {\n    john\n    james\n    *.shape: person\n  }\n  humans.* -> pizzas.pineapple: eats\n}"))))

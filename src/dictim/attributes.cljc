@@ -47,7 +47,8 @@
    "double-border" {:validate-fn (fn [v] true)}
    "underline" {:validate-fn (fn [v] true)}
    "font" {:validate-fn (fn [v] true)}
-   "fill-pattern" {:validate-fn (fn [v] true)}})
+   "fill-pattern" {:validate-fn (fn [v] true)}
+   "class" {:validate-fn (fn [v] true)}})
 
 
 (defn validate-fn [d2-keyword]
