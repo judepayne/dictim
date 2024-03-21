@@ -167,3 +167,9 @@
   (testing "Compiling dictim shapes with keys that are numbers."
     (is (= (c/d2 [1 "Person A"] [4 "Person C"] [1 "->" 2] [3 "->" 4 "->" 5])
            "1: Person A\n4: Person C\n1 -> 2\n3 -> 4 -> 5"))))
+
+
+(deftest fill-pattern
+  (testing "fill-pattern"
+    (is (= (c/d2 [1 "->" 2 {:style {:fill-pattern "lines"}}])
+           "1 -> 2:  {\n  style:  {\n    fill-pattern: lines\n  }\n}"))))

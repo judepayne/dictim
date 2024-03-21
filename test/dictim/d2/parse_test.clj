@@ -300,3 +300,10 @@
                ["poll the people" "->" "results"]
                ["results" "->" "unfavorable" "->" "poll the people"]
                ["results" "->" "favorable" "->" "will of the people"]))))))
+
+
+(deftest fill-pattern
+  (testing "fill-pattern can be parsed"
+    (is (= (p/dictim
+            "1 -> 2:  {\n  style:  {\n    fill-pattern: lines\n  }\n}")
+           '(["1" "->" "2" {"style" {"fill-pattern" "lines"}}])))))

@@ -1,5 +1,4 @@
-(ns
-    ^{:author "Jude payne"
+(ns ^{:author "Jude payne"
       :doc "Namespace for validating dictim."}
     dictim.validate
   (:require [clojure.string :as str]
@@ -73,21 +72,28 @@
              (every? (complement list?) (rest li))))
 
 
-(defn- last-d2-keyword? [k]
+(defn- key-last-part [k]
   (let [k' (if (keyword? k) (name k) k)]
     (-> k'
         (str/split #"\.")
-        last
-        at/d2-keyword?)))
+        last)))
+
+
+(defn- valid-d2-attribute? [[k v]]
+  (let [k (key-last-part k)]
+    (and (at/d2-keyword? k)
+         (or (map? v)
+             (let [val-fn (at/validate-fn k)]
+               (val-fn v))))))
 
 
 (check :attrs m
        (and
         (map? m)
-        (every? kstr? (keys m))
+        (every? kstr? (keys m)) ;; should this be d2 keyword?
         (if (= :d2 output)
-          (every? last-d2-keyword? (keys m))
-          true)      ;; Graphviz keywords are not checked at this point.
+          (every? valid-d2-attribute? m)
+          true) ;; Graphviz keywords are not checked at this point.
         (every? #(or (and (map? %) (valid? %))
                      (kstr? %) (number? %) (boolean? %)) (vals m))))
 
