@@ -23,22 +23,38 @@
   (contains? #{"--" "<->" "->" "<-"} s))
 
 
+(defn conn-ref-ptr?
+  [s]
+  (and (vector? s)
+       (= 1 (count s))
+       (integer? (first s))))
+
+
 (defn take-til-last
   "take until the last match. not every item needs match"
   [pred coll]
   (-> (reduce
-         (fn [acc cur]
-           (cond
-             (nil? cur)    (:banked acc)
+       (fn [acc cur]
+         (cond
+           (nil? cur)    (:banked acc)
              
-             (pred cur)    (-> acc
-                               (update :banked concat (conj (:buffer acc) cur))
-                               (assoc-in [:buffer] []))
+           (pred cur)    (-> acc
+                             (update :banked concat (conj (:buffer acc) cur))
+                             (assoc-in [:buffer] []))
              
-             :else         (update acc :buffer conj cur)))
-         {:banked [] :buffer []}
-         coll)
+           :else         (update acc :buffer conj cur)))
+       {:banked [] :buffer []}
+       coll)
       vals))
+
+
+(defn conn-ref?
+  "Returns true if element is a connection reference style attribute key."
+  [e]
+  (and (vector? e)
+       (direction? (second e))
+       (> (count e) 4)
+       (conn-ref-ptr? (nth e 3))))
 
 
 ;; element types

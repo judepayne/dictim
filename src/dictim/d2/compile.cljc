@@ -3,7 +3,7 @@
     :doc "Namespace for transpiling dictim to d2"}
   (:require [clojure.string :as str]
             [dictim.format :as f]
-            [dictim.utils :refer [kstr? direction? take-til-last elem-type]]
+            [dictim.utils :refer [kstr? direction? take-til-last elem-type conn-ref?]]
             [dictim.validate :refer [all-valid?]])
   (:refer-clojure :exclude [list]))
 
@@ -12,11 +12,13 @@
 
 (def spc " ")
 
+(def period ".")
+
 ;; sep the separator between elements
 (def ^:dynamic sep)
 
 
-(defn- de-key
+(defn- de-keyword
   [s]
   (if (keyword? s)
     (name s)
@@ -27,6 +29,25 @@
   (and (= 1 (count m))
        (map? (second (first m)))
        (empty? (second (first m)))))
+
+
+(defn- conn-ref->d2 [[k1 dir k2 ar & rst]]
+  (str "("
+       k1
+       spc dir
+       spc k2
+       ")"
+       ar
+       period
+       (apply str (interpose period rst))))
+
+
+(defn- format-key [k]
+  (cond
+    (integer? k)        (str k)
+    (conn-ref? k)       (conn-ref->d2 k)
+    (keyword? k)        (name k)
+    :else               k))
 
 
 (defn- attrs
@@ -40,8 +61,8 @@
                   (for [[k v] m]
                     (cond
                       (and (map? v) (empty? v)) nil
-                      (map? v)   (str (name k) colon (attrs v))
-                      :else      (str (name k) colon  (de-key v))))
+                      (map? v)   (str (format-key k) colon (attrs v))
+                      :else      (str (format-key k) colon  (de-keyword v))))
                   (remove nil?)
                   (interpose sep)))
           (if brackets? "\n}" "\n"))))

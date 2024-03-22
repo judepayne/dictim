@@ -3,7 +3,8 @@
     dictim.validate
   (:require [clojure.string :as str]
             [dictim.attributes :as at]
-            [dictim.utils :refer [kstr? direction? take-til-last elem-type error list?]])
+            [dictim.utils :refer [kstr? direction? take-til-last elem-type error list?
+                                  conn-ref?]])
   (:refer-clojure :exclude [list?])
   #?(:cljs (:require-macros [dictim.validate :refer [check]])))
 
@@ -72,30 +73,58 @@
              (every? (complement list?) (rest li))))
 
 
+(defn- conn-ref*? [k]
+  (and (vector? k) (conn-ref? k)))
+
+
+(defn- str-key-last-part [s]
+  (-> s (str/split #"\.") last))
+
+
 (defn- key-last-part [k]
-  (let [k' (if (keyword? k) (name k) k)]
-    (-> k'
-        (str/split #"\.")
-        last)))
+  (if (conn-ref*? k)
+    (-> k last str-key-last-part)
+    (let [k' (if (keyword? k) (name k) k)]
+      (str-key-last-part k'))))
 
 
-(defn- valid-d2-attribute? [[k v]]
-  (let [k (key-last-part k)]
-    (and (at/d2-keyword? k)
-         (or (map? v)
-             (let [val-fn (at/validate-fn k)]
-               (val-fn v))))))
+(defn- valid-form-d2-attr-key? [k]
+  (or (conn-ref*? k)
+      (keyword? k)
+      (string? k)))
+
+
+(defn- valid-d2-attr? [[k v]]
+  (and
+       (and
+        (valid-form-d2-attr-key? k)
+        (let [k' (key-last-part k)]
+          (and (at/d2-keyword? k')
+               (let [val-fn (at/validate-fn k')]
+                 (val-fn v)))))
+       (if (map? v)
+         (valid? v)
+         true)))
+
+
+(defn- valid-dot-attr? [[k v]]
+  (and
+   (kstr? k)
+   (if (map? v)
+     (valid? v)
+     true)))
+
+
+(defn- valid-attr? [attr]
+  (case output
+    :d2 (valid-d2-attr? attr)
+    :dot (valid-dot-attr? attr)))
 
 
 (check :attrs m
        (and
         (map? m)
-        (every? kstr? (keys m)) ;; should this be d2 keyword?
-        (if (= :d2 output)
-          (every? valid-d2-attribute? m)
-          true) ;; Graphviz keywords are not checked at this point.
-        (every? #(or (and (map? %) (valid? %))
-                     (kstr? %) (number? %) (boolean? %)) (vals m))))
+        (every? valid-attr? m)))
 
 
 (check :shape elem
@@ -123,8 +152,8 @@
 
 (check :cmt cmt
        (and (= 2 (count cmt))
-           (= :comment (first cmt))
-           (string? (second cmt))))
+            (= :comment (first cmt))
+            (string? (second cmt))))
 
 
 (check :ctr elem
