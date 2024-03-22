@@ -73,38 +73,30 @@
              (every? (complement list?) (rest li))))
 
 
-(defn- conn-ref*? [k]
-  (and (vector? k) (conn-ref? k)))
+;; put in a regex guard here for quoted dot keys
+(defn- last-key-part [s]
+  (let [s' (if (keyword? s) (name s) s)]
+    (-> s' (str/split #"\.") last)))
 
 
-(defn- str-key-last-part [s]
-  (-> s (str/split #"\.") last))
-
-
-(defn- key-last-part [k]
-  (if (conn-ref*? k)
-    (-> k last str-key-last-part)
-    (let [k' (if (keyword? k) (name k) k)]
-      (str-key-last-part k'))))
-
-
-(defn- valid-form-d2-attr-key? [k]
-  (or (conn-ref*? k)
+(defn- valid-d2-attr-key? [k]
+  (or (conn-ref? k)
+      (number? k)
       (keyword? k)
       (string? k)))
 
 
 (defn- valid-d2-attr? [[k v]]
   (and
-       (and
-        (valid-form-d2-attr-key? k)
-        (let [k' (key-last-part k)]
-          (and (at/d2-keyword? k')
-               (let [val-fn (at/validate-fn k')]
-                 (val-fn v)))))
-       (if (map? v)
-         (valid? v)
-         true)))
+   (and
+    (valid-d2-attr-key? k)
+    (if (not (map? v))
+      (let [k' (last-key-part k)]
+        (and (at/d2-keyword? k')
+             (let [val-fn (at/validate-fn k')]
+               (val-fn v))))
+      true))
+   (if (map? v) (valid? v) true)))
 
 
 (defn- valid-dot-attr? [[k v]]

@@ -53,7 +53,7 @@
   [e]
   (and (vector? e)
        (direction? (second e))
-       (> (count e) 4)
+       (= (count e) 4)
        (conn-ref-ptr? (nth e 3))))
 
 

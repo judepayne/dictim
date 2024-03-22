@@ -221,7 +221,7 @@
 (deftest connection-ref-attrs
   (testing "connection references as attr keys"
     (is (= (apply c/d2 '([1 "one" {:style.fill "green"}]
-                                                     [2 "two" {:style.fill "blue"}]
-                                                     [1 "->" 2]
-                                                     {[1 "->" 2 [0] "style" "stroke"]  "red"}))
-           "1: one  {\n  style.fill: green\n}\n2: two  {\n  style.fill: blue\n}\n1 -> 2\n(1 -> 2)[0].style.stroke: red"))))
+                         [2 "two" {:style.fill "blue"}]
+                         [1 "->" 2]
+                         {[1 "->" 2 [0]] {:style {:stroke "red"}}}))
+           "1: one  {\n  style.fill: green\n}\n2: two  {\n  style.fill: blue\n}\n1 -> 2\n(1 -> 2)[0]:  {\n  style:  {\n    stroke: red\n  }\n}"))))

@@ -31,15 +31,13 @@
        (empty? (second (first m)))))
 
 
-(defn- conn-ref->d2 [[k1 dir k2 ar & rst]]
+(defn- conn-ref->d2 [[k1 dir k2 ar]]
   (str "("
        k1
        spc dir
        spc k2
        ")"
-       ar
-       period
-       (apply str (interpose period rst))))
+       ar))
 
 
 (defn- format-key [k]
