@@ -308,7 +308,7 @@
                 ["commit()"]
                 ["\\#peekn(n int)" "(s string, eof bool)"]]
                ["\"github.com/terrastruct/d2parser.git\"" "--" "D2 Parser"])))))
-  (testing "d2 Classes: arrays"
+  (testing "d2 Classes"
     (let [d2 (slurp "test/dictim/d2/samples/classes3.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
@@ -354,4 +354,11 @@
                  ["pineapple"]
                  {"*.shape" "circle"}]
                 ["humans" ["john"] ["james"] {"*.shape" "person"}]
-                ["humans.*" "->" "pizzas.pineapple" "eats"]]))))))
+                ["humans.*" "->" "pizzas.pineapple" "eats"]])))))
+  (testing "recursive globs"
+    (let [d2 "a:   {\n  b:   {\n    c\n  }\n}\n**.style.border-radius: 7"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["a" ["b" ["c"]]] {"**.style.border-radius" 7}))))))

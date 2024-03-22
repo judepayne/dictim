@@ -199,9 +199,7 @@
                          ["api1" "->" "cache lb"]
                          ["api3" "->" "cache lb"]
                          ["cache lb.class" "load balancer"]))
-           "direction: right\nclasses:   {\n  load balancer:  {\n    label: load\\nbalancer\n    width: 100\n    height: 200\n    style:  {\n      stroke-width: 0\n      fill: \"#44C7B1\"\n      shadow: true\n      border-radius: 5\n    }\n  }\n  unhealthy:  {\n    style:  {\n      fill: \"#FE7070\"\n      stroke: \"#F69E03\"\n    }\n  }\n}\nweb traffic -> web lb\nweb lb.class: load balancer\nweb lb -> api1\nweb lb -> api2\nweb lb -> api3\napi2.class: unhealthy\napi1 -> cache lb\napi3 -> cache lb\ncache lb.class: load balancer")))
-
-  )
+           "direction: right\nclasses:   {\n  load balancer:  {\n    label: load\\nbalancer\n    width: 100\n    height: 200\n    style:  {\n      stroke-width: 0\n      fill: \"#44C7B1\"\n      shadow: true\n      border-radius: 5\n    }\n  }\n  unhealthy:  {\n    style:  {\n      fill: \"#FE7070\"\n      stroke: \"#F69E03\"\n    }\n  }\n}\nweb traffic -> web lb\nweb lb.class: load balancer\nweb lb -> api1\nweb lb -> api2\nweb lb -> api3\napi2.class: unhealthy\napi1 -> cache lb\napi3 -> cache lb\ncache lb.class: load balancer"))))
 
 
 (deftest globs
@@ -214,4 +212,7 @@
                            {"*.shape" "circle"}]
                           ["humans" ["john"] ["james"] {"*.shape" "person"}]
                           ["humans.*" "->" "pizzas.pineapple" "eats"]]))
-           "foods:   {\n  pizzas:   {\n    cheese\n    sausage\n    pineapple\n    *.shape: circle\n  }\n  humans:   {\n    john\n    james\n    *.shape: person\n  }\n  humans.* -> pizzas.pineapple: eats\n}"))))
+           "foods:   {\n  pizzas:   {\n    cheese\n    sausage\n    pineapple\n    *.shape: circle\n  }\n  humans:   {\n    john\n    james\n    *.shape: person\n  }\n  humans.* -> pizzas.pineapple: eats\n}")))
+  (testing "recursive globs"
+    (is (= (apply c/d2 '(["a" ["b" ["c"]]] {"**.style.border-radius" 7}))
+           "a:   {\n  b:   {\n    c\n  }\n}\n**.style.border-radius: 7"))))
