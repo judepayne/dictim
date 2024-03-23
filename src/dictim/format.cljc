@@ -13,6 +13,10 @@
 (def ^:private tab-value (atom 0))
 
 
+;; atom to determine if whether inside a var or not
+(def ^:private in-var? (atom false))
+
+
 ;; indent: i.e. increase indentation counter by tab-value
 (defn- ind! [] (swap! indentation-counter #(+ @tab-value %)) nil)
 
@@ -48,11 +52,16 @@
   (reduce
    (fn [acc cur]
      (case cur
-       \{        (do (ind!) (str acc
-                                 \space
-                                 \{))
-       \}        (do (outd!) (str (remove-n acc @tab-value) \}))
+       \{        (if (= (last acc) \$)
+                   (do (reset! in-var? true) (str acc cur))
+                   (do (ind!) (str acc \space \{)))
+       
+       \}        (if @in-var?
+                   (do (reset! in-var? false) (str acc cur))
+                   (do (outd!) (str (remove-n acc @tab-value) \})))
+       
        \newline  (str acc \newline (tabs))
+       
        (str acc cur)))
    nil
    (-> d2s trim-lines)))

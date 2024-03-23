@@ -244,3 +244,13 @@
   (testing "quoted periods are allowed in shape keys"
     (is (= (c/d2 ["ha'.l'o" "The Halo"])
            "ha'.l'o: The Halo"))))
+
+
+(deftest vars
+  (testing "basic var handling"
+    (is (= (apply c/d2 '({:direction :right}
+                                      [:vars [:server-name "Cat"]]
+                                      [:server1 "${server-name}-1"]
+                                      [:server2 "${server-name}-2"]
+                                      [:server1 "<->" :server2]))
+           "direction: right\nvars:   {\n  server-name: Cat\n}\nserver1: ${server-name}-1\nserver2: ${server-name}-2\nserver1 <-> server2"))))
