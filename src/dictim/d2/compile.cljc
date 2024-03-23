@@ -3,7 +3,7 @@
     :doc "Namespace for transpiling dictim to d2"}
   (:require [clojure.string :as str]
             [dictim.format :as f]
-            [dictim.utils :refer [kstr? direction? take-til-last elem-type conn-ref?]]
+            [dictim.utils :refer [kstr? direction? take-til-last elem-type conn-ref? convert-key]]
             [dictim.validate :refer [all-valid?]])
   (:refer-clojure :exclude [list]))
 
@@ -64,13 +64,6 @@
                   (remove nil?)
                   (interpose sep)))
           (if brackets? "\n}" "\n"))))
-
-
-(defn- convert-key [k]
-  (cond
-    (number? k) (str k)
-    (keyword? k) (name k)
-    :else k))
 
 
 (defn item->str [i]

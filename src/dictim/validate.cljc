@@ -4,7 +4,7 @@
   (:require [clojure.string :as str]
             [dictim.attributes :as at]
             [dictim.utils :refer [kstr? direction? take-til-last elem-type error list?
-                                  conn-ref?]])
+                                  conn-ref? unquoted-period single-quoted no-asterisk convert-key]])
   (:refer-clojure :exclude [list?])
   #?(:cljs (:require-macros [dictim.validate :refer [check]])))
 
@@ -73,10 +73,12 @@
              (every? (complement list?) (rest li))))
 
 
-;; put in a regex guard here for quoted dot keys
 (defn- last-key-part [s]
-  (let [s' (if (keyword? s) (name s) s)]
-    (-> s' (str/split #"\.") last)))
+  (-> s convert-key (str/split unquoted-period) last))
+
+
+(defn- first-key-part [s]
+  (-> s convert-key (str/split unquoted-period) first))
 
 
 (defn- valid-d2-attr-key? [k]
@@ -119,9 +121,18 @@
         (every? valid-attr? m)))
 
 
+(defn globs-quoted? [k]
+  (let [k (first-key-part k)]
+    (or (re-matches single-quoted k)
+        (re-matches no-asterisk k))))
+
+
+;; globs are allowed in key names but only when the whole name/ first part is quoted.
+
+
 (check :shape elem
        (let [[k & opts] elem]
-         (and (kstr? k)
+         (and (and (kstr? k) (globs-quoted? k)) 
               (case (count opts)
                 0 true
                 1 (or (kstr? (first opts))
@@ -151,7 +162,7 @@
 (check :ctr elem
        (let [[k & opts] elem]
         (and
-         (kstr? k)
+         (and (kstr? k) (globs-quoted? k))
          (or (and (kstr? (first opts)) ;; label & attrs
                   (valid? (second opts))
                   (or (nil? (rest (rest opts)))

@@ -203,7 +203,7 @@
 
 
 (deftest globs
-  (testing "glob compilation"
+  (testing "unquoted globs are allowed in attribute keys."
     (is (= (apply c/d2 '(["foods"
                           ["pizzas"
                            ["cheese"]
@@ -215,7 +215,16 @@
            "foods:   {\n  pizzas:   {\n    cheese\n    sausage\n    pineapple\n    *.shape: circle\n  }\n  humans:   {\n    john\n    james\n    *.shape: person\n  }\n  humans.* -> pizzas.pineapple: eats\n}")))
   (testing "recursive globs"
     (is (= (apply c/d2 '(["a" ["b" ["c"]]] {"**.style.border-radius" 7}))
-           "a:   {\n  b:   {\n    c\n  }\n}\n**.style.border-radius: 7"))))
+           "a:   {\n  b:   {\n    c\n  }\n}\n**.style.border-radius: 7")))
+  (testing "unquoted globs not allowed in shape keys"
+    (is (thrown? Exception
+                 (c/d2 ["ha*lo" "The Halo"]))))
+  (testing "quoted globs are allowed in shape keys"
+    (is (= (c/d2 ["'ha*lo'" "The Halo"])
+           "'ha*lo': The Halo")))
+  (testing "unquoted globs are allowed in connection keys"
+    (is (= (c/d2 ["*" "->" "y"])
+           "* -> y"))))
 
 
 (deftest connection-ref-attrs
@@ -225,3 +234,13 @@
                          [1 "->" 2]
                          {[1 "->" 2 [0]] {:style {:stroke "red"}}}))
            "1: one  {\n  style.fill: green\n}\n2: two  {\n  style.fill: blue\n}\n1 -> 2\n(1 -> 2)[0]:  {\n  style:  {\n    stroke: red\n  }\n}"))))
+
+
+
+(deftest periods
+  (testing "unquoted periods are allowed in shape keys"
+    (is (= (c/d2 ["ha.lo" "The Halo"])
+           "ha.lo: The Halo")))
+  (testing "quoted periods are allowed in shape keys"
+    (is (= (c/d2 ["ha'.l'o" "The Halo"])
+           "ha'.l'o: The Halo"))))

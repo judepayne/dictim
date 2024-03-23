@@ -155,3 +155,23 @@
                                    (println "--------------------------------")))))
           a))
   nil)
+
+
+;; This regexes match a period but only when not inside single quotes
+;; https://stackoverflow.com/questions/6462578/regex-to-match-all-instances-not-inside-quotes
+
+(def unquoted-period #"\.(?=([^']*'[^']*')*[^']*$)")
+
+
+;; matches when starts and ends with '
+(def single-quoted #"^'.*'$")
+
+;; does no
+(def no-asterisk #"^[^*]*$")
+
+
+(defn convert-key [k]
+  (cond
+    (number? k) (str k)
+    (keyword? k) (name k)
+    :else k))
