@@ -1,5 +1,4 @@
-(ns
-    ^{:author "judepayne"
+(ns ^{:author "judepayne"
       :doc "Namespace for formatting d2."}
     dictim.format
   (:require [clojure.string :as str]))

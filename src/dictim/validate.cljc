@@ -15,6 +15,14 @@
 (def ^:dynamic output nil)
 
 
+;; a dynamic var to hold whether we need to check attr keys as d2 keywords.
+(def ^:dynamic vars?)
+
+
+(defn is-vars? [k]
+  (= "vars" (convert-key k)))
+
+
 (defn err [msg]
   (throw (error (str msg " is invalid."))))
 
@@ -37,9 +45,9 @@
 
 (defn- valid-single-connection?
   [[k1 dir k2 & opts]]
-  (and (kstr? k1)
+  (and (and (kstr? k1) (not (is-vars? k1)))
        (direction? dir)
-       (kstr? k2)
+       (and (kstr? k2) (not (is-vars? k2)))
        (case (count opts)
          0 true
          1 (or (kstr? (first opts))
@@ -58,7 +66,8 @@
      (kstr? lk)
      (every?
       (fn [[k d]]
-        (and (kstr? k) (direction? d)))
+        (and (and (kstr? k) (not (is-vars? k)))
+             (direction? d)))
       conns)
      (case (count opts)
        0          true
@@ -89,16 +98,27 @@
 
 
 (defn- valid-d2-attr? [[k v]]
-  (and
-   (and
-    (valid-d2-attr-key? k)
-    (if (not (map? v))
-      (let [k' (last-key-part k)]
-        (and (at/d2-keyword? k')
-             (let [val-fn (at/validate-fn k')]
-               (val-fn v))))
-      true))
-   (if (map? v) (valid? v) true)))
+  ;; if we're in :vars, don't peform d2-keyword checks. optional; checks
+  (binding [vars? (or vars? (= (convert-key k) "vars"))]
+    (and
+     (valid-d2-attr-key? k)
+     (cond
+       (map? v)           (valid? v)
+
+       (conn-ref? k)      true
+
+       (and (not (map? v))
+            (not vars?))   (let [k' (last-key-part k)]
+                             (and (at/d2-keyword? k')
+                                  (let [val-fn (at/validate-fn k')]
+                                    (val-fn v))))
+
+       (and (not (map? v))
+            vars?)          (let [k' (last-key-part k)]
+                             (if (at/d2-keyword? k')
+                               (let [val-fn (at/validate-fn k')]
+                                 (val-fn v))
+                               true))))))
 
 
 (defn- valid-dot-attr? [[k v]]
@@ -132,7 +152,7 @@
 
 (check :shape elem
        (let [[k & opts] elem]
-         (and (and (kstr? k) (globs-quoted? k)) 
+         (and (and (kstr? k) (globs-quoted? k) (not (is-vars? k))) 
               (case (count opts)
                 0 true
                 1 (or (kstr? (first opts))
@@ -162,7 +182,7 @@
 (check :ctr elem
        (let [[k & opts] elem]
         (and
-         (and (kstr? k) (globs-quoted? k))
+         (and (kstr? k) (globs-quoted? k) (not (is-vars? k)))
          (or (and (kstr? (first opts)) ;; label & attrs
                   (valid? (second opts))
                   (or (nil? (rest (rest opts)))

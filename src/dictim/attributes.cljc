@@ -48,7 +48,14 @@
    "underline" {:validate-fn (fn [v] true)}
    "font" {:validate-fn (fn [v] true)}
    "fill-pattern" {:validate-fn (fn [v] true)}
-   "class" {:validate-fn (fn [v] true)}})
+   "class" {:validate-fn (fn [v] true)}
+   "d2-config" {:validate-fn (fn [v] true)}
+   "theme-id" {:validate-fn integer?}
+   "dark-theme-id" {:validate-fn integer?}
+   "pad" {:validate-fn (fn [v] integer?)}
+   "center" {:validate-fn boolean?}
+   "sketch" {:validate-fn boolean?}
+   "layout-engine" {:validate-fn (fn [v] true)}})
 
 
 (defn validate-fn [d2-keyword]

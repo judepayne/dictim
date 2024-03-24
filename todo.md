@@ -20,7 +20,7 @@
 - [x] globs
 - [x] classes
 - [x] positions
-- [ ] vars
+- [x] vars
 - [x] case insensitivty for keys (no change)
 - [x] overrides (no change)
 - [?] imports

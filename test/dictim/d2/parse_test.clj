@@ -362,3 +362,97 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["a" ["b" ["c"]]] {"**.style.border-radius" 7}))))))
+
+
+(deftest vars
+  (testing "parse vars and substitutions in shape & ctr labels"
+    (let [d2 "direction: right
+              vars: {
+                server-name: Cat
+              }
+              server2: ${ab} ${server-name}-2 {
+                buttons
+              }
+              server1 <-> server2"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"direction" "right"}
+               {"vars" {"server-name" "Cat"}}
+               ["server2" "${ab} ${server-name}-2" ["buttons"]]
+               ["server1" "<->" "server2"])))))
+  (testing "parse substitutions in attribute value"
+    (let [d2 "vars: {
+                primaryColors: {
+                  button: {
+                    active: \"#4baae5\"
+                    border: black
+                  }
+                }
+              }
+
+              button: {
+                width: 100
+                height: 40
+                style: {
+                  border-radius: 5
+                  fill: ${primaryColors.button.active}
+                  stroke: ${primaryColors.button.border}
+                }
+              }"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"vars"
+                {"primaryColors"
+                 {"button" {"active" "\"#4baae5\"", "border" "black"}}}}
+               ["button"
+                {"width" 100,
+                 "height" 40,
+                 "style"
+                 {"border-radius" 5,
+                  "fill" "${primaryColors.button.active}",
+                  "stroke" "${primaryColors.button.border}"}}])))))
+  (testing "single quoted substitutions (which are bypassed by d2)"
+    (let [d2 "direction: right
+              vars: {
+                names: John and Joyce
+              }
+              a -> b: 'Send field ${names}'"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"direction" "right"}
+               {"vars" {"names" "John and Joyce"}}
+               ["a" "->" "b" "'Send field ${names}'"])))))
+  (testing "nested vars under d2-config key"
+    (let [d2 "vars: {
+                d2-config: {
+                  theme-id: 4
+                  dark-theme-id: 200
+                  pad: 0
+                  center: true
+                  sketch: true
+                  layout-engine: elk
+                }
+              }
+
+              direction: right
+              x -> y"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"vars"
+                {"d2-config"
+                 {"theme-id" 4,
+                  "dark-theme-id" 200,
+                  "pad" 0,
+                  "center" true,
+                  "sketch" true,
+                  "layout-engine" "elk"}}}
+               {"direction" "right"}
+               ["x" "->" "y"]))))))

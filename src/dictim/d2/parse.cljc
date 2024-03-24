@@ -54,31 +54,8 @@
    ".\\-<>\n"
    true))
 
-;; Notes on parsing d2
-;; d2 is a pretty free in its syntax, has some ambiguity in the
-;; grammar and is quite 'texty' so not all that easy to parse.
 
-;; Tokens are not particularly easy to recognize with regexes.
-;;
-;; A particular source of ambiguity is the similarity between
-;; shapes and containers. containers being shapes that happen to
-;; have other elements than attr's in them. I've elected to parse
-;; shapes and containers in the grammar below as one thing, 'ctr'
-;; and them in the dictim function detect whether a shape or
-;; container and set the :tag in metadata accordingly. This helped
-;; to produce a simpler grmmar.
-;; I've tried rewriting the parse a number of times trying to get as
-;; much logic out of regexes and into instaparse, but since d2 is so
-;; free and essentially terminates tokens (which can be anything) by
-;; a few delimiter chars/ strings, unfortunately quite a bit of logic
-;; has had to end up in negative lookahead regexes.
-;; The only way to tell the difference between a shape e.g. a: A and
-;; an attribute e.g. link: A is to know the set of d2 (attribute)
-;; keywords rather than by the structure of the language, then to parse
-;; the language requires to know the set of (attribute) keywords.
-;; This coupling is perhaps not ideal and could be eliminated if
-;; d2 were to change its language spec to always have attributes inside
-;; their own braces e.g. <link: 42>. 
+;; d2's grammar
 
 (defn- grammar []
   (str
@@ -87,7 +64,7 @@
     <contained> = <sep*> (element (empty-lines | <sep>))* element <sep*>
     <element> = list | elem
 
-    <elem> = ctr |comment | attr | conn
+    <elem> = var-root | ctr | comment | ctr | attr | conn
 
     list = (elem <semi>+)+ elem <semi>*
     ctr = key colon-label? (<curlyo> <sep*> contained <s> <curlyc>)?
@@ -96,6 +73,13 @@
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr = <s> at-key <s> <colon> <s> (val | attr-label? attrs)
     attr-label = label
+
+    vars = <curlyo> <at-sep*> (var <at-sep+>)* var <at-sep*> <s> <curlyc>
+    var-root = <s> 'vars' <s> <colon> <s> vars
+    var = <s> var-key <s> <colon> <s> (val | vars)
+    var-key = !hash vk
+    <vk> = #'[^:;\\n{}]+'
+    var-reserved = 'vars'
  
     conn = <s> (ekey dir)+ <s> key colon-label? attrs?
     dir = <contd?> <s> direction
@@ -104,7 +88,7 @@
  
     (* keys *)
     K = key | at-key
-    key = !hash (key-part period)* key-part-last
+    key = !hash !var-reserved (key-part period)* key-part-last
     <key-part> = #'^(?!.*(?:-[>-]|<-))[^\\'\\\";:.\\n]+'
     <key-part-last> = <s> #'" key-reg "'
     at-key = (at-part period)* at-part-last
@@ -116,8 +100,11 @@
 
     (* labels *)
     <labels> = label | block | typescript
-    label = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
-    val = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
+    label = lbl | subst
+    <subst> = <s> #'^(?!^\\s*$)([^${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
+    <lbl> = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
+    val = v | subst
+    <v> = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
     <colon-label> = (<colon> <s> | <colon> labels)
     block = <s> '|' #'[^|]+' '|'
     typescript = <s> ts-open ts ts-close <s>
@@ -216,6 +203,10 @@
                    ([k lbl m] ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
+           :var-key (fn [v-k] v-k)
+           :var (fn [k v] (with-tag {k v} :vars))
+           :vars (fn [& vars] (with-tag (into {} vars) :vars))
+           :var-root (fn [k v] (with-tag {k v} :vars))
            :comment (fn [c] (with-tag [:comment (str/triml c)] :comment))
            :ctr (fn [& parts]
                   (let [tag (cond
