@@ -109,16 +109,16 @@
 
        (and (not (map? v))
             (not vars?))   (let [k' (last-key-part k)]
-                             (and (at/d2-keyword? k')
-                                  (let [val-fn (at/validate-fn k')]
-                                    (val-fn v))))
+            (and (at/d2-keyword? k')
+                 (let [val-fn (at/validate-fn k')]
+                   (val-fn v))))
 
        (and (not (map? v))
             vars?)          (let [k' (last-key-part k)]
-                             (if (at/d2-keyword? k')
-                               (let [val-fn (at/validate-fn k')]
-                                 (val-fn v))
-                               true))))))
+            (if (at/d2-keyword? k')
+              (let [val-fn (at/validate-fn k')]
+                (val-fn v))
+              true))))))
 
 
 (defn- valid-dot-attr? [[k v]]

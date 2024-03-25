@@ -51,7 +51,7 @@
   (reg-gen
    at/d2-attributes
    nil
-   ".\\-<>\n"
+   ".\\-<>\n()"
    true))
 
 
@@ -71,8 +71,14 @@
     comment = <s> <hash> label
 
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
-    attr = <s> at-key <s> <colon> <s> (val | attr-label? attrs)
+    attr = <s> (at-key | conn-ref) <s> <colon> <s> (val | attr-label? attrs)
     attr-label = label
+
+    conn-ref = <'('> <s> ref-key <s> dir <s> ref-key <s> <')'>
+               <'['> array-val <']'> conn-ref-attr-keys?
+    conn-ref-attr-keys = (<period> d2-keyword)*
+    ref-key = #'^[^;:.\\n\\<>\\-)]+'
+    array-val = #'(\\d|\\*)+'
 
     vars = <curlyo> <at-sep*> (var <at-sep+>)* var <at-sep*> <s> <curlyc>
     var-root = <s> 'vars' <s> <colon> <s> vars
@@ -95,7 +101,7 @@
     <at-part> = key-part | d2-keyword
     <at-part-last> = d2-keyword
     ekey = !hash (ekey-part period)* ekey-part-last
-    <ekey-part> = #'^[^;:.\\n\\-<]+'
+    <ekey-part> = #'^[^;:.\\n\\-<\\[(]+'
     <ekey-part-last> = <s> #'" ekey-reg "'
 
     (* labels *)
@@ -155,6 +161,11 @@
          count)))
 
 
+(defn- conn-ref? [k]
+  (and (vector? k)
+       (= :conn-ref (first k))))
+
+
 (defn dictim
   "Converts a d2 string to its dictim representation.
    Each dictim element returned's type is captured in the :tag key
@@ -199,7 +210,12 @@
            :val (fn [v] (try-parse-primitive v))
            :attr-label identity
            :attr (fn
-                   ([k v] (with-tag {k v} :attrs))
+                   ([k v] (if (not (conn-ref? k))
+                            (with-tag {k v} :attrs)
+                            (let [[_ k1 dir k2 ar-val at] k]
+                              (with-tag
+                                {[k1 dir k2 [ar-val]] {at v}}
+                                :conn-ref))))
                    ([k lbl m] ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
@@ -224,6 +240,11 @@
                                               (map first elems)
                                               elems)]
                                  (with-tag (into [:list] elems') :list)))
+                                        ;           :conn-ref (fn [& parts] (str/join parts))
+           :ref-key (fn [k] (try-parse-primitive (str/trim k)))
+           :array-val (fn [ar-val] (try-parse-primitive ar-val))
+           :conn-ref-attr-keys (fn [& parts]
+                                 (str/join (interpose "." parts)))
            :empty-lines (fn [& seps] (into [:empty-lines (dec (count seps))]))
            :elements (fn [& elems] (vec (handle-empty-lines elems)))
            :contained (fn [& elems] (println elems) (vec (handle-empty-lines elems)))}

@@ -27,7 +27,8 @@
   [s]
   (and (vector? s)
        (= 1 (count s))
-       (integer? (first s))))
+       (or (integer? (first s))
+           (= "*" (first s)))))
 
 
 (defn take-til-last

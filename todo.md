@@ -26,9 +26,9 @@
 - [?] imports
 - [ ] layers, scenarios, steps
 - [ ] array notation (see classes, globs, SQL tables]
-- [-] conn-refs
+- [x] conn-refs  <----next up!
 - [ ] & character (globs)
-- [ ] lists in globs
+- [ ] lists in globs. also see vars for example.
 - [x] . character in quoted keys
 
 ### design thoughts

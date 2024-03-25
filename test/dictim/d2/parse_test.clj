@@ -456,3 +456,26 @@
                   "layout-engine" "elk"}}}
                {"direction" "right"}
                ["x" "->" "y"]))))))
+
+
+(deftest connection-references
+  (testing "connection references can be parsed."
+    (let [d2 "lady 1
+              lady 2
+
+              barbie
+
+              lady 1 -> barbie: hi barbie
+              lady 2 -> barbie: hi barbie
+
+              (lady* -> barbie)[*].style.stroke: pink"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["lady 1"]
+               ["lady 2"]
+               ["barbie"]
+               ["lady 1" "->" "barbie" "hi barbie"]
+               ["lady 2" "->" "barbie" "hi barbie"]
+               {["lady*" "->" "barbie" ["*"]] {"style.stroke" "pink"}}))))))
