@@ -8,7 +8,6 @@
 - [ ] Add note to syntax wiki about $ character; needs to be single quoted
 - [x] add class as a d2 keyword: validate-fn map?
 - [x] test handling of .class endings to d2 keys
-- [ ] (a -> b)[0].class: something -> edge refs
 - [x] write classes tests for both compilation and parsing.
 - [x] positions
 
@@ -26,12 +25,11 @@
 - [?] imports
 - [ ] layers, scenarios, steps
 - [ ] array notation (see classes, globs, SQL tables]
-- [x] conn-refs  <----next up!
+- [x] conn-refs
 - [ ] & character (globs)
 - [ ] lists in globs. also see vars for example.
 - [x] . character in quoted keys
 - [ ] parse line returns at end of d2 string
-- [ ] parse shape/container definitions in one 'bravo team.shape: person'
 
 ### design thoughts
 

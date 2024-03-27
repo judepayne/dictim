@@ -57,7 +57,7 @@
 
 ;; d2's grammar
 
-(defn- grammar []
+(defn- grammar-old []
   (str
    "<D2> = elements
     elements = <sep*> (element (empty-lines | <sep>))* element <sep*>
@@ -131,6 +131,94 @@
     curlyo = '{'
     curlyc = '}'
     <period> = '.'
+
+    s = #' *'
+    <d2-keyword> =" (at/d2-keys)))
+
+
+;; ctr-keys, conn-keys, attr-keys. unclear about single-quote
+(def all-key-bans
+  ["hash" "period" "semi" "colon" "line-return" "double-quote"])
+
+(def ctr-key-bans
+  (concat all-key-bans
+          ["glob" "vars-lit" "amp"]))
+
+(def conn-key-bans
+  (concat all-key-bans
+          ["hyphen" "l-arrow" "r-arrow" "vars-lit" "amp"]))
+
+(def attr-key-bans all-key-bans)
+
+
+(defn alt [alts]
+  (str "("
+       (apply str
+              (interpose " | " alts))
+       ")"))
+
+(defn neg [s] (str "!" s))
+
+
+(defn- grammar []
+  (str
+   "<D2> = elements
+    elements = <sep*> (element (empty-lines | <sep>))* element <sep*>
+    <contained> = <sep*> (element (empty-lines | <sep>))* element <sep*>
+    <element> = elem
+
+    <elem> = ctr
+
+ 
+    ctr = key colon-label? (<curlyo> <sep*> contained <s> <curlyc>)?
+ 
+    vars-lit = 'vars'
+
+    (* keys *)
+    glob = '*'
+    key = (" (-> ctr-key-bans alt neg) " ctr-key period)* key-part-last
+    ctr-key = #'.'* 
+    <key-part> = #'^(?!.*(?:-[>-]|<-))[^\\'\\\";:.\\n]+'
+    <key-part-last> = <s> #'" key-reg "'
+
+    boo = (!boo-banned boo-allowed)+
+    boo-banned = " (alt ctr-key-bans) "
+    <boo-allowed> = #'.'
+    
+
+
+    (* labels *)
+    <labels> = label | block | typescript
+    label = lbl | subst
+    <subst> = <s> #'^(?!^\\s*$)([^${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
+    <lbl> = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
+    val = v | subst
+    <v> = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
+    <colon-label> = (<colon> <s> | <colon> labels)
+    block = <s> '|' #'[^|]+' '|'
+    typescript = <s> ts-open ts ts-close <s>
+    <ts> = #'[\\s\\S]+?(?=\\|\\|\\||`\\|)'
+    ts-open = '|||' | '|`'
+    ts-close = '|||' | '`|'
+ 
+    (* building blocks *)
+    <any> = #'.'
+    <any-key> = #'[^.:;{\\n]'
+    empty-lines = sep sep+
+    sep = <#'[^\\S\\r\\n]*\\r?\\n'>
+    <at-sep> = sep | semi
+    colon = ':'
+    <semi> = ';'
+    <hash> = '#'
+    curlyo = '{'
+    curlyc = '}'
+    <period> = '.'
+    <single-quote> = '\\''
+    <hyphen> = '-'
+    <l-arrow> = '<'
+    <r-arrow> = '>'
+    <double-quote> = '\\\"'
+    <line-return> = '\\n'
 
     s = #' *'
     <d2-keyword> =" (at/d2-keys)))
