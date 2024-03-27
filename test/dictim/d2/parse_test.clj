@@ -361,7 +361,26 @@
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
-             '(["a" ["b" ["c"]]] {"**.style.border-radius" 7}))))))
+             '(["a" ["b" ["c"]]] {"**.style.border-radius" 7})))))
+  (testing "can parse & (filters what globs can target"
+    (let [d2 "bravo team.shape: person
+              charlie team.shape: person
+              command center.shape: cloud
+              hq.shape: rectangle
+
+              *: {
+                &shape: person
+                style.multiple: true
+              }"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"bravo team.shape" "person"}
+               {"charlie team.shape" "person"}
+               {"command center.shape" "cloud"}
+               {"hq.shape" "rectangle"}
+               {"*" {"&shape" "person" "style.multiple" true}}))))))
 
 
 (deftest vars

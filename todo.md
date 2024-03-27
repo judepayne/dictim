@@ -30,6 +30,8 @@
 - [ ] & character (globs)
 - [ ] lists in globs. also see vars for example.
 - [x] . character in quoted keys
+- [ ] parse line returns at end of d2 string
+- [ ] parse shape/container definitions in one 'bravo team.shape: person'
 
 ### design thoughts
 

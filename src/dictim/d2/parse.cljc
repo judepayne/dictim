@@ -42,7 +42,7 @@
 (def key-reg
   (reg-gen
    at/d2-attributes
-   '("--" "->" "<-")
+   '("--" "->" "<-" "\\*")
    ":;.\n>"
    false))
 
@@ -64,7 +64,7 @@
     <contained> = <sep*> (element (empty-lines | <sep>))* element <sep*>
     <element> = list | elem
 
-    <elem> = var-root | ctr | comment | ctr | attr | conn
+    <elem> = var-root | ctr | comment | attr | conn
 
     list = (elem <semi>+)+ elem <semi>*
     ctr = key colon-label? (<curlyo> <sep*> contained <s> <curlyc>)?
@@ -76,7 +76,7 @@
 
     conn-ref = <'('> <s> ref-key <s> dir <s> ref-key <s> <')'>
                <'['> array-val <']'> conn-ref-attr-keys?
-    conn-ref-attr-keys = (<period> d2-keyword)*
+    conn-ref-attr-keys = (<period> d2-keyword)+
     ref-key = #'^[^;:.\\n\\<>\\-)]+'
     array-val = #'(\\d|\\*)+'
 
@@ -93,13 +93,14 @@
     <direction> = '--' | '->' | '<-' | '<->'
  
     (* keys *)
-    K = key | at-key
+    glob = '*'
+    amp = '&'
     key = !hash !var-reserved (key-part period)* key-part-last
     <key-part> = #'^(?!.*(?:-[>-]|<-))[^\\'\\\";:.\\n]+'
     <key-part-last> = <s> #'" key-reg "'
     at-key = (at-part period)* at-part-last
-    <at-part> = key-part | d2-keyword
-    <at-part-last> = d2-keyword
+    <at-part> = key-part | d2-keyword | glob
+    <at-part-last> = amp? d2-keyword | glob
     ekey = !hash (ekey-part period)* ekey-part-last
     <ekey-part> = #'^[^;:.\\n\\-<\\[(]+'
     <ekey-part-last> = <s> #'" ekey-reg "'
@@ -218,6 +219,8 @@
                                 :conn-ref))))
                    ([k lbl m] ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
+           :glob (fn [g] g)
+           :amp (fn [a] a)
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
            :var-key (fn [v-k] v-k)
            :var (fn [k v] (with-tag {k v} :vars))
