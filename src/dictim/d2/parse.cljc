@@ -7,231 +7,155 @@
             [dictim.attributes :as at]
             [dictim.utils :refer [error try-parse-primitive]]))
 
-;; regexes required to parse d2
-
-(defn- reg-gen
-  "Generates a regex (for matching keys) where the string:
-   - can't be one of not-in - a sequence of strings
-   - can't contain any of the substrings cant-contain
-   - matches up until any of the delim-chars"
-  [not-in cant-contain delim-chars edge?]
-  (let [not-fn
-        (fn [ns]
-          (apply
-           str
-           (interpose
-            "|"(map
-                #(if edge?
-                   (str % "|" % "[ ].*")
-                   (str % "|" % "[" (str delim-chars) "][\\s\\S]*"))
-                ns))))
-        cant-fn
-        (fn [ns]
-          (apply str (interpose "|" (map #(str %) ns))))]
-    (str
-     "^(?!(?:"
-     (not-fn not-in)
-     ")$"
-     (when cant-contain
-       (str "|.*(?:" (cant-fn cant-contain) ")"))
-     ")[^"
-     delim-chars
-     "]+")))
-
-
-(def key-reg
-  (reg-gen
-   at/d2-attributes
-   '("--" "->" "<-" "\\*")
-   ":;.\n>"
-   false))
-
-
-(def ekey-reg
-  (reg-gen
-   at/d2-attributes
-   nil
-   ".\\-<>\n()"
-   true))
-
-
 ;; d2's grammar
 
-(defn- grammar-old []
-  (str
-   "<D2> = elements
-    elements = <sep*> (element (empty-lines | <sep>))* element <sep*>
-    <contained> = <sep*> (element (empty-lines | <sep>))* element <sep*>
-    <element> = list | elem
+;; the sets of banned chars required in the grammar.
+(def base-bans
+  ["hash" "period" "semi" "colon" "line-return" "double-quote"
+   "curlyo" "curlyc"])
 
-    <elem> = var-root | ctr | comment | attr | conn
-
-    list = (elem <semi>+)+ elem <semi>*
-    ctr = key colon-label? (<curlyo> <sep*> contained <s> <curlyc>)?
-    comment = <s> <hash> label
-
-    attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
-    attr = <s> (at-key | conn-ref) <s> <colon> <s> (val | attr-label? attrs)
-    attr-label = label
-
-    conn-ref = <'('> <s> ref-key <s> dir <s> ref-key <s> <')'>
-               <'['> array-val <']'> conn-ref-attr-keys?
-    conn-ref-attr-keys = (<period> d2-keyword)+
-    ref-key = #'^[^;:.\\n\\<>\\-)]+'
-    array-val = #'(\\d|\\*)+'
-
-    vars = <curlyo> <at-sep*> (var <at-sep+>)* var <at-sep*> <s> <curlyc>
-    var-root = <s> 'vars' <s> <colon> <s> vars
-    var = <s> var-key <s> <colon> <s> (val | vars)
-    var-key = !hash vk
-    <vk> = #'[^:;\\n{}]+'
-    var-reserved = 'vars'
- 
-    conn = <s> (ekey dir)+ <s> key colon-label? attrs?
-    dir = <contd?> <s> direction
-    contd = #'--\\\\\n'
-    <direction> = '--' | '->' | '<-' | '<->'
- 
-    (* keys *)
-    glob = '*'
-    amp = '&'
-    key = !hash !var-reserved (key-part period)* key-part-last
-    <key-part> = #'^(?!.*(?:-[>-]|<-))[^\\'\\\";:.\\n]+'
-    <key-part-last> = <s> #'" key-reg "'
-    at-key = (at-part period)* at-part-last
-    <at-part> = key-part | d2-keyword | glob
-    <at-part-last> = amp? d2-keyword | glob
-    ekey = !hash (ekey-part period)* ekey-part-last
-    <ekey-part> = #'^[^;:.\\n\\-<\\[(]+'
-    <ekey-part-last> = <s> #'" ekey-reg "'
-
-    (* labels *)
-    <labels> = label | block | typescript
-    label = lbl | subst
-    <subst> = <s> #'^(?!^\\s*$)([^${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
-    <lbl> = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
-    val = v | subst
-    <v> = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
-    <colon-label> = (<colon> <s> | <colon> labels)
-    block = <s> '|' #'[^|]+' '|'
-    typescript = <s> ts-open ts ts-close <s>
-    <ts> = #'[\\s\\S]+?(?=\\|\\|\\||`\\|)'
-    ts-open = '|||' | '|`'
-    ts-close = '|||' | '`|'
- 
-    (* building blocks *)
-    <any> = #'.'
-    <any-key> = #'[^.:;{\\n]'
-    empty-lines = sep sep+
-    sep = <#'[^\\S\\r\\n]*\\r?\\n'>
-    <at-sep> = sep | semi
-    colon = ':'
-    <semi> = ';'
-    <hash> = '#'
-    curlyo = '{'
-    curlyc = '}'
-    <period> = '.'
-
-    s = #' *'
-    <d2-keyword> =" (at/d2-keys)))
-
-
-;; ctr-keys, conn-keys, attr-keys. unclear about single-quote
-(def all-key-bans
-  ["hash" "period" "semi" "colon" "line-return" "double-quote"])
 
 (def ctr-key-bans
-  (concat all-key-bans
-          ["glob" "vars-lit" "amp"]))
+  (concat base-bans
+          ["glob" "amp" "l-arrow" "r-arrow"]))
+
 
 (def conn-key-bans
-  (concat all-key-bans
-          ["hyphen" "l-arrow" "r-arrow" "vars-lit" "amp"]))
-
-(def attr-key-bans all-key-bans)
+  (concat base-bans
+          ["hyphen" "l-arrow" "r-arrow" "amp"]))
 
 
-(defn alt [alts]
-  (str "("
-       (apply str
-              (interpose " | " alts))
-       ")"))
+(def attr-key-bans
+  (concat base-bans
+          ["bracketo" "bracketc"]))  ;;faciliatate differentiation from conn-refs
 
-(defn neg [s] (str "!" s))
+
+(def attr-val-bans ["semi" "line-return"])
+
+
+(def conn-ref-key-bans conn-key-bans)
+
+
+(def label-bans base-bans)
+
+
+(def substitution-bans base-bans)
+
+
+(defn alt
+  "Return an instaparse expression which alts the input."
+  [alts]
+  (str "(" (apply str (interpose " | " alts)) ")"))
+
+
+(def bans
+  {"hash" "#"
+   "period" ""
+   })
+
+
+(defn reg-banned [bans]
+  )
 
 
 (defn- grammar []
   (str
-   "<D2> = elements
+   "(* high level structure *)
+    <D2> = elements
     elements = <sep*> (element (empty-lines | <sep>))* element <sep*>
     <contained> = <sep*> (element (empty-lines | <sep>))* element <sep*>
-    <element> = elem
+    <element> = list | elem
 
-    <elem> = ctr
+    <elem> = vars | ctr | attr | comment | conn
 
- 
-    ctr = key colon-label? (<curlyo> <sep*> contained <s> <curlyc>)?
- 
-    vars-lit = 'vars'
+    comment = <s> <hash> lbl
+    list = (elem <semi>+)+ elem <semi>*
 
-    (* keys *)
-    glob = '*'
-    key = (" (-> ctr-key-bans alt neg) " ctr-key period)* key-part-last
-    ctr-key = #'.'* 
-    <key-part> = #'^(?!.*(?:-[>-]|<-))[^\\'\\\";:.\\n]+'
-    <key-part-last> = <s> #'" key-reg "'
-
-    boo = (!boo-banned boo-allowed)+
-    boo-banned = " (alt ctr-key-bans) "
-    <boo-allowed> = #'.'
+    (* containers - including shapes *)
+    ctr = ctr-key colon-label? (<curlyo> <sep*> contained <s> <curlyc>)?
+    ctr-key = (ctr-key-part <period>)* ctr-key-part
+    ctr-key-part =  !(contains-dir | vars-lit | d2-keyword)
+                     (!ctr-key-banned-chars any)+
+    ctr-key-banned-chars = " (alt ctr-key-bans)  "
     
+    (* vars and attrs *)
+    vars = <s> vars-lit <s> <colon> <s> (attr-val | attr-label? attrs)
+    attr = <s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs)
+    attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
+    attr-key = (attr-key-part <period>)* attr-key-last | conn-ref
+    attr-key-part = !vars-lit (!attr-key-banned-chars any <s>)+
+    attr-key-last = d2-keyword
+    attr-key-banned-chars = " (alt attr-key-bans)  "
+    attr-label = label (* i.e. lbl, block or typescript *)
+    attr-val-banned-chars = " (alt attr-val-bans) "
+    attr-val = (!attr-val-banned-chars any)+
 
+    (* conn-refs - a special type of attr *)
+    conn-ref = <'('> <s> conn-ref-key <s> dir <s> conn-ref-key <s> <')'>
+               <'['> array-val <']'> conn-ref-attr-keys?
+    conn-ref-key = (!conn-ref-key-banned-chars any <s>)+
+    conn-ref-attr-keys = (<period> d2-keyword)+
+    conn-ref-key-banned-chars = " (alt conn-ref-key-bans)  "
+    array-val = #'\\d'
 
     (* labels *)
-    <labels> = label | block | typescript
-    label = lbl | subst
-    <subst> = <s> #'^(?!^\\s*$)([^${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
-    <lbl> = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
-    val = v | subst
-    <v> = <s> #'^(?!^\\s*$)[^;|{}\\n]+'
-    <colon-label> = (<colon> <s> | <colon> labels)
-    block = <s> '|' #'[^|]+' '|'
-    typescript = <s> ts-open ts ts-close <s>
-    <ts> = #'[\\s\\S]+?(?=\\|\\|\\||`\\|)'
-    ts-open = '|||' | '|`'
-    ts-close = '|||' | '`|'
- 
+    <colon-label> = (<colon> <s> | <colon> <s> label)
+    label = lbl | block | typescript
+    lbl = lbl-part | substitution | (lbl-part? substitution lbl-part?)+
+    lbl-part = #'[^;|{}\\n]+' (* greedy regex to avoid parser ambiguity *)
+    lbl-banned-chars = " (alt label-bans) "                
+    substitution = '${' (!substitution-banned-chars any)+ '}'
+    substitution-banned-chars = " (alt substitution-bans) "
+    block = <s> pipe (!pipe any)+ pipe <s>
+    typescript = <s> ts-open (!pipe any)+ ts-close <s>
+
+    (* connections *)
+    conn = <s> (conn-key dir)+ <s> conn-key colon-label? attrs?
+    conn-key = (conn-key-part <period>)* conn-key-part
+    conn-key-part = !d2-keyword (!conn-key-banned-chars any <s>)+
+    conn-key-banned-chars = " (alt conn-key-bans) "
+    dir = <contd?> <s> direction
+    contd = #'--\\\\\n'
+    <direction> = '--' | '->' | '<-' | '<->'
+
+    (* regex bans: for when single char bans are insufficient  *)
+    contains-dir = #'^.*(--|->|<-|<->).*$'
+
     (* building blocks *)
     <any> = #'.'
-    <any-key> = #'[^.:;{\\n]'
     empty-lines = sep sep+
     sep = <#'[^\\S\\r\\n]*\\r?\\n'>
     <at-sep> = sep | semi
+    vars-lit = 'vars'
     colon = ':'
     <semi> = ';'
     <hash> = '#'
     curlyo = '{'
     curlyc = '}'
+    bracketo = '('
+    bracketc = ')'
     <period> = '.'
+    <glob> = '*'
+    <amp> = '&'
     <single-quote> = '\\''
     <hyphen> = '-'
     <l-arrow> = '<'
     <r-arrow> = '>'
     <double-quote> = '\\\"'
     <line-return> = '\\n'
-
+    pipe = '|'
+    ts-open = '|||' | '|`'
+    ts-close = '|||' | '`|'
     s = #' *'
-    <d2-keyword> =" (at/d2-keys)))
+    <d2-keyword> =(" (at/d2-keys) ")"))
 
+
+"olly: |jude ${cat} me ${dog}| {style: 1}\n
+#I'm a comment\n jude: simple man {Bridget: lovely daughter\nfill: pink}\n\n"
 
 #?(:bb (defn parse-d2 [d2] (insta/parse (insta/parser (grammar)) d2))
    :clj (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
    :cljs (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar)))
-
-(defmacro dbg [body]
-  `(let [x# ~body]
-     (println "dbg:" '~body "=" x#)
-     x#))
 
 (defn cond-keyword
   "Converts to keyword where possible."
@@ -246,7 +170,7 @@
 #?(:clj
    (defn num-parses [d2]
      (-> (insta/parser (grammar))
-         (insta/parse d2)
+         (insta/parses d2)
          count)))
 
 
@@ -254,6 +178,16 @@
   (and (vector? k)
        (= :conn-ref (first k))))
 
+
+(defmacro dbg [body]
+  `(let [x# ~body]
+     (println "dbg:" '~body "=" x#)
+     x#))
+
+
+(defn dbg-identity [arg]
+  (println arg)
+  (identity arg))
 
 (defn dictim
   "Converts a d2 string to its dictim representation.
@@ -287,16 +221,45 @@
        (fn [p-tree]
          (insta/transform
 
-          {:label (fn [& parts] (label-fn (str/join parts)))
-           :block (fn [& parts] (str/join parts))
-           :key (fn [& parts] (key-fn (str/join parts)))
-           :at-key (fn [& parts] (key-fn (str/join parts)))
-           :ekey (fn [& parts] (key-fn (str/join parts)))
-           :dir (fn [dir] dir)
-           :ts-open (fn [o] o)
-           :ts-close (fn [c] c)
+          {:ctr-key-part (fn [& chars] (str/trim (str/join chars)))
+           :ctr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
+           :attr-key-part (fn [& chars] (str/trim (str/join chars)))
+           :attr-key-last identity
+           :attr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
+           :attr-val (fn [& chars]
+                       (-> chars
+                           str/join
+                           try-parse-primitive))
+           :conn-ref-key identity
+           :vars-lit (constantly "vars")
+           :var-key (fn [v-k] v-k)
+           :vars (fn [k v] (with-tag {(key-fn k) v} :vars))
+           :substitution (fn [& chars] (str/join chars))
+           :lbl-part identity
+           :lbl (fn [& parts] (label-fn (str/join parts)))
+           :label identity
+           :ts-open identity
+           :ts-close identity
            :typescript (fn [& parts] (str/join parts))
-           :val (fn [v] (try-parse-primitive v))
+           :pipe identity
+           :block (fn [& parts] (str/join parts))
+           :comment (fn [c] (with-tag [:comment (str/triml c)] :comment))
+           :list (fn [& elems]
+                   (let [elems'
+                         (if (and flatten-lists?
+                                  (every? (fn [item] (= 1 (count item))) elems))
+                           (map first elems)
+                           elems)]
+                     (with-tag (into [:list] elems') :list)))
+           :dir identity
+           :conn-key (fn [& parts] (key-fn (str/join (interpose "." parts))))
+           :conn-key-part (fn [& parts] (str/join parts))
+           :conn (fn [& parts] (with-tag (vec parts) :conn))
+           :array-val (fn [ar-val] (try-parse-primitive ar-val))
+           :conn-ref-attr-keys (fn [& parts]
+                                 (str/join (interpose "." parts)))           
+
+
            :attr-label identity
            :attr (fn
                    ([k v] (if (not (conn-ref? k))
@@ -310,11 +273,6 @@
            :glob (fn [g] g)
            :amp (fn [a] a)
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
-           :var-key (fn [v-k] v-k)
-           :var (fn [k v] (with-tag {k v} :vars))
-           :vars (fn [& vars] (with-tag (into {} vars) :vars))
-           :var-root (fn [k v] (with-tag {k v} :vars))
-           :comment (fn [c] (with-tag [:comment (str/triml c)] :comment))
            :ctr (fn [& parts]
                   (let [tag (cond
                               (str/includes? (first parts) ".")    :ctr
@@ -325,17 +283,8 @@
                             attrs (apply merge ms)]
                         (with-tag (if attrs (conj (into [] kl) attrs) (into [] kl)) tag))
                       (with-tag (vec (handle-empty-lines parts)) tag))))
-           :conn (fn [& parts] (with-tag (vec parts) :conn))
-           :list (fn [& elems] (let [elems' (if (and flatten-lists?
-                                                     (every? (fn [item] (= 1 (count item))) elems))
-                                              (map first elems)
-                                              elems)]
-                                 (with-tag (into [:list] elems') :list)))
-                                        ;           :conn-ref (fn [& parts] (str/join parts))
-           :ref-key (fn [k] (try-parse-primitive (str/trim k)))
-           :array-val (fn [ar-val] (try-parse-primitive ar-val))
-           :conn-ref-attr-keys (fn [& parts]
-                                 (str/join (interpose "." parts)))
+
+
            :empty-lines (fn [& seps] (into [:empty-lines (dec (count seps))]))
            :elements (fn [& elems] (vec (handle-empty-lines elems)))
            :contained (fn [& elems] (println elems) (vec (handle-empty-lines elems)))}

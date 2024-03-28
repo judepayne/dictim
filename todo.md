@@ -10,6 +10,7 @@
 - [x] test handling of .class endings to d2 keys
 - [x] write classes tests for both compilation and parsing.
 - [x] positions
+- [ ] add regex bans section to grammar (for '--' to start)
 
 
 
