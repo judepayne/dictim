@@ -6,25 +6,62 @@
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
             #?(:clj [lambdaisland.deep-diff2 :as ddiff])
             [dictim.attributes :as at]
-            [dictim.utils :refer [error try-parse-primitive line-by-line]]))
+            [dictim.utils :refer [error try-parse-primitive line-by-line prn-repl]]))
 
-;; d2's grammar
+;; d2 parser v2
 
-;; d2 has a fairly free-form grammar. i.e. lots of options for expressing something.
-;; In this grammar, we've tried to keep the use of regexes down to a minimum to
-;; keep it more comprehensible/ extensible in the future.
-;; d2's grammar is texty and can have a variable amount of whitespace between
-;; the different tokens. Whitespace can cause parser ambiguity since instaparse can
-;; choose to put intermediate whitespace onto the end of the first token or at
-;; the start of the succeeding. In order to keep ambiguity are control,
-;; it is occasionally necessary to resort to the use of greedy regex expressions
-;; which suck up the target token and following whitespace up until the start
-;; of the following token.
-;; In order to keep the clarity of the overall grammar, most of the token matching
-;; expressions have been broken out of the main grammar itself below...
+;; This rewrite of the parser focuses on good future extensibility. To support that;
+;; - Regexes are kept to a minimum and where used, are formed clearly outside of the grammar.
+;; - Different grammar concepts are differentiated explicitly, rather than the v1 approach
+;;   that minimised the length of the grmmar but clarity suffered from opaque re-use.
+;;   For instance, in v2, vars, classes and connection-references are all explicit
+;;   concepts discrete from attrs which they resemble. This approach will allow for
+;;   future specific fine tuning of the grammar. The downside to this approach is that
+;;   the grammar is longer than before.
 
 
-;; the sets of banned chars required in the grammar.
+;; ------ Literals -------
+;; chars & words used as token literals and in regexes in the grammar
+;; :reg is the regex value (with proper escaping for instaparse)
+;; :lit is the value to be used as a literal (if different to :reg)
+;; :hide? indicates whether to token should be hidden e.g. <hidden-token>
+;; :not-lit? means not to be used as a literal inserted into the grammar
+(def char-literals
+  {"hash" {:reg "#" :hide? true}
+   "period" {:reg "." :hide? true}
+   "colon" {:reg ":" :hide? false}
+   "semi" {:reg ";" :hide? true}
+   "curlyo" {:reg "{" :hide? false}
+   "curlyc" {:reg "}" :hide? false}
+   "bracketo" {:reg "(" :hide? false}
+   "bracketc" {:reg ")" :hide? false}
+   "glob" {:reg "*" :hide? true}
+   "amp" {:reg "&" :hide? true}
+   "single-quote" {:reg "\\'" :not-lit? true}
+   "double-quote" {:reg "\\\"" :not-lit? true}
+   "hyphen" {:reg "\\-" :hide? true :lit "-"}
+   "l-arrow" {:reg "<" :hide? true}
+   "r-arrow" {:reg ">" :hide? true}
+   "line-return" {:reg "\\n" :not-lit? true}
+   "pipe" {:reg "|" :hide? false}
+   "dollar" {:reg "$" :not-lit? true}})
+
+
+(def word-literals
+  {"dir-left" {:reg "<-" :not-lit? true}
+   "dir-right" {:reg "->" :not-lit? true}
+   "dir-both" {:reg "<->" :not-lit? true}
+   "dir-neither" {:reg "--" :not-lit? true}
+   "vars-lit" {:reg "vars" :hide? false}
+   "classes-lit" {:reg "classes" :hide? false}
+   "ts-open" {:reg ["|||" "|`"] :hide? false}
+   "ts-close" {:reg ["|||" "`|"] :hide? false}})
+
+
+(def literals (merge char-literals word-literals))
+
+
+;; the sets of 'banned' chars required in the grammar.
 (def base-bans
   ["period" "semi" "colon" "line-return" "curlyo" "curlyc"])
 
@@ -49,50 +86,10 @@
 
 (def substitution-bans base-bans)
 
-
-(defn alt
-  "Return an instaparse expression which alts the input."
-  [alts]
-  (str "(" (apply str (interpose " | " alts)) ")"))
-
-;; The value of each key is escaped as required to be inserted into
-;; an instaparse grammar.
-(def insta-literals
-  {"hash" "#"
-   "period" "."
-   "colon" ":"
-   "semi" ";"
-   "curlyo" "{"
-   "curlyc" "}"
-   "bracketo" "("
-   "bracketc" ")"
-   "glob" "*"
-   "amp" "&"
-   "single-quote" "\\'"
-   "double-quote" "\\\""
-   "hyphen" "\\-"
-   "l-arrow" "<"
-   "r-arrow" ">"
-   "line-return" "\\n"
-   "pipe" "|"
-   "dollar" "$"
-   "dir-left" "<-"
-   "dir-right" "->"
-   "dir-both" "<->"
-   "dir-neither" "--"
-   "vars-lit" "vars"})
-
-
-(defn insta-reg
-  "Generates a regex that matches any chars apart from the banned;
-   a sequence of char names. See map 'insta-quoted-chars' above."
-  [banned]
-  (let [chars' (map #(get insta-literals %) banned)]
-    (str "#'[^" (apply str chars') "]*'")))
-
-
 (def dirs ["dir-left" "dir-right" "dir-both" "dir-neither"])
 
+
+;; Functions that generate output to be inserted into the grammar
 
 (defn insta-reg
   "Generates a regex that matches any chars apart from the banned;
@@ -102,22 +99,37 @@
    to ban these substrings also. Unlike the chars specified in the
    banned argument, negative-lookaheads can be (one than one character)
    strings."
-  [banned & {:keys [negative-lookaheads]
-             :or {negative-lookaheads nil}}]
-  (let [chars' (map #(get insta-literals %) banned)
+  [banned-chars & {:keys [banned-words]
+                   :or {banned-words nil}}]
+  (let [chars' (map #(-> (get literals %) :reg) banned-chars)
         char-ban-reg (str "[^" (apply str chars') "]")]
-    (if negative-lookaheads
-      (let [neg-literals (map #(get insta-literals %) negative-lookaheads)
+    (if banned-words
+      (let [neg-literals (map #(-> (get literals %) :reg) banned-words)
             alt-literals (apply str (interpose "|" neg-literals))]
         (str "#'((?!(?:" alt-literals "))" char-ban-reg ")+'"))
       (str "#'" char-ban-reg "+'"))))
 
 
-;; attr = normal-attr | conn-ref
-;; must include the attr-val in the structure to migrate
-;; the conn-ref-attr-keys (d2 keywords) to the val in dictim
-;; time processing
-;; attr val itself can be a val or attrs, i.e. nested.
+(defn- format-literal-val
+  [lit]
+  (if (vector? lit)
+    (apply str (interpose " | "
+                          (map #(str "'" % "'") lit)))
+    (str "'" lit "'")))
+
+
+;; The literals chunk of the grammar
+(def literals-insert
+  (apply str
+         (interpose "\n    "
+                    (map (fn [[k m]]
+                           (let [v-lit (get m :lit (get m :reg))]
+                             (str (if (:hide? m)
+                                    (str "<" k ">")
+                                    k)
+                                  " = "
+                                  (format-literal-val v-lit))))
+                         (filter (fn [[_ v]] (not (:not-lit? v))) literals)))))
 
 
 (defn- grammar []
@@ -130,17 +142,14 @@
 
     <elem> = classes | vars | ctr | attr | comment | conn
 
-    break = empty-line+ line-return? | line-return
-    empty-line = line-return line-return
-    line-return = <#'[^\\S\\r\\n]*\\r?\\n'>
-
+    (* lists and comments *)
     list = (elem <semi>+)+ elem <semi>*
     comment = <s> <hash> lbl
 
     (* containers - including shapes *)
     ctr = <s> ctr-key colon-label? (<curlyo> <break?> contained <s> <curlyc>)?
     ctr-key = !classes-lit !hash !vars-lit (ctr-key-part <period>)* ctr-key-part
-    ctr-key-part =  !d2-keyword " (insta-reg ctr-key-bans :negative-lookaheads dirs) "
+    ctr-key-part =  !d2-keyword " (insta-reg ctr-key-bans :banned-words dirs) "
 
     (* vars, classes and attrs *)
     (* vars *)
@@ -166,7 +175,7 @@
     attr-label = label (* i.e. lbl, block or typescript *)
     attr-val = "(insta-reg attr-val-bans) " | substitution
 
-      (* conn-refs - a special type of attr *)
+    (* conn-refs - a special type of attr *)
     <conn-ref> = <s> conn-ref-key conn-ref-val
     conn-ref-key = <'('> <s> crk <s> dir <s> crk <s> <')'> <'['> array-val <']'>
     conn-ref-val = conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) 
@@ -193,30 +202,17 @@
 
     (* building blocks *)
     <any> = #'.'
-    empty-lines = sep sep+
-    sep = <#'[^\\S\\r\\n]*\\r?\\n'>
-    vars-lit = 'vars'
-    classes-lit = 'classes'
-    colon = ':'
-    <semi> = ';'
-    <hash> = '#'
-    curlyo = '{'
-    curlyc = '}'
-    bracketo = '('
-    bracketc = ')'
-    <period> = '.'
-    <glob> = '*'
-    <amp> = '&'
-    <single-quote> = '\\''
-    <hyphen> = '-'
-    <l-arrow> = '<'
-    <r-arrow> = '>'
-    <double-quote> = '\\\"'
-    pipe = '|'
-    ts-open = '|||' | '|`'
-    ts-close = '|||' | '`|'
+    <d2-keyword> =(" (at/d2-keys) ")
+    break = empty-line+ line-return? | line-return
+    empty-line = line-return line-return
+    line-return = <#'[^\\S\\r\\n]*\\r?\\n'>
     s = #' *'
-    <d2-keyword> =(" (at/d2-keys) ")"))
+
+    (* literals *)
+    <single-quote> = '\\''   (* can't insert due to clojure/ instaparse escaping diffs *)
+    <double-quote> = '\\\"'  (* ditto *)
+    " literals-insert "
+    "))
 
 
 #?(:bb (defn parse-d2 [d2] (insta/parse (insta/parser (grammar)) d2))
@@ -251,11 +247,6 @@
        (if (= 1 (count parses))
          nil
          (ddiff/pretty-print (apply ddiff/diff (map first (take 2 parses))))))))
-
-
-(defn- conn-ref? [k]
-  (and (vector? k)
-       (= :conn-ref (first k))))
 
 
 (defmacro dbg [body]
