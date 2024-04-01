@@ -4,40 +4,48 @@
   (:require [clojure.string :as str]
             #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
+            #?(:clj [lambdaisland.deep-diff2 :as ddiff])
             [dictim.attributes :as at]
-            [dictim.utils :refer [error try-parse-primitive]]))
+            [dictim.utils :refer [error try-parse-primitive line-by-line]]))
 
 ;; d2's grammar
 
+;; d2 has a fairly free-form grammar. i.e. lots of options for expressing something.
+;; In this grammar, we've tried to keep the use of regexes down to a minimum to
+;; keep it more comprehensible/ extensible in the future.
+;; d2's grammar is texty and can have a variable amount of whitespace between
+;; the different tokens. Whitespace can cause parser ambiguity since instaparse can
+;; choose to put intermediate whitespace onto the end of the first token or at
+;; the start of the succeeding. In order to keep ambiguity are control,
+;; it is occasionally necessary to resort to the use of greedy regex expressions
+;; which suck up the target token and following whitespace up until the start
+;; of the following token.
+;; In order to keep the clarity of the overall grammar, most of the token matching
+;; expressions have been broken out of the main grammar itself below...
+
+
 ;; the sets of banned chars required in the grammar.
 (def base-bans
-  ["hash" "period" "semi" "colon" "line-return" "double-quote"
-   "curlyo" "curlyc"])
-
+  ["period" "semi" "colon" "line-return" "curlyo" "curlyc"])
 
 (def ctr-key-bans
   (concat base-bans
           ["glob" "amp" "l-arrow" "r-arrow"]))
 
-
 (def conn-key-bans
   (concat base-bans
           ["hyphen" "l-arrow" "r-arrow" "amp"]))
-
 
 (def attr-key-bans
   (concat base-bans
           ["bracketo" "bracketc"]))  ;;faciliatate differentiation from conn-refs
 
+(def attr-val-bans ["curlyo" "curlyc" "semi" "line-return"])
 
-(def attr-val-bans ["semi" "line-return"])
-
-
-(def conn-ref-key-bans conn-key-bans)
-
+(def conn-ref-key-bans
+  (concat conn-key-bans ["bracketo" "bracketc"]))
 
 (def label-bans base-bans)
-
 
 (def substitution-bans base-bans)
 
@@ -47,86 +55,148 @@
   [alts]
   (str "(" (apply str (interpose " | " alts)) ")"))
 
-
-(def bans
+;; The value of each key is escaped as required to be inserted into
+;; an instaparse grammar.
+(def insta-literals
   {"hash" "#"
-   "period" ""
-   })
+   "period" "."
+   "colon" ":"
+   "semi" ";"
+   "curlyo" "{"
+   "curlyc" "}"
+   "bracketo" "("
+   "bracketc" ")"
+   "glob" "*"
+   "amp" "&"
+   "single-quote" "\\'"
+   "double-quote" "\\\""
+   "hyphen" "\\-"
+   "l-arrow" "<"
+   "r-arrow" ">"
+   "line-return" "\\n"
+   "pipe" "|"
+   "dollar" "$"
+   "dir-left" "<-"
+   "dir-right" "->"
+   "dir-both" "<->"
+   "dir-neither" "--"
+   "vars-lit" "vars"})
 
 
-(defn reg-banned [bans]
-  )
+(defn insta-reg
+  "Generates a regex that matches any chars apart from the banned;
+   a sequence of char names. See map 'insta-quoted-chars' above."
+  [banned]
+  (let [chars' (map #(get insta-literals %) banned)]
+    (str "#'[^" (apply str chars') "]*'")))
+
+
+(def dirs ["dir-left" "dir-right" "dir-both" "dir-neither"])
+
+
+(defn insta-reg
+  "Generates a regex that matches any chars apart from the banned;
+   a sequence of char names. See map 'insta-quoted-chars' above.
+   When a sequence of :negative-lookaheads are also supplied, these
+   are added to negative lookahead section of the regex and function
+   to ban these substrings also. Unlike the chars specified in the
+   banned argument, negative-lookaheads can be (one than one character)
+   strings."
+  [banned & {:keys [negative-lookaheads]
+             :or {negative-lookaheads nil}}]
+  (let [chars' (map #(get insta-literals %) banned)
+        char-ban-reg (str "[^" (apply str chars') "]")]
+    (if negative-lookaheads
+      (let [neg-literals (map #(get insta-literals %) negative-lookaheads)
+            alt-literals (apply str (interpose "|" neg-literals))]
+        (str "#'((?!(?:" alt-literals "))" char-ban-reg ")+'"))
+      (str "#'" char-ban-reg "+'"))))
+
+
+;; attr = normal-attr | conn-ref
+;; must include the attr-val in the structure to migrate
+;; the conn-ref-attr-keys (d2 keywords) to the val in dictim
+;; time processing
+;; attr val itself can be a val or attrs, i.e. nested.
 
 
 (defn- grammar []
   (str
    "(* high level structure *)
     <D2> = elements
-    elements = <sep*> (element (empty-lines | <sep>))* element <sep*>
-    <contained> = <sep*> (element (empty-lines | <sep>))* element <sep*>
+    elements = break* (element break)* element? | break* | element
+    <contained> = (element break)* element? | break* | element
     <element> = list | elem
 
-    <elem> = vars | ctr | attr | comment | conn
+    <elem> = classes | vars | ctr | attr | comment | conn
 
-    comment = <s> <hash> lbl
+    break = empty-line+ line-return? | line-return
+    empty-line = line-return line-return
+    line-return = <#'[^\\S\\r\\n]*\\r?\\n'>
+
     list = (elem <semi>+)+ elem <semi>*
+    comment = <s> <hash> lbl
 
     (* containers - including shapes *)
-    ctr = ctr-key colon-label? (<curlyo> <sep*> contained <s> <curlyc>)?
-    ctr-key = (ctr-key-part <period>)* ctr-key-part
-    ctr-key-part =  !(contains-dir | vars-lit | d2-keyword)
-                     (!ctr-key-banned-chars any)+
-    ctr-key-banned-chars = " (alt ctr-key-bans)  "
-    
-    (* vars and attrs *)
-    vars = <s> vars-lit <s> <colon> <s> (attr-val | attr-label? attrs)
-    attr = <s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs)
-    attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
-    attr-key = (attr-key-part <period>)* attr-key-last | conn-ref
-    attr-key-part = !vars-lit (!attr-key-banned-chars any <s>)+
-    attr-key-last = d2-keyword
-    attr-key-banned-chars = " (alt attr-key-bans)  "
-    attr-label = label (* i.e. lbl, block or typescript *)
-    attr-val-banned-chars = " (alt attr-val-bans) "
-    attr-val = (!attr-val-banned-chars any)+
+    ctr = <s> ctr-key colon-label? (<curlyo> <break?> contained <s> <curlyc>)?
+    ctr-key = !classes-lit !hash !vars-lit (ctr-key-part <period>)* ctr-key-part
+    ctr-key-part =  !d2-keyword " (insta-reg ctr-key-bans :negative-lookaheads dirs) "
 
-    (* conn-refs - a special type of attr *)
-    conn-ref = <'('> <s> conn-ref-key <s> dir <s> conn-ref-key <s> <')'>
-               <'['> array-val <']'> conn-ref-attr-keys?
-    conn-ref-key = (!conn-ref-key-banned-chars any <s>)+
+    (* vars, classes and attrs *)
+    (* vars *)
+    vars = <s> vars-lit <s> <colon> <s> vars-content
+    <vars-content> = <curlyo> <break?> the-vars <s> <break>? <s> <curlyc>
+    the-vars = (var break)* var
+    var = <s> ctr-key <colon> <s> (var-val | vars-content)
+    var-val = "(insta-reg attr-val-bans) "
+
+    (* classes *)
+    classes = <s> classes-lit <s> <colon> <s> <curlyo> <at-sep*>
+              (class <at-sep*>)* <curlyc>
+    class = <s> ctr-key <s> <colon> <s> attrs
+
+    (* attrs *)
+    <at-sep> = break | semi
+    attr = std-attr | conn-ref
+    <std-attr> = (<s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs))
+    attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
+    attr-key = (attr-key-part <period>)* attr-key-last
+    attr-key-part = " (insta-reg attr-key-bans :negative-lookaheads ["vars-lit"]) "
+    attr-key-last = d2-keyword | glob | amp d2-keyword
+    attr-label = label (* i.e. lbl, block or typescript *)
+    attr-val = "(insta-reg attr-val-bans) " | substitution
+
+      (* conn-refs - a special type of attr *)
+    <conn-ref> = <s> conn-ref-key conn-ref-val
+    conn-ref-key = <'('> <s> crk <s> dir <s> crk <s> <')'> <'['> array-val <']'>
+    conn-ref-val = conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) 
+    crk = " (insta-reg conn-ref-key-bans) "
     conn-ref-attr-keys = (<period> d2-keyword)+
-    conn-ref-key-banned-chars = " (alt conn-ref-key-bans)  "
-    array-val = #'\\d'
+    array-val = #'\\d' | glob
 
     (* labels *)
     <colon-label> = (<colon> <s> | <colon> <s> label)
     label = lbl | block | typescript
-    lbl = lbl-part | substitution | (lbl-part? substitution lbl-part?)+
-    lbl-part = #'[^;|{}\\n]+' (* greedy regex to avoid parser ambiguity *)
-    lbl-banned-chars = " (alt label-bans) "                
-    substitution = '${' (!substitution-banned-chars any)+ '}'
-    substitution-banned-chars = " (alt substitution-bans) "
-    block = <s> pipe (!pipe any)+ pipe <s>
-    typescript = <s> ts-open (!pipe any)+ ts-close <s>
+    <lbl> = normal-label | substitution
+    <normal-label> = #'[^;|{}\\n]+' (* greedy regex to avoid parser ambiguity *)
+    <substitution> =  <s> #'^(?!^\\s*$)([^${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
+    block = <s> pipe #'[^|]+' pipe <s>
+    typescript = <s> ts-open #'[\\s\\S]+?(?=\\|\\|\\||`\\|)' ts-close <s>
 
     (* connections *)
     conn = <s> (conn-key dir)+ <s> conn-key colon-label? attrs?
     conn-key = (conn-key-part <period>)* conn-key-part
-    conn-key-part = !d2-keyword (!conn-key-banned-chars any <s>)+
-    conn-key-banned-chars = " (alt conn-key-bans) "
+    conn-key-part = !d2-keyword " (insta-reg conn-key-bans) " (* greedy regex *)
     dir = <contd?> <s> direction
     contd = #'--\\\\\n'
     <direction> = '--' | '->' | '<-' | '<->'
-
-    (* regex bans: for when single char bans are insufficient  *)
-    contains-dir = #'^.*(--|->|<-|<->).*$'
 
     (* building blocks *)
     <any> = #'.'
     empty-lines = sep sep+
     sep = <#'[^\\S\\r\\n]*\\r?\\n'>
-    <at-sep> = sep | semi
     vars-lit = 'vars'
+    classes-lit = 'classes'
     colon = ':'
     <semi> = ';'
     <hash> = '#'
@@ -142,16 +212,12 @@
     <l-arrow> = '<'
     <r-arrow> = '>'
     <double-quote> = '\\\"'
-    <line-return> = '\\n'
     pipe = '|'
     ts-open = '|||' | '|`'
     ts-close = '|||' | '`|'
     s = #' *'
     <d2-keyword> =(" (at/d2-keys) ")"))
 
-
-"olly: |jude ${cat} me ${dog}| {style: 1}\n
-#I'm a comment\n jude: simple man {Bridget: lovely daughter\nfill: pink}\n\n"
 
 #?(:bb (defn parse-d2 [d2] (insta/parse (insta/parser (grammar)) d2))
    :clj (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
@@ -166,12 +232,25 @@
     :otherwise item))
 
 
-;; a function that is only uses by the parse-test namespace
+;; Useful functions to debug the output of parsing
 #?(:clj
-   (defn num-parses [d2]
-     (-> (insta/parser (grammar))
-         (insta/parses d2)
-         count)))
+   (defn parses-d2 [d2 & kvs]    
+     (let [parser (insta/parser (grammar))]
+       (apply insta/parses parser d2 kvs))))
+
+
+#?(:clj
+   (defn num-parses [d2 & kvs]
+     (count (apply parses-d2 d2 kvs))))
+
+;; a function used to identify the cause of parser ambiguities
+#?(:clj
+   (defn ambig [d2]
+     (let [parses (-> (insta/parser (grammar))
+                      (insta/parses d2))]
+       (if (= 1 (count parses))
+         nil
+         (ddiff/pretty-print (apply ddiff/diff (map first (take 2 parses))))))))
 
 
 (defn- conn-ref? [k]
@@ -185,10 +264,6 @@
      x#))
 
 
-(defn dbg-identity [arg]
-  (println arg)
-  (identity arg))
-
 (defn dictim
   "Converts a d2 string to its dictim representation.
    Each dictim element returned's type is captured in the :tag key
@@ -198,23 +273,23 @@
      :label-fn           a modifier applied to each label.
      :flatten-lists?     if true, flattens lists where every element is a shape
                          with just a key, & no label or attrs.
-     :show-empty-lines?  If true, empty lines are hidden into the dictim output."
+     :retain-empty-lines?  If true, empty lines are retained in the dictim output."
   
-  [d2 & {:keys [key-fn label-fn flatten-lists? show-empty-lines?]
+  [d2 & {:keys [key-fn label-fn flatten-lists? retain-empty-lines?]
          :or {key-fn identity
               label-fn str/trim
               flatten-lists? false
-              show-empty-lines? false}}]
+              retain-empty-lines? false}}]
   (let [p-trees (parse-d2 d2)
         key-fn (comp key-fn str/trim)
         with-tag (fn [obj tag] (with-meta obj {:tag tag}))
-        handle-empty-lines (fn [elems] (filter
-                                        (fn [item]
-                                          (not (and (not show-empty-lines?)
-                                                    (seqable? item)
-                                                    (= :empty-lines (first item)))))
-                                        elems))]
-
+        process-breaks (fn [parts]
+                         (filter
+                          (fn [elem]
+                            (if (= :empty-line elem)
+                              (if retain-empty-lines? true false)
+                              true))
+                          (filter (complement nil?) parts)))]
     (if (insta/failure? p-trees)
       (throw (error (str "Could not parse: " (-> p-trees last second))))
       (mapcat
@@ -224,20 +299,30 @@
           {:ctr-key-part (fn [& chars] (str/trim (str/join chars)))
            :ctr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
            :attr-key-part (fn [& chars] (str/trim (str/join chars)))
-           :attr-key-last identity
+           :attr-key-last (fn [& parts] (str/join parts))
            :attr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
            :attr-val (fn [& chars]
                        (-> chars
                            str/join
+                           ;;str/trim
                            try-parse-primitive))
-           :conn-ref-key identity
+           :conn-ref-key (fn [crk1 dir crk2 ar-val]
+                           [crk1 dir crk2 [ar-val]])
+           :conn-ref-val (fn [p1 p2] {p1 p2})
+           :conn-ref-attr-keys (fn [& ks] (str/join (interpose "." ks)))
+           :crk (fn [k] (key-fn (str/trim k)))
+           :array-val (fn [ar-val] (try-parse-primitive ar-val))
            :vars-lit (constantly "vars")
-           :var-key (fn [v-k] v-k)
-           :vars (fn [k v] (with-tag {(key-fn k) v} :vars))
-           :substitution (fn [& chars] (str/join chars))
-           :lbl-part identity
-           :lbl (fn [& parts] (label-fn (str/join parts)))
-           :label identity
+           :the-vars (fn [& vars] (into {} (concat vars)))
+           :var (fn [k v] [k v])
+           ;; & _ below to catch :breaks
+           :vars (fn [k v & _] (with-tag {(key-fn k) v} :vars))
+           :var-val (fn [v] (try-parse-primitive v))
+           :class (fn [k v] (with-tag {k v} :class))
+           :classes (fn [k & kvs]
+                      (with-tag {k (apply merge kvs)} :classes))
+           :classes-lit identity
+           :label (fn [& parts] (label-fn (str/join parts)))
            :ts-open identity
            :ts-close identity
            :typescript (fn [& parts] (str/join parts))
@@ -255,39 +340,30 @@
            :conn-key (fn [& parts] (key-fn (str/join (interpose "." parts))))
            :conn-key-part (fn [& parts] (str/join parts))
            :conn (fn [& parts] (with-tag (vec parts) :conn))
-           :array-val (fn [ar-val] (try-parse-primitive ar-val))
-           :conn-ref-attr-keys (fn [& parts]
-                                 (str/join (interpose "." parts)))           
-
-
+           :line-return (constantly :line-return)
+           :empty-line (constantly :empty-line)
+           :break (fn [& brks] (first (filter #(= :empty-line %) brks)))
+           :elements (fn [& elems] (process-breaks elems))
            :attr-label identity
            :attr (fn
-                   ([k v] (if (not (conn-ref? k))
-                            (with-tag {k v} :attrs)
-                            (let [[_ k1 dir k2 ar-val at] k]
-                              (with-tag
-                                {[k1 dir k2 [ar-val]] {at v}}
-                                :conn-ref))))
+                   ([k v] (with-tag {k v} :attrs))
                    ([k lbl m] ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
-           :glob (fn [g] g)
-           :amp (fn [a] a)
+           :glob identity
+           :amp identity
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
-           :ctr (fn [& parts]
-                  (let [tag (cond
-                              (str/includes? (first parts) ".")    :ctr
-                              (every? (complement vector?) parts)  :shape
-                              :else :ctr)]
-                    (if (= :shape tag)
-                      (let [[kl ms] (split-with (complement map?) parts)
-                            attrs (apply merge ms)]
-                        (with-tag (if attrs (conj (into [] kl) attrs) (into [] kl)) tag))
-                      (with-tag (vec (handle-empty-lines parts)) tag))))
-
-
-           :empty-lines (fn [& seps] (into [:empty-lines (dec (count seps))]))
-           :elements (fn [& elems] (vec (handle-empty-lines elems)))
-           :contained (fn [& elems] (println elems) (vec (handle-empty-lines elems)))}
+           :ctr
+           (fn [& parts]
+             (let [parts (process-breaks parts)
+                   tag (cond
+                         (str/includes? (first parts) ".")    :ctr
+                         (every? (complement vector?) parts)  :shape
+                         :else :ctr)]
+               (if (= :shape tag)
+                 (let [[kl ms] (split-with (complement map?) parts)
+                       attrs (apply merge ms)]
+                   (with-tag (if attrs (conj (into [] kl) attrs) (into [] kl)) tag))
+                 (with-tag (vec parts) tag))))}
 
           p-tree))
        p-trees))))

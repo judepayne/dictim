@@ -315,8 +315,8 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '({"direction" "right"}
-               ["classes"
-                ["load balancer"
+               {"classes"
+                {"load balancer"
                  {"label" "load\\nbalancer",
                   "width" 100,
                   "height" 200,
@@ -324,9 +324,9 @@
                   {"stroke-width" 0,
                    "fill" "\"#44C7B1\"",
                    "shadow" true,
-                   "border-radius" 5}}]
-                ["unhealthy"
-                 {"style" {"fill" "\"#FE7070\"", "stroke" "\"#F69E03\""}}]]
+                   "border-radius" 5}},
+                 "unhealthy"
+                 {"style" {"fill" "\"#FE7070\"", "stroke" "\"#F69E03\""}}}}
                ["web traffic" "->" "web lb"]
                {"web lb.class" "load balancer"}
                ["web lb" "->" "api1"]
