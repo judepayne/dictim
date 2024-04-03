@@ -529,3 +529,36 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["x" "->" "y" "<-" "z" nil]))))))
+
+
+(deftest layers-scenarios-steps
+  (testing "layers can be parsed"
+    (let [d2 "aShape: I'm a Shape\nlayers:   {\n  tiktok:   {\n    what: A messaging app\n  }\n  facebook:   {\n    was: A legacy messaging app\n  }\n}"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["aShape" "I'm a Shape"]
+               ["layers"
+                ["tiktok" ["what" "A messaging app"]]
+                ["facebook" ["was" "A legacy messaging app"]]])))))
+  (testing "scenarios can be parsed"
+    (let [d2 "aShape: I'm a Shape\nscenarios:   {\n  tiktok:   {\n    what: A messaging app\n  }\n  facebook:   {\n    was: A legacy messaging app\n  }\n}"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["aShape" "I'm a Shape"]
+               ["scenarios"
+                ["tiktok" ["what" "A messaging app"]]
+                ["facebook" ["was" "A legacy messaging app"]]])))))
+  (testing "steps can be parsed"
+    (let [d2 "aShape: I'm a Shape\nsteps:   {\n  tiktok:   {\n    what: A messaging app\n  }\n  facebook:   {\n    was: A legacy messaging app\n  }\n}"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["aShape" "I'm a Shape"]
+               ["steps"
+                ["tiktok" ["what" "A messaging app"]]
+                ["facebook" ["was" "A legacy messaging app"]]]))))))

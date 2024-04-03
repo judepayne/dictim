@@ -279,3 +279,24 @@
   (testing "multiple connections can be nulled"
     (is (= (c/d2 [:x "->" :y "--" :z nil])
            "x -> y -- z: null"))))
+
+
+(deftest layers-scenarios-steps
+  (testing "layers can be compiled"
+    (is (= (apply c/d2 '(["aShape" "I'm a Shape"]
+                         ["layers"
+                          ["tiktok" ["what" "A messaging app"]]
+                          ["facebook" ["was" "A legacy messaging app"]]]))
+           "aShape: I'm a Shape\nlayers:   {\n  tiktok:   {\n    what: A messaging app\n  }\n  facebook:   {\n    was: A legacy messaging app\n  }\n}")))
+  (testing "scenarios can be compiled"
+    (is (= (apply c/d2 '(["aShape" "I'm a Shape"]
+                         ["scenarios"
+                          ["tiktok" ["what" "A messaging app"]]
+                          ["facebook" ["was" "A legacy messaging app"]]]))
+           "aShape: I'm a Shape\nscenarios:   {\n  tiktok:   {\n    what: A messaging app\n  }\n  facebook:   {\n    was: A legacy messaging app\n  }\n}")))
+  (testing "steps can be compiled"
+    (is (= (apply c/d2 '(["aShape" "I'm a Shape"]
+                         ["steps"
+                          ["tiktok" ["what" "A messaging app"]]
+                          ["facebook" ["was" "A legacy messaging app"]]]))
+           "aShape: I'm a Shape\nsteps:   {\n  tiktok:   {\n    what: A messaging app\n  }\n  facebook:   {\n    was: A legacy messaging app\n  }\n}"))))
