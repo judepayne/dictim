@@ -261,3 +261,21 @@
                                    [:server1 "${server-name}-1"]
                                    [:server2 "${server-name}-2"]
                                    [:server1 "<->" :server2])))))))
+
+
+(deftest null-overrides
+  (testing "attributes can have a nil/ null value"
+    (is (= (c/d2 {:style.fill nil})
+           "style.fill: null")))
+  (testing "containers/ shapes can have a null label"
+    (is (= (c/d2 [:shapeA nil [:shapeB]])
+           "shapeA: null  {\n  shapeB\n}")))
+  (testing "connection-references can be nulled"
+    (is (= (c/d2 {[:a "->" :b [0]] nil})
+           "(:a -> :b)[0]: null")))
+  (testing "single connections can be nulled"
+    (is (= (c/d2 [:x "->" :y nil])
+           "x -> y: null")))
+  (testing "multiple connections can be nulled"
+    (is (= (c/d2 [:x "->" :y "--" :z nil])
+           "x -> y -- z: null"))))

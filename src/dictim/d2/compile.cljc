@@ -59,8 +59,9 @@
                   (for [[k v] m]
                     (cond
                       (and (map? v) (empty? v)) nil
+                      (and (nil? v)) (str (format-key k) colon "null")
                       (map? v)   (str (format-key k) colon (attrs v))
-                      :else      (str (format-key k) colon  (de-keyword v))))
+                      :else      (str (format-key k) colon (de-keyword v))))
                   (remove nil?)
                   (interpose sep)))
           (if brackets? "\n}" "\n"))))
@@ -68,6 +69,7 @@
 
 (defn item->str [i]
   (cond
+    (nil? i)  "null"
     (kstr? i) (convert-key i)
     (and (map? i)
          (not (empty-single-entry? i)))      (attrs i)))
@@ -78,6 +80,7 @@
   [opts]
   (apply str
          (interpose spc (map item->str opts))))
+
 
 (defn- single-conn
   "layout conn(ection) vector."
@@ -133,6 +136,7 @@
 (defmethod layout :ctr [[k & opts]]
   (str (name k) colon
        (when (kstr? (first opts)) (name (first opts)))
+       (when (nil? (first opts))  "null")
        " {"
        sep
        (apply str

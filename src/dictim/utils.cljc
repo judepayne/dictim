@@ -37,7 +37,7 @@
   (-> (reduce
        (fn [acc cur]
          (cond
-           (nil? cur)    (:banked acc)
+           #_(nil? cur)    #_(:banked acc)
              
            (pred cur)    (-> acc
                              (update :banked concat (conj (:buffer acc) cur))

@@ -51,9 +51,10 @@
        (case (count opts)
          0 true
          1 (or (kstr? (first opts))
+               (nil? (first opts))
                (valid? (first opts)))
          2 (let [[label attrs] opts]
-             (and (kstr? label)
+             (and (or (kstr? label) (nil? label))
                   (valid? attrs)))
          false)))
 
@@ -71,8 +72,8 @@
       conns)
      (case (count opts)
        0          true
-       1          (or (kstr? (first opts)) (map? (first opts)))
-       2          (and (kstr? (first opts)) (map? (second opts)))
+       1          (or (kstr? (first opts)) (nil? (first opts)) (map? (first opts)))
+       2          (and (or (kstr? (first opts)) (nil? (first opts))) (map? (second opts)))
        false))))
 
 
@@ -105,20 +106,25 @@
      (cond
        (map? v)           (valid? v)
 
-       (conn-ref? k)      true
+       (conn-ref? k)      true ;; TODO write conn-ref validation
 
        (and (not (map? v))
-            (not vars?))   (let [k' (last-key-part k)]
-            (and (at/d2-keyword? k')
-                 (let [val-fn (at/validate-fn k')]
-                   (val-fn v))))
+            (not vars?))
+       (let [k' (last-key-part k)]
+         (and (at/d2-keyword? k')
+              (or
+               (let [val-fn (at/validate-fn k')]
+                 (val-fn v))
+               (nil? v) ;; attributes can be 'nulled'. See the d2 tour overrides page.
+               )))
 
        (and (not (map? v))
-            vars?)          (let [k' (last-key-part k)]
-            (if (at/d2-keyword? k')
-              (let [val-fn (at/validate-fn k')]
-                (val-fn v))
-              true))))))
+            vars?)
+       (let [k' (last-key-part k)]
+         (if (at/d2-keyword? k')
+           (let [val-fn (at/validate-fn k')]
+             (val-fn v))
+           true))))))
 
 
 (defn- valid-dot-attr? [[k v]]
@@ -156,9 +162,10 @@
               (case (count opts)
                 0 true
                 1 (or (kstr? (first opts))
+                      (nil? (first opts))
                       (valid? (first opts)))
                 2 (let [[label attrs] opts]
-                    (and (kstr? label)
+                    (and (or (kstr? label) (nil? label))
                          (valid? attrs)))
                 false))))
 
@@ -183,11 +190,11 @@
        (let [[k & opts] elem]
         (and
          (and (kstr? k) (globs-quoted? k) (not (is-vars? k)))
-         (or (and (kstr? (first opts)) ;; label & attrs
+         (or (and (or (nil? (first opts)) (kstr? (first opts))) ;; label & attrs
                   (valid? (second opts))
                   (or (nil? (rest (rest opts)))
                       (every? valid? (rest (rest opts)))))
-             (and (kstr? (first opts)) ;; just the label
+             (and (or (nil? (first opts)) (kstr? (first opts))) ;; just the label
                   (or (nil? (rest opts))
                       (every? valid? (rest opts))))
              (and (valid? (first opts)) ;; just the attrs

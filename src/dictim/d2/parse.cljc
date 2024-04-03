@@ -44,7 +44,9 @@
    "r-arrow" {:reg ">" :hide? true}
    "line-return" {:reg "\\n" :not-lit? true}
    "pipe" {:reg "|" :hide? false}
-   "dollar" {:reg "$" :not-lit? true}})
+   "dollar" {:reg "$" :not-lit? true}
+   "sq-bracketo" {:reg "\\[" :not-lit? true :lit "["}
+   "sq-bracketc" {:reg "\\]" :not-lit? true :lit "]"}})
 
 
 (def word-literals
@@ -55,7 +57,8 @@
    "vars-lit" {:reg "vars" :hide? false}
    "classes-lit" {:reg "classes" :hide? false}
    "ts-open" {:reg ["|||" "|`"] :hide? false}
-   "ts-close" {:reg ["|||" "`|"] :hide? false}})
+   "ts-close" {:reg ["|||" "`|"] :hide? false}
+   "null" {:reg "null" :hide? false}})
 
 
 (def literals (merge char-literals word-literals))
@@ -71,7 +74,7 @@
 
 (def conn-key-bans
   (concat base-bans
-          ["hyphen" "l-arrow" "r-arrow" "amp"]))
+          ["hyphen" "l-arrow" "r-arrow" "amp" "bracketo" "bracketc"]))
 
 (def attr-key-bans
   (concat base-bans
@@ -82,7 +85,8 @@
 (def conn-ref-key-bans
   (concat conn-key-bans ["bracketo" "bracketc"]))
 
-(def label-bans base-bans)
+(def label-bans
+  ["semi" "pipe" "curlyo" "curlyc" "line-return"])
 
 (def substitution-bans base-bans)
 
@@ -170,15 +174,15 @@
     <std-attr> = (<s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs))
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr-key = (attr-key-part <period>)* attr-key-last
-    attr-key-part = " (insta-reg attr-key-bans :negative-lookaheads ["vars-lit"]) "
+    attr-key-part = " (insta-reg attr-key-bans :banned-words ["vars-lit"]) "
     attr-key-last = d2-keyword | glob | amp d2-keyword
     attr-label = label (* i.e. lbl, block or typescript *)
-    attr-val = "(insta-reg attr-val-bans) " | substitution
+    attr-val = !null "(insta-reg attr-val-bans) " | substitution | <s> null <s>
 
     (* conn-refs - a special type of attr *)
     <conn-ref> = <s> conn-ref-key conn-ref-val
     conn-ref-key = <'('> <s> crk <s> dir <s> crk <s> <')'> <'['> array-val <']'>
-    conn-ref-val = conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) 
+    conn-ref-val = (conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> null)
     crk = " (insta-reg conn-ref-key-bans) "
     conn-ref-attr-keys = (<period> d2-keyword)+
     array-val = #'\\d' | glob
@@ -186,8 +190,8 @@
     (* labels *)
     <colon-label> = (<colon> <s> | <colon> <s> label)
     label = lbl | block | typescript
-    <lbl> = normal-label | substitution
-    <normal-label> = #'[^;|{}\\n]+' (* greedy regex to avoid parser ambiguity *)
+    <lbl> = (<s> null <s>) | normal-label | substitution
+    <normal-label> = !null " (insta-reg label-bans) "
     <substitution> =  <s> #'^(?!^\\s*$)([^${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
     block = <s> pipe #'[^|]+' pipe <s>
     typescript = <s> ts-open #'[\\s\\S]+?(?=\\|\\|\\||`\\|)' ts-close <s>
@@ -203,9 +207,9 @@
     (* building blocks *)
     <any> = #'.'
     <d2-keyword> =(" (at/d2-keys) ")
-    break = empty-line+ line-return? | line-return
+    <break> = empty-line+ line-return? | line-return
     empty-line = line-return line-return
-    line-return = <#'[^\\S\\r\\n]*\\r?\\n'>
+    <line-return> = <#'[^\\S\\r\\n]*\\r?\\n'>
     s = #' *'
 
     (* literals *)
@@ -274,13 +278,13 @@
   (let [p-trees (parse-d2 d2)
         key-fn (comp key-fn str/trim)
         with-tag (fn [obj tag] (with-meta obj {:tag tag}))
-        process-breaks (fn [parts]
-                         (filter
-                          (fn [elem]
-                            (if (= :empty-line elem)
-                              (if retain-empty-lines? true false)
-                              true))
-                          (filter (complement nil?) parts)))]
+        process-empty-lines (fn [parts]
+                              (filter
+                               (fn [elem]
+                                 (if (= :empty-line elem)
+                                   (if retain-empty-lines? true false)
+                                   true))
+                               parts))]
     (if (insta/failure? p-trees)
       (throw (error (str "Could not parse: " (-> p-trees last second))))
       (mapcat
@@ -292,15 +296,17 @@
            :attr-key-part (fn [& chars] (str/trim (str/join chars)))
            :attr-key-last (fn [& parts] (str/join parts))
            :attr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
-           :attr-val (fn [& chars]
-                       (-> chars
-                           str/join
-                           ;;str/trim
-                           try-parse-primitive))
+           :attr-val (fn [v]
+                       (if (nil? v)
+                         nil
+                         (try-parse-primitive v)))
            :conn-ref-key (fn [crk1 dir crk2 ar-val]
-                           [crk1 dir crk2 [ar-val]])
-           :conn-ref-val (fn [p1 p2] {p1 p2})
+                           [(key-fn crk1) dir (key-fn crk2) [ar-val]])
+           :conn-ref-val (fn
+                           ([null] null)
+                           ([p1 p2] {p1 p2}))
            :conn-ref-attr-keys (fn [& ks] (str/join (interpose "." ks)))
+           :null (constantly nil)
            :crk (fn [k] (key-fn (str/trim k)))
            :array-val (fn [ar-val] (try-parse-primitive ar-val))
            :vars-lit (constantly "vars")
@@ -313,7 +319,10 @@
            :classes (fn [k & kvs]
                       (with-tag {k (apply merge kvs)} :classes))
            :classes-lit identity
-           :label (fn [& parts] (label-fn (str/join parts)))
+           :label (fn [& parts] (if (and (= 1 (count parts))
+                                         (nil? (first parts)))
+                                  nil  ;; the null label
+                                  (label-fn (str/join parts))))
            :ts-open identity
            :ts-close identity
            :typescript (fn [& parts] (str/join parts))
@@ -334,7 +343,6 @@
            :line-return (constantly :line-return)
            :empty-line (constantly :empty-line)
            :break (fn [& brks] (first (filter #(= :empty-line %) brks)))
-           :elements (fn [& elems] (process-breaks elems))
            :attr-label identity
            :attr (fn
                    ([k v] (with-tag {k v} :attrs))
@@ -345,7 +353,7 @@
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
            :ctr
            (fn [& parts]
-             (let [parts (process-breaks parts)
+             (let [parts (process-empty-lines parts)
                    tag (cond
                          (str/includes? (first parts) ".")    :ctr
                          (every? (complement vector?) parts)  :shape
@@ -354,7 +362,8 @@
                  (let [[kl ms] (split-with (complement map?) parts)
                        attrs (apply merge ms)]
                    (with-tag (if attrs (conj (into [] kl) attrs) (into [] kl)) tag))
-                 (with-tag (vec parts) tag))))}
+                 (with-tag (vec parts) tag))))
+            :elements (fn [& elems] (process-empty-lines elems))}
 
           p-tree))
        p-trees))))

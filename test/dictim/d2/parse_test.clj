@@ -498,3 +498,34 @@
                ["lady 1" "->" "barbie" "hi barbie"]
                ["lady 2" "->" "barbie" "hi barbie"]
                {["lady*" "->" "barbie" ["*"]] {"style.stroke" "pink"}}))))))
+
+
+(deftest nulls
+  (testing "connection references can be nulled."
+    (let [d2 "(a -> b)[0]: null"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({["a" "->" "b" [0]] nil})))))
+  (testing "shapes/ containers can be nulled."
+    (let [d2 "pig: null {piglet}"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["pig" nil ["piglet"]])))))
+  (testing "single-connections can be nulled."
+    (let [d2 "x -> y: null"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["x" "->" "y" nil])))))
+  (testing "multiple-connections can be nulled."
+    (let [d2 "x -> y <- z: null"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["x" "->" "y" "<-" "z" nil]))))))

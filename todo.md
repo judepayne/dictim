@@ -27,10 +27,12 @@
 - [ ] layers, scenarios, steps
 - [ ] array notation (see classes, globs, SQL tables]
 - [x] conn-refs
-- [ ] & character (globs)
+- [x] & character (globs)
 - [ ] lists in globs. also see vars for example.
 - [x] . character in quoted keys
-- [ ] parse line returns at end of d2 string
+- [x] parse line returns at end of d2 string
+- [ ] overrides test. null for connection refernces
+- [ ] null keyword
 
 ### design thoughts
 
