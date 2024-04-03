@@ -1,22 +1,9 @@
 ## TODO
 
-- [x] Add fill pattern test
-- [x] Add fill pattern
-- [ ] Write validation functions for d2 attributes
-- [x] Write compile tests for globs
-- [x] write parse tests for globs
-- [ ] Add note to syntax wiki about $ character; needs to be single quoted
-- [x] add class as a d2 keyword: validate-fn map?
-- [x] test handling of .class endings to d2 keys
-- [x] write classes tests for both compilation and parsing.
-- [x] positions
-- [ ] add regex bans section to grammar (for '--' to start)
-
-
-
 
 ## New Features added
 
+- [ ] wiki documentation
 - [x] globs
 - [x] classes
 - [x] positions
@@ -31,8 +18,8 @@
 - [ ] lists in globs. also see vars for example.
 - [x] . character in quoted keys
 - [x] parse line returns at end of d2 string
-- [ ] overrides test. null for connection refernces
-- [ ] null keyword
+- [x] overrides test. null for connection refernces
+- [x] null keyword
 
 ### design thoughts
 
