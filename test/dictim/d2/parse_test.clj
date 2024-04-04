@@ -572,3 +572,16 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["test" {"direction" ["a" "...${ab}"]}]))))))
+
+
+(deftest imports
+  (testing "imports can be parsed"
+    (let [d2 "a: @x.d2"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["a" "@x.d2"]))))))
+
+
+

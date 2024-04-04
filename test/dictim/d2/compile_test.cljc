@@ -307,3 +307,9 @@
   (testing "arrays compile"
     (is (= (c/d2 [:data {:shape "sql_table" :a {:constraint [:list "PK" "...${base-constraints}"]}}])
            "data:  {\n  shape: sql_table\n  a:  {\n    constraint: [PK; ...${base-constraints}]\n    \n  }\n}"))))
+
+
+(deftest imports
+  (testing "imports can be compiled"
+    (is (= (c/d2 ["a" "@x.d2"])
+           "a: @x.d2"))))
