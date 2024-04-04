@@ -562,3 +562,13 @@
                ["steps"
                 ["tiktok" ["what" "A messaging app"]]
                 ["facebook" ["was" "A legacy messaging app"]]]))))))
+
+
+(deftest inner-lists
+  (testing "inner-lists can be parsed in attr vals"
+    (let [d2 "test: {direction: [a; ...${ab}]}"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["test" {"direction" ["a" "...${ab}"]}]))))))

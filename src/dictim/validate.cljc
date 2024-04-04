@@ -3,7 +3,7 @@
     dictim.validate
   (:require [clojure.string :as str]
             [dictim.attributes :as at]
-            [dictim.utils :refer [kstr? direction? take-til-last elem-type error list?
+            [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type error list?
                                   conn-ref? unquoted-period single-quoted no-asterisk convert-key]])
   (:refer-clojure :exclude [list?])
   #?(:cljs (:require-macros [dictim.validate :refer [check]])))
@@ -79,7 +79,8 @@
 
 ;; the defmethods are defined by the 'check' macro in dictim.macros
 (check :list li
-        (and (every? valid? (rest li))
+       (and (or (every? valid? (rest li))
+                (every? kstr? (rest li)))
              (every? (complement list?) (rest li))))
 
 
@@ -104,6 +105,8 @@
     (and
      (valid-d2-attr-key? k)
      (cond
+       (list? v)          (valid? v)
+       
        (map? v)           (valid? v)
 
        (conn-ref? k)      true ;; TODO write conn-ref validation

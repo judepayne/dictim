@@ -64,14 +64,19 @@
   "Returns the type of dictim element e."
   [e]
   (cond
-    (= :empty-lines (first e))         :empty-lines
-    (map? e)                           :attrs
-    (kstr? e)                          :quikshape
-    (= :comment (first e))             :cmt
-    (= :list (first e))                :list
-    (not (empty? (filter vector? e)))  :ctr
-    (direction? (second e))            :conn
-    :else                              :shape))
+    (and (vector? e)
+         (= :empty-lines (first e)))            :empty-lines
+    (map? e)                                    :attrs
+    (kstr? e)                                   :quikshape
+    (and (vector? e)
+         (= :comment (first e)))                :cmt
+    (and (vector? e)
+         (= :list (first e)))                   :list
+    (and (vector? e)
+         (not (empty? (filter vector? e))))     :ctr
+    (and (vector? e)
+         (direction? (second e)))               :conn
+    :else                                       :shape))
 
 
 (defn ctr? [e] (= :ctr (elem-type e)))
@@ -126,7 +131,7 @@
       nil)))
 
 
-(defn try-parse-primitive [p]
+(defn- try-parse-primitive* [p]
   (if-let [i (parse-int p)]
     i
     (if-let [f (parse-float p)]
@@ -135,6 +140,13 @@
         (if (nil? b)
           p
           b)))))
+
+
+(defn try-parse-primitive [p]
+  (if (sequential? p)
+    (mapv try-parse-primitive* p)
+    (try-parse-primitive* p)))
+
 
 
 (defn prn-repl

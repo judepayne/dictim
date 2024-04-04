@@ -3,9 +3,9 @@
     :doc "Namespace for transpiling dictim to d2"}
   (:require [clojure.string :as str]
             [dictim.format :as f]
-            [dictim.utils :refer [kstr? direction? take-til-last elem-type conn-ref? convert-key]]
+            [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type conn-ref? convert-key list?]]
             [dictim.validate :refer [all-valid?]])
-  (:refer-clojure :exclude [list]))
+  (:refer-clojure :exclude [list?]))
 
 
 (def colon ": ")
@@ -16,6 +16,9 @@
 
 ;; sep the separator between elements
 (def ^:dynamic sep)
+
+
+(def ^:dynamic inner-list? false)
 
 
 (defn- de-keyword
@@ -48,6 +51,9 @@
     :else               k))
 
 
+(defmulti ^:private layout elem-type)
+
+
 (defn- attrs
   "layout the map of attrs. m may be nested."
   ([m] (attrs m true))
@@ -61,6 +67,7 @@
                       (and (map? v) (empty? v)) nil
                       (and (nil? v)) (str (format-key k) colon "null")
                       (map? v)   (str (format-key k) colon (attrs v))
+                      (list? v)   (str (format-key k) colon (binding [inner-list? true] (layout v)))
                       :else      (str (format-key k) colon (de-keyword v))))
                   (remove nil?)
                   (interpose sep)))
@@ -98,9 +105,6 @@
          sep)))
 
 
-(defmulti ^:private layout elem-type)
-
-
 (defmethod layout :attrs [el] (attrs el false))
 
 
@@ -126,10 +130,12 @@
 
 (defmethod layout :list [li]
   (str
-   (binding [sep \;]
+   (when inner-list? "[")
+   (binding [sep "; "]
      (apply str (map layout (butlast (rest li)))))
    (binding [sep ""]
      (layout (last li)))
+   (when inner-list? "]")
    sep))
 
 

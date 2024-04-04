@@ -90,6 +90,8 @@
 
 (def substitution-bans base-bans)
 
+(def inner-list-item-bans ["semi" "sq-bracketo" "sq-bracketc" "line-return"])
+
 (def dirs ["dir-left" "dir-right" "dir-both" "dir-neither"])
 
 
@@ -161,7 +163,7 @@
     <vars-content> = <curlyo> <break?> the-vars <s> <break>? <s> <curlyc>
     the-vars = (var break)* var
     var = <s> ctr-key <colon> <s> (var-val | vars-content)
-    var-val = "(insta-reg attr-val-bans) "
+    var-val = "(insta-reg attr-val-bans) " | inner-list
 
     (* classes *)
     classes = <s> classes-lit <s> <colon> <s> <curlyo> <at-sep*>
@@ -177,7 +179,10 @@
     attr-key-part = " (insta-reg attr-key-bans :banned-words ["vars-lit"]) "
     attr-key-last = d2-keyword | glob | amp d2-keyword
     attr-label = label (* i.e. lbl, block or typescript *)
-    attr-val = !null "(insta-reg attr-val-bans) " | substitution | <s> null <s>
+    <item> = " (insta-reg inner-list-item-bans) "
+    inner-list = <'['> (item <semi> <s>)* item <']'>
+    <av> = !null " (insta-reg attr-val-bans) "
+    attr-val = av | substitution | <s> null <s> | inner-list
 
     (* conn-refs - a special type of attr *)
     <conn-ref> = <s> conn-ref-key conn-ref-val
@@ -192,7 +197,7 @@
     label = lbl | block | typescript
     <lbl> = (<s> null <s>) | normal-label | substitution
     <normal-label> = !null " (insta-reg label-bans) "
-    <substitution> =  <s> #'^(?!^\\s*$)([^${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
+    <substitution> =  <s> #'^(?!^\\s*$)([^;${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
     block = <s> pipe #'[^|]+' pipe <s>
     typescript = <s> ts-open #'[\\s\\S]+?(?=\\|\\|\\||`\\|)' ts-close <s>
 
@@ -296,6 +301,8 @@
            :attr-key-part (fn [& chars] (str/trim (str/join chars)))
            :attr-key-last (fn [& parts] (str/join parts))
            :attr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
+           :inner-list (fn [& items]
+                         items)
            :attr-val (fn [v]
                        (if (nil? v)
                          nil

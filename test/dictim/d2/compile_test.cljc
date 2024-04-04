@@ -71,7 +71,7 @@
 
 
 (def ex-sequence-d2
-  "various: demonstrate various things  {\n  block: Block Text - e.g. Markdown  {\n    a: |md ## A header |\n    b: |md ### a smaller header |  {\n      shape: cloud\n    }\n    c: |md *some italic text* |\n    a -- b -> c\n  }\n  class: Class diagram  {\n    shape: class\n    \\#reader: io.RuneReader\n    method(a unint64): (x, y, int)\n    -lookahead: '[]rune'\n  }\n  convs: Office Conversations  {\n    conv1: Office conversation 1  {\n      shape: sequence_diagram\n      # This is a comment\n      bob;alice\n      alice: Alice  {\n        shape: person\n        style:  {\n          fill: orange\n        }\n      }\n      bob.\"In the eyes of my (dog), I'm a man.\"\n      awkward small talk:   {\n        alice -> bob: um, hi\n        bob -> alice: oh, hello\n        icebreaker attempt:   {\n          alice -> bob: what did you have for lunch?\n        }\n        fail:   {\n          style:  {\n            fill: green\n          }\n          bob -> alice: that's personal\n        }\n      }\n    }\n    conv2: Office conversation 2  {\n      shape: sequence_diagram\n      simon;trev\n      simon: Simon  {\n        shape: person\n      }\n      trev: Trevor\n      failed conversation:   {\n        simon -> trev: seen the football\n        trev -> simon: no, I was at my gran's\n        Carry on anyway:   {\n          simon -> trev: mate, you missed a classic\n        }\n      }\n    }\n    conv1 -> conv2: spot the difference?\n  }\n}")
+  "various: demonstrate various things  {\n  block: Block Text - e.g. Markdown  {\n    a: |md ## A header |\n    b: |md ### a smaller header |  {\n      shape: cloud\n    }\n    c: |md *some italic text* |\n    a -- b -> c\n  }\n  class: Class diagram  {\n    shape: class\n    \\#reader: io.RuneReader\n    method(a unint64): (x, y, int)\n    -lookahead: '[]rune'\n  }\n  convs: Office Conversations  {\n    conv1: Office conversation 1  {\n      shape: sequence_diagram\n      # This is a comment\n      bob; alice\n      alice: Alice  {\n        shape: person\n        style:  {\n          fill: orange\n        }\n      }\n      bob.\"In the eyes of my (dog), I'm a man.\"\n      awkward small talk:   {\n        alice -> bob: um, hi\n        bob -> alice: oh, hello\n        icebreaker attempt:   {\n          alice -> bob: what did you have for lunch?\n        }\n        fail:   {\n          style:  {\n            fill: green\n          }\n          bob -> alice: that's personal\n        }\n      }\n    }\n    conv2: Office conversation 2  {\n      shape: sequence_diagram\n      simon; trev\n      simon: Simon  {\n        shape: person\n      }\n      trev: Trevor\n      failed conversation:   {\n        simon -> trev: seen the football\n        trev -> simon: no, I was at my gran's\n        Carry on anyway:   {\n          simon -> trev: mate, you missed a classic\n        }\n      }\n    }\n    conv1 -> conv2: spot the difference?\n  }\n}")
 
 
 (deftest complex-compilation
@@ -300,3 +300,10 @@
                           ["tiktok" ["what" "A messaging app"]]
                           ["facebook" ["was" "A legacy messaging app"]]]))
            "aShape: I'm a Shape\nsteps:   {\n  tiktok:   {\n    what: A messaging app\n  }\n  facebook:   {\n    was: A legacy messaging app\n  }\n}"))))
+
+
+(deftest arrays
+  ;;arrays are lists inside attr vals
+  (testing "arrays compile"
+    (is (= (c/d2 [:data {:shape "sql_table" :a {:constraint [:list "PK" "...${base-constraints}"]}}])
+           "data:  {\n  shape: sql_table\n  a:  {\n    constraint: [PK; ...${base-constraints}]\n    \n  }\n}"))))
