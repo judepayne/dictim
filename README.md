@@ -18,6 +18,8 @@ As a git dep:
 io.github.judepayne/dictim {:git/tag "0.6.3" :git/sha "4321c2b"}
 ``` 
 
+Note that dictim version is synchronized to the version of d2 that it is compatible with.
+
 
 ## Docs
 
