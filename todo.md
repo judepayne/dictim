@@ -12,16 +12,16 @@
 - [x] overrides (no change)
 - [?] imports
 - [x] layers, scenarios, steps
-- [ ] array notation (see classes, globs, SQL tables, vars]
+- [x] array notation (see classes, globs, SQL tables, vars]
 - [x] conn-refs
 - [x] & character (globs)
 - [x] . character in quoted keys
 - [x] parse line returns at end of d2 string
 - [x] overrides test. null for connection refernces
 - [x] null keyword
-- [ ] parse periods in single quotes in keys -> think just needed for attrs
-- [ ] imports
-- [ ] write validation for conn-refs
+- [x] parse periods in single quotes in keys -> think just needed for attrs. not needed. d2 handles
+- [x] imports
+- [x] write validation for conn-refs
 - [x] check UML attr vals can have [] "[]string" or () "(r rune, eof bool)"
 
 ### design thoughts

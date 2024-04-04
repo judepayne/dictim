@@ -109,7 +109,7 @@
        
        (map? v)           (valid? v)
 
-       (conn-ref? k)      true ;; TODO write conn-ref validation
+       (conn-ref? k)      true ;; conn-ref is already validated by the detection fn.
 
        (and (not (map? v))
             (not vars?))
