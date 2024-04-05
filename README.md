@@ -15,10 +15,10 @@ Latest release:
 As a git dep:
 
 ```clojure
-io.github.judepayne/dictim {:git/tag "0.6.3" :git/sha "4321c2b"}
+io.github.judepayne/dictim {:git/tag "0.5.7" :git/sha "4321c2b"}
 ``` 
 
-Note that dictim version is synchronized to the version of d2 that it is compatible with.
+d2 compatibility: 0.6.3
 
 
 ## Docs

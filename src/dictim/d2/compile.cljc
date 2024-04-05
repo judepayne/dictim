@@ -14,6 +14,7 @@
 
 (def period ".")
 
+
 ;; sep the separator between elements
 (def ^:dynamic sep)
 

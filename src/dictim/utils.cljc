@@ -143,9 +143,14 @@
 
 
 (defn try-parse-primitive [p]
-  (if (sequential? p)
+  (cond
+    (sequential? p)
     (mapv try-parse-primitive* p)
-    (try-parse-primitive* p)))
+
+    (or (float? p) (boolean? p) (integer? p))
+    p
+
+    :else (try-parse-primitive* p)))
 
 
 

@@ -23,6 +23,7 @@
 - [x] imports
 - [x] write validation for conn-refs
 - [x] check UML attr vals can have [] "[]string" or () "(r rune, eof bool)"
+- [x] with jude.shape cloud, recognize that last/s are keywords and validate
 
 ### design thoughts
 

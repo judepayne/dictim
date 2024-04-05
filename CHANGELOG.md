@@ -1,5 +1,6 @@
-	# v0.6.3
+	# v0.6.0
 	- A major catch up to d2 verion 0.6.3. Added support for compilation and parsing of:
+	  - Grid diagram
 	  - classes
 	  - vars
 	  - positions

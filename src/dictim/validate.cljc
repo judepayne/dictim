@@ -94,9 +94,7 @@
 
 (defn- valid-d2-attr-key? [k]
   (or (conn-ref? k)
-      (number? k)
-      (keyword? k)
-      (string? k)))
+      (kstr? k)))
 
 
 (defn- valid-d2-attr? [[k v]]
@@ -158,10 +156,30 @@
 
 ;; globs are allowed in key names but only when the whole name/ first part is quoted.
 
+(defn valid-key? [k v]
+  (or (and (conn-ref? k) (map? v))
+      (and (kstr? k)
+           (let [k' (last-key-part k)]
+             (if (at/d2-keyword? k')
+               (let [val-fn (at/validate-fn k')]
+                 (val-fn v))
+               true)))))
+
+;; a composite key is when a shape or container has a key with attributes appended
+;; e.g. aShape.style.fill
+(defn composite-key? [k]
+  (let [lp (last-key-part k)]
+    (if (at/d2-keyword? lp)
+      lp
+      false)))
+
 
 (check :shape elem
        (let [[k & opts] elem]
-         (and (and (kstr? k) (globs-quoted? k) (not (is-vars? k))) 
+         (and (and (kstr? k) (globs-quoted? k) (not (is-vars? k)))
+              (if-let [attr-k (composite-key? k)]
+                (valid? {attr-k (first opts)})
+                true)
               (case (count opts)
                 0 true
                 1 (or (kstr? (first opts))
@@ -193,6 +211,9 @@
        (let [[k & opts] elem]
         (and
          (and (kstr? k) (globs-quoted? k) (not (is-vars? k)))
+         (if-let [attr-k (composite-key? k)]
+                (valid? {attr-k (first opts)})
+                true)
          (or (and (or (nil? (first opts)) (kstr? (first opts))) ;; label & attrs
                   (valid? (second opts))
                   (or (nil? (rest (rest opts)))
