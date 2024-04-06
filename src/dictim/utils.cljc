@@ -132,14 +132,17 @@
 
 
 (defn- try-parse-primitive* [p]
-  (if-let [i (parse-int p)]
-    i
-    (if-let [f (parse-float p)]
-      f
-      (let [b (parse-bool p)]
-        (if (nil? b)
-          p
-          b)))))
+  (try
+    (if-let [i (parse-int p)]
+      i
+      (if-let [f (parse-float p)]
+        f
+        (let [b (parse-bool p)]
+          (if (nil? b)
+            p
+            b))))
+    #?(:clj (catch Exception e p)
+       :cljs (catch js/Error e p))))
 
 
 (defn try-parse-primitive [p]

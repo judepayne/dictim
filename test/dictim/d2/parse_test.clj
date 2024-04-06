@@ -20,17 +20,17 @@
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
-             '(["imAShape"]
-               ["im_a_shape"]
-               ["im a shape"]
-               ["i'm a shape"]
-               [:comment "notice that one-hyphen is not a connection"]
-               [:comment "whereas, `a--shape` would be a connection"]
-               ["a-shape"]
-               [:list ["SQLite"] ["Cassandra"]]
-               ["pg" "PostgreSQL"]
-               ["Cloud" "my cloud"]
-               {"Cloud.shape" "cloud"}))))))
+             '(["imAShape"]	    
+	       ["im_a_shape"]
+	       ["im a shape"]
+	       ["i'm a shape"]
+	       [:comment "notice that one-hyphen is not a connection"]
+	       [:comment "whereas, `a--shape` would be a connection"]
+	       ["a-shape"]
+	       [:list ["SQLite"] ["Cassandra"]]
+	       ["pg" "PostgreSQL"]
+	       ["Cloud" "my cloud"]
+	       ["Cloud" {"shape" "cloud"}]))))))
 
 
 (deftest containers
@@ -41,31 +41,31 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["server"]
-               [:comment "Declares a shape inside of another shape"]
-               ["server.process"]
-               [:comment "Can declare the container and child in same line"]
-               ["im a parent.im a child"]
-               [:comment "Since connections can also declare keys, this works too"]
-               ["apartment.Bedroom.Bathroom"
-                "->"
-                "office.Spare Room.Bathroom"
-                "Portal"]
-               ["clouds"
-                ["aws" ["load_balancer" "->" "api"] ["api" "->" "db"]]
-                ["gcloud" ["auth" "->" "db"]]
-                ["gcloud" "->" "aws"]]
-               ["clouds"
-                ["aws" "AWS" ["load_balancer" "->" "api"] ["api" "->" "db"]]
-                ["gcloud" "Google Cloud" ["auth" "->" "db"]]
-                ["gcloud" "->" "aws"]]
-               ["users" "->" "clouds.aws.load_balancer"]
-               ["users" "->" "clouds.gcloud.auth"]
-               ["ci.deploys" "->" "clouds"]
-               ["christmas" ["presents"]]
-               ["birthdays"
-                ["presents"]
-                ["_.christmas.presents" "->" "presents" "regift"]
-                {"_.christmas.style.fill" "\"#ACE1AF\""}]))))))
+	       [:comment "Declares a shape inside of another shape"]
+	       ["server.process"]
+	       [:comment "Can declare the container and child in same line"]
+	       ["im a parent.im a child"]
+	       [:comment "Since connections can also declare keys, this works too"]
+	       ["apartment.Bedroom.Bathroom"
+	        "->"
+	        "office.Spare Room.Bathroom"
+	        "Portal"]
+	       ["clouds"
+	        ["aws" ["load_balancer" "->" "api"] ["api" "->" "db"]]
+	        ["gcloud" ["auth" "->" "db"]]
+	        ["gcloud" "->" "aws"]]
+	       ["clouds"
+	        ["aws" "AWS" ["load_balancer" "->" "api"] ["api" "->" "db"]]
+	        ["gcloud" "Google Cloud" ["auth" "->" "db"]]
+	        ["gcloud" "->" "aws"]]
+	       ["users" "->" "clouds.aws.load_balancer"]
+	       ["users" "->" "clouds.gcloud.auth"]
+	       ["ci.deploys" "->" "clouds"]
+	       ["christmas" ["presents"]]
+	       ["birthdays"
+	        ["presents"]
+	        ["_.christmas.presents" "->" "presents" "regift"]
+	        ["_.christmas" {"style.fill" "\"#ACE1AF\""}]]))))))
 
 
 (deftest connections
@@ -328,14 +328,14 @@
                  "unhealthy"
                  {"style" {"fill" "\"#FE7070\"", "stroke" "\"#F69E03\""}}}}
                ["web traffic" "->" "web lb"]
-               {"web lb.class" "load balancer"}
+               ["web lb" {"class" "load balancer"}]
                ["web lb" "->" "api1"]
                ["web lb" "->" "api2"]
                ["web lb" "->" "api3"]
-               {"api2.class" "unhealthy"}
+               ["api2" {"class" "unhealthy"}]
                ["api1" "->" "cache lb"]
                ["api3" "->" "cache lb"]
-               {"cache lb.class" "load balancer"}))))))
+               ["cache lb" {"class" "load balancer"}]))))))
 
 
 
@@ -348,13 +348,9 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["foods"
-                ["pizzas"
-                 ["cheese"]
-                 ["sausage"]
-                 ["pineapple"]
-                 {"*.shape" "circle"}]
-                ["humans" ["john"] ["james"] {"*.shape" "person"}]
-                ["humans.*" "->" "pizzas.pineapple" "eats"]])))))
+	        ["pizzas" ["cheese"] ["sausage"] ["pineapple"] {"*.shape" "circle"}]
+	        ["humans" ["john"] ["james"] {"*.shape" "person"}]
+	        ["humans.*" "->" "pizzas.pineapple" "eats"]])))))
   (testing "recursive globs"
     (let [d2 "a:   {\n  b:   {\n    c\n  }\n}\n**.style.border-radius: 7"
           dict (p/dictim d2)]
@@ -376,11 +372,11 @@
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
-             '({"bravo team.shape" "person"}
-               {"charlie team.shape" "person"}
-               {"command center.shape" "cloud"}
-               {"hq.shape" "rectangle"}
-               {"*" {"&shape" "person" "style.multiple" true}}))))))
+             '(["bravo team" {"shape" "person"}]	    
+	       ["charlie team" {"shape" "person"}]
+	       ["command center" {"shape" "cloud"}]
+	       ["hq" {"shape" "rectangle"}]
+	       {"*" {"&shape" "person", "style.multiple" true}}))))))
 
 
 (deftest vars
@@ -571,7 +567,7 @@
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
-             '(["test" {"direction" ["a" "...${ab}"]}]))))))
+             '(["test" {"direction" [:list "a" "...${ab}"]}]))))))
 
 
 (deftest imports
@@ -582,6 +578,3 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["a" "@x.d2"]))))))
-
-
-

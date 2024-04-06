@@ -68,7 +68,7 @@
                       (and (map? v) (empty? v)) nil
                       (and (nil? v)) (str (format-key k) colon "null")
                       (map? v)   (str (format-key k) colon (attrs v))
-                      (list? v)   (str (format-key k) colon (binding [inner-list? true] (layout v)))
+                      (list? v)  (str (format-key k) colon (binding [inner-list? true] (layout v)))
                       :else      (str (format-key k) colon (de-keyword v))))
                   (remove nil?)
                   (interpose sep)))

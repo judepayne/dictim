@@ -80,7 +80,7 @@
   (concat base-bans
           ["bracketo" "bracketc"]))  ;;faciliatate differentiation from conn-refs
 
-(def attr-val-bans ["curlyo" "curlyc" "semi" "line-return"])
+(def attr-val-bans ["glob" "curlyo" "curlyc" "semi" "line-return"])
 
 (def conn-ref-key-bans
   (concat conn-key-bans ["bracketo" "bracketc"]))
@@ -153,7 +153,9 @@
     comment = <s> <hash> lbl
 
     (* containers - including shapes *)
-    ctr = <s> ctr-key colon-label? (<curlyo> <break?> contained <s> <curlyc>)?
+    ctr = (<s> ctr-key colon-label? (<curlyo> <break?> contained <s> <curlyc>)?) | composite-ctr
+    <composite-ctr> = <s> ctr-key <period> composite-ctr-attr
+    composite-ctr-attr = std-attr      
     ctr-key = !classes-lit !hash !vars-lit (ctr-key-part <period>)* ctr-key-part
     ctr-key-part =  !d2-keyword " (insta-reg ctr-key-bans :banned-words dirs) "
 
@@ -175,9 +177,9 @@
     attr = std-attr | conn-ref
     <std-attr> = (<s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs))
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
-    attr-key = (attr-key-part <period>)* attr-key-last
-    attr-key-part = " (insta-reg attr-key-bans :banned-words ["vars-lit"]) "
-    attr-key-last = d2-keyword | glob | amp d2-keyword
+    attr-key = ((attr-key-part <period>)* (attr-key-last <period>)* attr-key-last) | globs
+    attr-key-part = &glob " (insta-reg attr-key-bans :banned-words ["vars-lit"]) "
+    attr-key-last = d2-keyword | amp d2-keyword
     attr-label = label (* i.e. lbl, block or typescript *)
     <item> = " (insta-reg inner-list-item-bans) "
     inner-list = <'['> (item <semi> <s>)* item <']'>
@@ -190,7 +192,7 @@
     conn-ref-val = (conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> null)
     crk = " (insta-reg conn-ref-key-bans) "
     conn-ref-attr-keys = (<period> d2-keyword)+
-    array-val = #'\\d' | glob
+    array-val = #'\\d' | globs
 
     (* labels *)
     <colon-label> = (<colon> <s> | <colon> <s> label)
@@ -216,6 +218,7 @@
     empty-line = line-return line-return
     <line-return> = <#'[^\\S\\r\\n]*\\r?\\n'>
     s = #' *'
+    globs = glob+
 
     (* literals *)
     <single-quote> = '\\''   (* can't insert due to clojure/ instaparse escaping diffs *)
@@ -298,11 +301,12 @@
 
           {:ctr-key-part (fn [& chars] (str/trim (str/join chars)))
            :ctr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
+           :composite-ctr-attr (fn [at-k at-v] {at-k at-v})
            :attr-key-part (fn [& chars] (str/trim (str/join chars)))
            :attr-key-last (fn [& parts] (str/join parts))
            :attr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
            :inner-list (fn [& items]
-                         items)
+                         (into [] (cons :list items)))
            :attr-val (fn [v]
                        (if (nil? v)
                          nil
@@ -356,6 +360,7 @@
                    ([k lbl m] ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
            :glob identity
+           :globs (fn [& gs] (str/join gs))
            :amp identity
            :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
            :ctr
