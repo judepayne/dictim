@@ -176,7 +176,7 @@
 
 (check :shape elem
        (let [[k & opts] elem]
-         (and (and (kstr? k) #_(globs-quoted? k) (not (is-vars? k)))
+         (and (and (kstr? k) (globs-quoted? k) (not (is-vars? k)))
               (case (count opts)
                 0 true
                 1 (or (kstr? (first opts))
@@ -207,7 +207,7 @@
 (check :ctr elem
        (let [[k & opts] elem]
         (and
-         (and (kstr? k) #_(globs-quoted? k) (not (is-vars? k)))
+         (and (kstr? k) (globs-quoted? k) (not (is-vars? k)))
          (or (and (or (nil? (first opts)) (kstr? (first opts))) ;; label & attrs
                   (valid? (second opts))
                   (or (nil? (rest (rest opts)))
