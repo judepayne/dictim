@@ -290,7 +290,10 @@
                                  (if (= :empty-lines (first elem))
                                    (if retain-empty-lines? true false)
                                    true))
-                               parts))]
+                               parts))
+        remove-empty-lines (fn [parts]
+                             (filter
+                              (fn [elem] (not (= :empty-lines (first elem)))) parts))]
     (if (insta/failure? p-trees)
       (throw (error (str "Could not parse: " (-> p-trees last second))))
       (mapcat
@@ -319,7 +322,7 @@
            :crk (fn [k] (key-fn (str/trim k)))
            :array-val (fn [ar-val] (try-parse-primitive ar-val))
            :vars-lit (constantly "vars")
-           :the-vars (fn [& vars] (into {} (concat vars)))
+           :the-vars (fn [& vars] (into {} (concat (remove-empty-lines vars))))
            :var (fn [k v] [k v])
            ;; & _ below to catch :breaks
            :vars (fn [k v & _] (with-tag {(key-fn k) v} :vars))
@@ -361,7 +364,7 @@
            :glob identity
            :globs (fn [& gs] (str/join gs))
            :amp identity
-           :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
+           :attrs (fn [& attrs] (with-tag (into {} (remove-empty-lines attrs)) :attrs))
            :ctr
            (fn [& parts]
              (let [parts (process-empty-lines parts)
