@@ -214,9 +214,7 @@
     (* building blocks *)
     <any> = #'.'
     <d2-keyword> =(" (at/d2-keys) ")
-    <break> = empty-line+ line-return? | line-return
-    empty-line = line-return line-return
-    <line-return> = <#'[^\\S\\r\\n]*\\r?\\n'>
+    break = #'[^\\S\\r\\n]*\\r?\\n'+
     s = #' *'
     globs = glob+
 
@@ -289,7 +287,7 @@
         process-empty-lines (fn [parts]
                               (filter
                                (fn [elem]
-                                 (if (= :empty-line elem)
+                                 (if (= :empty-lines (first elem))
                                    (if retain-empty-lines? true false)
                                    true))
                                parts))]
@@ -353,7 +351,8 @@
            :conn (fn [& parts] (with-tag (vec parts) :conn))
            :line-return (constantly :line-return)
            :empty-line (constantly :empty-line)
-           :break (fn [& brks] (first (filter #(= :empty-line %) brks)))
+           :break (fn [& brks] 
+                    [:empty-lines (dec (count brks))])
            :attr-label identity
            :attr (fn
                    ([k v] (with-tag {k v} :attrs))
