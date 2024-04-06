@@ -51,7 +51,8 @@
    "fill-pattern" {:validate-fn (fn [v] true)}
    "class" {:validate-fn (fn [v] true)}
    "grid-rows" {:validate-fn (fn [v] (integer? (tpp v)))}
-   "grid-columns" {:validate-fn (fn [v] (integer? (tpp v)))}})
+   "grid-columns" {:validate-fn (fn [v] (integer? (tpp v)))}
+   "text-transform" {:validate-fn (fn [v] true)}})
 
 
 (defn validate-fn [d2-keyword]
