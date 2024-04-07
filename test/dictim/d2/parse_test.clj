@@ -376,7 +376,25 @@
 	       ["charlie team" {"shape" "person"}]
 	       ["command center" {"shape" "cloud"}]
 	       ["hq" {"shape" "rectangle"}]
-	       {"*" {"&shape" "person", "style.multiple" true}}))))))
+	       {"*" {"&shape" "person", "style.multiple" true}})))))
+  (testing "globs can be used in edge connections"
+    (let [d2 "zone-A: {
+                machine A
+                machine B: {
+                  submachine A
+                  submachine B
+                }
+              }
+
+             zone-A.** -> load balancer"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["zone-A"
+                ["machine A"]
+                ["machine B" ["submachine A"] ["submachine B"]]]
+               ["zone-A.**" "->" "load balancer"]))))))
 
 
 (deftest vars

@@ -74,7 +74,7 @@
 
 (def conn-key-bans
   (concat base-bans
-          ["hyphen" "l-arrow" "r-arrow" "amp" "bracketo" "bracketc"]))
+          [ "l-arrow" "r-arrow" "amp" "bracketo" "bracketc"]))
 
 (def attr-key-bans
   (concat base-bans
@@ -190,7 +190,7 @@
     <conn-ref> = <s> conn-ref-key conn-ref-val
     conn-ref-key = <'('> <s> crk <s> dir <s> crk <s> <')'> <'['> array-val <']'>
     conn-ref-val = (conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> null)
-    crk = " (insta-reg conn-ref-key-bans) "
+    crk = " (insta-reg conn-ref-key-bans :banned-words dirs) "
     conn-ref-attr-keys = (<period> d2-keyword)+
     array-val = #'\\d' | globs
 
@@ -206,7 +206,7 @@
     (* connections *)
     conn = <s> (conn-key dir)+ <s> conn-key colon-label? attrs?
     conn-key = (conn-key-part <period>)* conn-key-part
-    conn-key-part = !d2-keyword " (insta-reg conn-key-bans) " (* greedy regex *)
+    conn-key-part = !d2-keyword " (insta-reg conn-key-bans :banned-words dirs) " (* greedy regex *)
     dir = <contd?> <s> direction
     contd = #'--\\\\\n'
     <direction> = '--' | '->' | '<-' | '<->'
