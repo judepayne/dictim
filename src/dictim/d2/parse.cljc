@@ -4,7 +4,6 @@
   (:require [clojure.string :as str]
             #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
-            #?(:clj [lambdaisland.deep-diff2 :as ddiff])
             [dictim.attributes :as at]
             [dictim.utils :refer [error try-parse-primitive line-by-line prn-repl]]))
 
@@ -226,9 +225,12 @@
     "))
 
 
-#?(:bb (defn parse-d2 [d2] (insta/parse (insta/parser (grammar)) d2))
+#_(:bb (defn parse-d2 [d2] (insta/parse (insta/parser (grammar)) d2))
    :clj (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
    :cljs (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar)))
+
+(defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
+
 
 (defn cond-keyword
   "Converts to keyword where possible."
@@ -249,15 +251,6 @@
 #?(:clj
    (defn num-parses [d2 & kvs]
      (count (apply parses-d2 d2 kvs))))
-
-;; a function used to identify the cause of parser ambiguities
-#?(:clj
-   (defn ambig [d2]
-     (let [parses (-> (insta/parser (grammar))
-                      (insta/parses d2))]
-       (if (= 1 (count parses))
-         nil
-         (ddiff/pretty-print (apply ddiff/diff (map first (take 2 parses))))))))
 
 
 (defmacro dbg [body]

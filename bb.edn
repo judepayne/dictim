@@ -1,5 +1,5 @@
 {:paths ["src"]
- :deps {io.github.babashka/instaparse-bb {:local/root "../instaparse-bb"}}
+ :deps {io.github.babashka/instaparse-bb {:git/sha "6fc056915b939bfbb5ac01460b53aab8fc18ba10"}}
  :tasks
  {test:bb {:extra-paths ["test"]
            :extra-deps {io.github.cognitect-labs/test-runner
