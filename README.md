@@ -60,6 +60,11 @@ user> (dictim "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
 
 ```
 
+A more interesting diagram that can be produced from dictim
+
+<img src="img/ex2.svg" width="200">
+
+
 For details on dictim syntax, the compile, parse and format operations, please see the [wiki](https://github.com/judepayne/dictim/wiki).
 
 
@@ -68,11 +73,6 @@ This project is the base project for a number of other projects:
 - [dictim.graph](https://github.com/judepayne/dictim.graph) Convert a representation of a graph into dictim: ideal for boxes and arrows/ network diagrams
 - [dictim.cookbook](https://github.com/judepayne/dictim.cookbook) Examples of dictim in action!
 - [dictim.server](https://github.com/judepayne/dictim.server) A easy-to-deploy microservice for converting dictim into d2 diagrams.
-
-## d2 version compatibility
-
-dictim is currently compatible with d2 v0.2.4 (and earlier).
-We plan to bring this up to d2 v0.6.3 soon!
 
 
 ## License
