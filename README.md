@@ -2,9 +2,12 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
 
-Dictim is a library for representing Terrastruct's [d2](https://github.com/terrastruct/d2) and Graphviz's [dot](https://graphviz.org/doc/info/lang.html) languages in Clojure/ Clojurescript. It uses vectors and maps to represent d2 elements and attributes.
+Dictim is a library for representing Terrastruct's [d2](https://github.com/terrastruct/d2) and Graphviz's [dot](https://graphviz.org/doc/info/lang.html) languages as data.
+It uses Clojure's vectors and maps to represent the d2 language, and provides functions to compile to d2 text as well as parsing d2 text back to the dictim data format.
 
-Dictim allows d2 and dot to be produced programmatically, and for d2 diagrams to be read back into your programs as data.
+Support is provided for Clojure and Babshka (with experimental Clojurescript support).
+
+
 
 ## Release Information
 
