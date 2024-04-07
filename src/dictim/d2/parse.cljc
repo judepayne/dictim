@@ -163,7 +163,7 @@
     (* vars *)
     vars = <s> vars-lit <s> <colon> <s> vars-content
     <vars-content> = <curlyo> <break?> the-vars <s> <break>? <s> <curlyc>
-    the-vars = (var break)* var
+    the-vars = (var <break>)* var
     var = <s> ctr-key <colon> <s> (var-val | vars-content)
     var-val = "(insta-reg attr-val-bans) " | inner-list
 
@@ -214,9 +214,10 @@
     (* building blocks *)
     <any> = #'.'
     <d2-keyword> =(" (at/d2-keys) ")
-    break = #'[^\\S\\r\\n]*\\r?\\n'+
     s = #' *'
     globs = glob+
+    break = lr+
+    lr = #'[^\\S\\r\\n]*\\r?\\n'
 
     (* literals *)
     <single-quote> = '\\''   (* can't insert due to clojure/ instaparse escaping diffs *)
@@ -287,13 +288,15 @@
         process-empty-lines (fn [parts]
                               (filter
                                (fn [elem]
-                                 (if (= :empty-lines (first elem))
-                                   (if retain-empty-lines? true false)
-                                   true))
-                               parts))
-        remove-empty-lines (fn [parts]
-                             (filter
-                              (fn [elem] (not (= :empty-lines (first elem)))) parts))]
+                                 (cond
+                                   (not= :empty-lines (first elem))   true
+
+                                   (= 0 (second elem))                false
+
+                                   retain-empty-lines?                true
+
+                                   :else                              false))
+                               parts))]
     (if (insta/failure? p-trees)
       (throw (error (str "Could not parse: " (-> p-trees last second))))
       (mapcat
@@ -322,7 +325,7 @@
            :crk (fn [k] (key-fn (str/trim k)))
            :array-val (fn [ar-val] (try-parse-primitive ar-val))
            :vars-lit (constantly "vars")
-           :the-vars (fn [& vars] (into {} (concat (remove-empty-lines vars))))
+           :the-vars (fn [& vars] (into {} (concat vars)))
            :var (fn [k v] [k v])
            ;; & _ below to catch :breaks
            :vars (fn [k v & _] (with-tag {(key-fn k) v} :vars))
@@ -352,10 +355,8 @@
            :conn-key (fn [& parts] (key-fn (str/join (interpose "." parts))))
            :conn-key-part (fn [& parts] (str/join parts))
            :conn (fn [& parts] (with-tag (vec parts) :conn))
-           :line-return (constantly :line-return)
-           :empty-line (constantly :empty-line)
-           :break (fn [& brks] 
-                    [:empty-lines (dec (count brks))])
+           :el (constantly :el)
+           :break (fn [& els] [:empty-lines (dec (count els))])
            :attr-label identity
            :attr (fn
                    ([k v] (with-tag {k v} :attrs))
@@ -364,7 +365,7 @@
            :glob identity
            :globs (fn [& gs] (str/join gs))
            :amp identity
-           :attrs (fn [& attrs] (with-tag (into {} (remove-empty-lines attrs)) :attrs))
+           :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
            :ctr
            (fn [& parts]
              (let [parts (process-empty-lines parts)
