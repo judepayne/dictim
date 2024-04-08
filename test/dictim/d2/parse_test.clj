@@ -596,3 +596,9 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["a" "@x.d2"]))))))
+
+
+(deftest key-and-label-fn
+  (testing "key-fn and label-fn work as expected"
+    (is (= (p/dictim "larry: king" :key-fn keyword :label-fn keyword)
+           '([:larry :king])))))

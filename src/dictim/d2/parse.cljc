@@ -278,6 +278,8 @@
                               (filter
                                (fn [elem]
                                  (cond
+                                   (not (vector? elem))               true
+                                   
                                    (not= :empty-lines (first elem))   true
 
                                    (= 0 (second elem))                false
@@ -292,7 +294,7 @@
        (fn [p-tree]
          (insta/transform
 
-          {:ctr-key-part (fn [& chars] (str/trim (str/join chars)))
+          {:ctr-key-part identity
            :ctr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
            :composite-ctr-attr (fn [at-k at-v] {at-k at-v})
            :attr-key-part (fn [& chars] (str/trim (str/join chars)))
