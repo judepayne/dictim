@@ -1,7 +1,7 @@
 {:paths ["src"]
  :deps {org.clojure/clojure             {:mvn/version "1.11.1"}
         instaparse/instaparse           {:mvn/version "1.4.12"}
-        lambdaisland/deep-diff2         {:mvn/version "2.11.216"}}
+        cheshire/cheshire               {:mvn/version "5.13.0"}}
  :aliases {:test {:extra-paths ["test"]
                  :extra-deps {io.github.cognitect-labs/test-runner 
                               {:git/tag "v0.5.1" :git/sha "dfb30dd"}}

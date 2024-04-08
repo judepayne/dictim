@@ -65,13 +65,16 @@
   [e]
   (cond
     (and (vector? e)
-         (= :empty-lines (first e)))            :empty-lines
+         (or (= :empty-lines (first e))
+             (= "empty-lines" (first e))))      :empty-lines
     (map? e)                                    :attrs
     (kstr? e)                                   :quikshape
     (and (vector? e)
-         (= :comment (first e)))                :cmt
+         (or (= :comment (first e))
+             (= "comment" (first e))))          :cmt
     (and (vector? e)
-         (= :list (first e)))                   :list
+         (or (= :list (first e))
+             (= "list" (first e))))             :list
     (and (vector? e)
          (not (empty? (filter vector? e))))     :ctr
     (and (vector? e)

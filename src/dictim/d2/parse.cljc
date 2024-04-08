@@ -225,10 +225,6 @@
     "))
 
 
-#_(:bb (defn parse-d2 [d2] (insta/parse (insta/parser (grammar)) d2))
-   :clj (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
-   :cljs (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar)))
-
 (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
 
 
