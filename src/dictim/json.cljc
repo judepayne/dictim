@@ -50,7 +50,9 @@
        p-tree))))
 
 
-(defn- fix-conn-ref-keys
+;; This fn is public as might be used outside of 'from-json' e.g. in dictim.server
+;; when the serialization is done by the web framework.
+(defn fix-conn-ref-keys
   [m]
   (clojure.walk/postwalk
    (fn [x]
