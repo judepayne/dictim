@@ -36,7 +36,19 @@
 (defparser ^{:doc "A parser for d2" :private true} parse-d2 conn-ref-grammar)
 
 
-(defn- convert-conn-ref-key
+(def conn-ref-reg
+  (re-pattern
+   (str "\\[\\s*"
+        "((?!(?:<-|->|<->|--))[^.;:\n{}<>&()\\[\\]])+"
+        "(?:<-|->|<->|--)"
+        "((?!(?:<-|->|<->|--))[^.;:\n{}<>&()\\[\\]])+"
+        "\\[\\\".\\\"\\]\\]")))
+
+
+(defn conn-ref? [x] (when (re-matches conn-ref-reg x) true))
+
+
+(defn- parse-conn-ref-key
   [maybe-key]
   (let [p-tree (parse-d2 (remove-quoting maybe-key))]
     (if (insta/failure? p-tree)
@@ -48,6 +60,13 @@
         :conn-ref-key (fn [k1 d k2 arv]
                         [k1 d k2 [arv]])}
        p-tree))))
+
+
+(defn convert-conn-ref-key
+  [maybe-key]
+  (if (conn-ref? maybe-key)
+    (parse-conn-ref-key maybe-key)
+    maybe-key))
 
 
 ;; This fn is public as might be used outside of 'from-json' e.g. in dictim.server
@@ -66,9 +85,8 @@
    m))
 
 
-;; This fix for connection reference key has a severe performance penalty over
-;; deserialization. Should be optimized further.
-
+;; This fix for connection reference key has a performance penalty. This is optimized
+;; by doing a regex check before attempting to parse
 
 (defn from-json
   "Desrializes the json to dictim"
