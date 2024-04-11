@@ -165,7 +165,7 @@
      ["barbie"]
      ["lady 1" "->" "barbie" "hi barbie"]
      ["lady 2" "->" "barbie" "hi barbie"]
-     {["lady*" "->" "barbie" ["*"]] {"style.stroke" "pink"}})
+     ["lady*" "->" "barbie" ["*"] {"style.stroke" "pink"}])
 
    '(["pig" nil ["piglet"]])
 
