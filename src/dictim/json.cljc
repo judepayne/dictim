@@ -6,7 +6,6 @@
 
 ;; serialization/ deserialization of dictim to json
 
-
 (defn to-json
   "Serializes the dictim to json."
   [dictim & {:as opts}]
