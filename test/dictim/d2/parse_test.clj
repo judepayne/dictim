@@ -511,7 +511,7 @@
                ["barbie"]
                ["lady 1" "->" "barbie" "hi barbie"]
                ["lady 2" "->" "barbie" "hi barbie"]
-               {["lady*" "->" "barbie" ["*"]] {"style.stroke" "pink"}}))))))
+               ["lady*" "->" "barbie" ["*"] {"style.stroke" "pink"}]))))))
 
 
 (deftest nulls
@@ -521,7 +521,7 @@
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
-             '({["a" "->" "b" [0]] nil})))))
+             '(["a" "->" "b" [0] nil])))))
   (testing "shapes/ containers can be nulled."
     (let [d2 "pig: null {piglet}"
           dict (p/dictim d2)]

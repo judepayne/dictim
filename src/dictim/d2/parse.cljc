@@ -145,7 +145,7 @@
     <contained> = (element break)* element? | break* | element
     <element> = list | elem
 
-    <elem> = classes | vars | ctr | attr | comment | conn
+    <elem> = classes | vars | ctr | attr | comment | conn | conn-ref
 
     (* lists and comments *)
     list = (elem <semi>+)+ elem <semi>*
@@ -173,7 +173,7 @@
 
     (* attrs *)
     <at-sep> = break | semi
-    attr = std-attr | conn-ref
+    attr = std-attr
     <std-attr> = (<s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs))
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr-key = ((attr-key-part <period>)* (attr-key-last <period>)* attr-key-last) | globs
@@ -184,14 +184,6 @@
     inner-list = <'['> (item <semi> <s>)* item <']'>
     <av> = !null " (insta-reg attr-val-bans) "
     attr-val = av | substitution | <s> null <s> | inner-list
-
-    (* conn-refs - a special type of attr *)
-    <conn-ref> = <s> conn-ref-key conn-ref-val
-    conn-ref-key = <'('> <s> crk <s> dir <s> crk <s> <')'> <'['> array-val <']'>
-    conn-ref-val = (conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> null)
-    crk = " (insta-reg conn-ref-key-bans :banned-words dirs) "
-    conn-ref-attr-keys = (<period> d2-keyword)+
-    array-val = #'\\d' | globs
 
     (* labels *)
     <colon-label> = (<colon> <s> | <colon> <s> label)
@@ -209,6 +201,14 @@
     dir = <contd?> <s> direction
     contd = #'--\\\\\n'
     <direction> = '--' | '->' | '<-' | '<->'
+
+    (* conn-refs - a special type of connection *)
+    conn-ref = <s> conn-ref-key conn-ref-val
+    conn-ref-key = <'('> <s> crk <s> dir <s> crk <s> <')'> <'['> array-val <']'>
+    conn-ref-val = (conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> null)
+    crk = " (insta-reg conn-ref-key-bans :banned-words dirs) "
+    conn-ref-attr-keys = (<period> d2-keyword)+
+    array-val = #'\\d' | globs
 
     (* building blocks *)
     <any> = #'.'
@@ -306,6 +306,7 @@
                        (if (nil? v)
                          nil
                          (try-parse-primitive v)))
+           :conn-ref (fn [rk rv] (conj rk rv))
            :conn-ref-key (fn [crk1 dir crk2 ar-val]
                            [(key-fn crk1) dir (key-fn crk2) [ar-val]])
            :conn-ref-val (fn

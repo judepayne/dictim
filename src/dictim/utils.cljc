@@ -23,14 +23,6 @@
   (contains? #{"--" "<->" "->" "<-"} s))
 
 
-(defn conn-ref-ptr?
-  [s]
-  (and (vector? s)
-       (= 1 (count s))
-       (or (integer? (first s))
-           (= "*" (first s)))))
-
-
 (defn take-til-last
   "take until the last match. not every item needs match"
   [pred coll]
@@ -49,12 +41,20 @@
       vals))
 
 
-(defn conn-ref?
+(defn conn-ref-ptr?
+  [s]
+  (and (vector? s)
+       (= 1 (count s))
+       (or (integer? (first s))
+           (= "*" (first s)))))
+
+
+(defn- conn-ref?*
   "Returns true if element is a connection reference style attribute key."
   [e]
   (and (vector? e)
        (direction? (second e))
-       (= (count e) 4)
+       (= (count e) 5)
        (conn-ref-ptr? (nth e 3))))
 
 
@@ -64,6 +64,7 @@
   "Returns the type of dictim element e."
   [e]
   (cond
+    (conn-ref?* e)                              :conn-ref
     (and (vector? e)
          (or (= :empty-lines (first e))
              (= "empty-lines" (first e))))      :empty-lines
@@ -89,6 +90,9 @@
 
 
 (defn conn? [e] (= :conn (elem-type e)))
+
+
+(defn conn-ref? [e] (= :conn-ref (elem-type e)))
 
 
 (defn shape? [e] (= :shape (elem-type e)))

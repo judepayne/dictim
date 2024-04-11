@@ -35,19 +35,9 @@
        (empty? (second (first m)))))
 
 
-(defn- conn-ref->d2 [[k1 dir k2 ar]]
-  (str "("
-       k1
-       spc dir
-       spc k2
-       ")"
-       ar))
-
-
 (defn- format-key [k]
   (cond
     (integer? k)        (str k)
-    (conn-ref? k)       (conn-ref->d2 k)
     (keyword? k)        (name k)
     :else               k))
 
@@ -123,6 +113,30 @@
     (if (> num-dirs 1)
       (multi-conn el)
       (single-conn el))))
+
+
+(defn- conn-ref->d2 [[k1 dir k2 ar at]]
+  (str "("
+       k1
+       spc dir
+       spc k2
+       ")"
+       ar))
+
+(defmethod layout :conn-ref [[k1 dir k2 ar at]]
+  (str "("
+       k1
+       spc dir
+       spc k2
+       ")"
+       (str "[" (first ar) "]")
+       ": "
+       (cond
+         (nil? at)   "null"
+         :else       (case (count at)
+                       0    "null"
+                       1    (binding [sep ""] (attrs at true))
+                       (attrs at true)))))
 
 
 (defmethod layout :cmt [el]

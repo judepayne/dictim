@@ -18,7 +18,7 @@
    "label" {:validate-fn (fn [v] true)}
    "source-arrowhead" {:validate-fn (fn [v] true)}
    "target-arrowhead" {:validate-fn (fn [v] true)}
-   "style" {:validate-fn (fn [v] (println v) true)}
+   "style" {:validate-fn (fn [v] true)}
    "near" {:validate-fn (fn [v] true)}
    "icon" {:validate-fn (fn [v] true)}
    "width" {:validate-fn (fn [v] true)}

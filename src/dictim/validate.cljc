@@ -93,8 +93,7 @@
 
 
 (defn- valid-d2-attr-key? [k]
-  (or (conn-ref? k)
-      (kstr? k)))
+  (kstr? k))
 
 
 (defn- valid-d2-attr? [[k v]]
@@ -106,8 +105,6 @@
        (list? v)          (valid? v)
        
        (map? v)           (valid? v)
-
-       (conn-ref? k)      true ;; conn-ref is already validated by the detection fn.
 
        (and (not (map? v))
             (not vars?))
@@ -157,13 +154,12 @@
 ;; globs are allowed in key names but only when the whole name/ first part is quoted.
 
 (defn valid-key? [k v]
-  (or (and (conn-ref? k) (map? v))
-      (and (kstr? k)
-           (let [k' (last-key-part k)]
-             (if (at/d2-keyword? k')
-               (let [val-fn (at/validate-fn k')]
-                 (val-fn v))
-               true)))))
+  (and (kstr? k)
+       (let [k' (last-key-part k)]
+         (if (at/d2-keyword? k')
+           (let [val-fn (at/validate-fn k')]
+             (val-fn v))
+           true))))
 
 ;; a composite key is when a shape or container has a key with attributes appended
 ;; e.g. aShape.style.fill
@@ -196,6 +192,12 @@
          (if (> num-dirs 1)
            (valid-multiple-connection? conn)
            (valid-single-connection? conn))))
+
+
+(check :conn-ref cr
+       (let [attr (last cr)]
+         (or (nil? attr) ;; conn-ref's can be nulled out
+             (valid? attr))))
 
 
 (check :cmt cmt

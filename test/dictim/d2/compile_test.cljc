@@ -232,7 +232,7 @@
     (is (= (apply c/d2 '([1 "one" {:style.fill "green"}]
                          [2 "two" {:style.fill "blue"}]
                          [1 "->" 2]
-                         {[1 "->" 2 [0]] {:style {:stroke "red"}}}))
+                         [1 "->" 2 [0] {:style {:stroke "red"}}]))
            "1: one  {\n  style.fill: green\n}\n2: two  {\n  style.fill: blue\n}\n1 -> 2\n(1 -> 2)[0]:  {\n  style:  {\n    stroke: red\n  }\n}"))))
 
 
@@ -271,7 +271,7 @@
     (is (= (c/d2 [:shapeA nil [:shapeB]])
            "shapeA: null  {\n  shapeB\n}")))
   (testing "connection-references can be nulled"
-    (is (= (c/d2 {[:a "->" :b [0]] nil})
+    (is (= (c/d2 [:a "->" :b [0] nil])
            "(:a -> :b)[0]: null")))
   (testing "single connections can be nulled"
     (is (= (c/d2 [:x "->" :y nil])
