@@ -21,7 +21,7 @@ As a git dep:
 io.github.judepayne/dictim {:git/tag "0.6.7" :git/sha "0ae6788"}
 ``` 
 
-d2 compatibility: 0.6.3
+d2 compatibility: 0.6.4
 
 
 ## Docs
