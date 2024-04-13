@@ -225,7 +225,7 @@
 
 (check :empty-lines elem
        (and (= 2 (count elem))
-           (= :empty-lines (first elem))
+            (or (= :empty-lines (first elem)) (= "empty-lines" (first elem)))
            (integer? (second elem))
            (> (second elem) 0)))
 

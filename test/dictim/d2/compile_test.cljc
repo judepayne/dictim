@@ -313,3 +313,15 @@
   (testing "imports can be compiled"
     (is (= (c/d2 ["a" "@x.d2"])
            "a: @x.d2"))))
+
+
+(deftest comment-str
+  (testing "The 'comment' marker can be a string"
+    (is (= (c/d2 ["comment" "This is a comment"])
+           "# This is a comment"))))
+
+
+(deftest empty-lines-str
+  (testing "The 'empty-lines' marker can be a string"
+    (is (= (apply c/d2 '(["One"]["empty-lines" 2]["Two"]))
+           "One\n\n\nTwo"))))
