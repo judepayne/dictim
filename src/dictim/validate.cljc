@@ -202,7 +202,7 @@
 
 (check :cmt cmt
        (and (= 2 (count cmt))
-            (= :comment (first cmt))
+            (or (= :comment (first cmt)) (= "comment" (first cmt)))
             (string? (second cmt))))
 
 
