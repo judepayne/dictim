@@ -1,5 +1,6 @@
-{:paths ["src"]
- :deps {io.github.babashka/instaparse-bb {:git/sha "6fc056915b939bfbb5ac01460b53aab8fc18ba10"}}
+{:paths ["src" "resources"]
+ :deps {io.github.babashka/instaparse-bb {:git/sha "059045f6a8450bda74eb30136ddd2c5475f788d1"}}
+ :bbin/bin {dictim {:main-opts ["-f" "dictim.clj"]}}
  :tasks
  {test:bb {:extra-paths ["test"]
            :extra-deps {io.github.cognitect-labs/test-runner

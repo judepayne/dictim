@@ -226,6 +226,11 @@
 
 
 (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
+;; for testing local pod-babshka-instaparse development
+#_(require '[babashka.pods :as pods])
+#_(pods/load-pod "../pod-babashka-instaparse/pod-babashka-instaparse")
+#_(require '[pod.babashka.instaparse :as insta])
+#_(def parse-d2 (insta/parser (grammar)))
 
 
 (defn cond-keyword
@@ -289,7 +294,7 @@
                                    :else                              false))
                                parts))]
     (if (insta/failure? p-trees)
-      (throw (error (str "Could not parse: " (-> p-trees last second))))
+      (throw (error (str "Could not parse: " (:text p-trees))))
       (mapcat
        (fn [p-tree]
          (insta/transform
