@@ -1,3 +1,7 @@
+#!/usr/bin/env bb
+
+;; babashka script for the cmd line tool
+
 (ns dictim
   (:require [dictim.d2.compile :as c]
             [dictim.d2.parse :as p]
@@ -93,14 +97,18 @@
           (if-let [dict (from-edn input)]
             dict
             nil))]
-    (if dict
-      (do (println dict)
-        (try
-          (let [d2 (c/d2 dict)]
-            (println d2))
-          (catch Exception ex
-            (.getMessage ex))))
-      (println "Error: Could not read input as valid json or dictim"))))
+    (cond
+      (empty? dict) (println "Error: no dictim to compile")
+      
+      (or (and dict (not (list? dict))) (and (list? dict) (every? coll? dict)))
+      (try
+        (if (list? dict)
+          (let [d2 (apply c/d2 dict)] (println d2))
+          (let [d2 (c/d2 dict)] (println d2)))
+        (catch Exception ex
+          (.getMessage ex)))
+      
+      :else (println "Error: Could not read input as valid json or dictim"))))
 
 
 (defn- parse [opts]
@@ -116,7 +124,7 @@
 
 
 (defn -main
-  [args]
+  [& args]
   (let [opts (cli/parse-opts args cli-spec)]
     (try
       (cond
@@ -138,4 +146,4 @@
         (println (str "Error: " (.getMessage ex)))))))
 
 
-(-main *command-line-args*)
+#_(-main *command-line-args*)
