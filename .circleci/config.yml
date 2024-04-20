@@ -62,7 +62,7 @@ jobs:
       - run:
           name: release artifact
           command: |
-            sudo .circleci/script/release
+            .circleci/script/release
 
       - save_cache:
           paths:
