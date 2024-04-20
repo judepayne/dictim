@@ -32,6 +32,34 @@ jobs:
           name: run bb tests
           command: |
             bb test:bb
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "deps.edn" }}
+  release:
+    docker:
+      - image: cimg/clojure:1.11.1-openjdk-17.0
+
+    working_directory: ~/project
+    steps:
+      - checkout
+      - restore_cache:
+         keys:
+           - v1-dependencies-{{ checksum "deps.edn" }}
+           # fallback to using the latest cache if no exact match is found
+           - v1-dependencies-
+      - run:
+          name: install babashka
+          command: |
+            sudo bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
+      - run:
+          name: build bb uberjar
+          command: |
+            bb uberjar dictim.jar -m dictim
+      - run:
+          name: release artifact
+          command: |
+            .circleci/script/release
 
       - save_cache:
           paths:
@@ -43,3 +71,11 @@ workflows:
   test-workflow:
     jobs:
       - test
+      - release:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+            tags:
+              only: /^\d+\.\d+\.\d+$/

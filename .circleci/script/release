@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+rm -rf /tmp/release
+mkdir -p /tmp/release
+
+VERSION=$(cat resources/VERSION)
+
+cp dictim.jar /tmp/release
+
+bb release-artifact --file "/tmp/release/dictim.jar"
