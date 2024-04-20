@@ -14,8 +14,8 @@
           :out
           str/trim)))
 
-(defn release [{:keys [file token]}]
-  (let [ght (or token (System/getenv "GITHUB_TOKEN"))
+(defn release [{:keys [file]}]
+  (let [ght (System/getenv "GITHUB_TOKEN")
         _ (when ght (println "Github token found"))
         _ (println "File" file)
         branch (current-branch)
