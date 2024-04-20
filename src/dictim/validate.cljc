@@ -230,6 +230,10 @@
            (> (second elem) 0)))
 
 
+(check :nil elem
+       false)
+
+
 (defn all-valid?
   "Validates a collection of dictim elements.
    Throws an error at the first non valid element. Returns nil
@@ -239,4 +243,5 @@
   {:pre [(contains? #{:d2 :dot} output-format)]}
 
   (binding [output output-format]
-    (every? valid? elems)))
+    (and (not (empty? elems))
+         (every? valid? elems))))

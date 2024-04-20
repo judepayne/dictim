@@ -1,5 +1,6 @@
 {:paths ["src" "resources"]
- :deps {io.github.babashka/instaparse-bb {:git/sha "059045f6a8450bda74eb30136ddd2c5475f788d1"}}
+ :deps {io.github.babashka/instaparse-bb {:git/sha "059045f6a8450bda74eb30136ddd2c5475f788d1"}
+        io.github.borkdude/gh-release-artifact {:git/sha "05f8d8659e6805d513c59447ff41dc8497878462"}}
  :bbin/bin {dictim {:main-opts ["-f" "dictim.jar"]}}
  :tasks
  {test:bb {:extra-paths ["test"]

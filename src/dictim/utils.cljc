@@ -64,6 +64,7 @@
   "Returns the type of dictim element e."
   [e]
   (cond
+    (nil? e)                                    :nil
     (conn-ref?* e)                              :conn-ref
     (and (vector? e)
          (or (= :empty-lines (first e))

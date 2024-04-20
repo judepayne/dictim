@@ -100,7 +100,7 @@
     (cond
       (empty? dict) (println "Error: no dictim to compile")
       
-      (or (and dict (not (list? dict))) (and (list? dict) (every? coll? dict)))
+      (or dict (and (list? dict) (every? coll? dict)))
       (try
         (if (list? dict)
           (let [d2 (apply c/d2 dict)] (println d2))
