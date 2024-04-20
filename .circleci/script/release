@@ -9,4 +9,4 @@ VERSION=$(cat resources/VERSION)
 
 cp dictim.jar /tmp/release
 
-bb release-artifact --file "/tmp/release/dictim.jar"
+bb release-artifact --file "/tmp/release/dictim.jar" --token $GITHUB_TOKEN

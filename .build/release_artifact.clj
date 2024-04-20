@@ -14,8 +14,8 @@
           :out
           str/trim)))
 
-(defn release [{:keys [file]}]
-  (let [ght (System/getenv "GITHUB_TOKEN")
+(defn release [{:keys [file token]}]
+  (let [ght (or token (System/getenv "GITHUB_TOKEN"))
         _ (when ght (println "Github token found"))
         _ (println "File" file)
         branch (current-branch)
@@ -33,7 +33,5 @@
                                 :draft true
                                 :overwrite true #_(str/ends-with? current-version "SNAPSHOT")
                                 :sha256 true}))
-      (do
-        (println ght)
-        (println "Skipping release artifact (no GITHUB_TOKEN or not on main branch)")))
+      (println "Skipping release artifact (no GITHUB_TOKEN or not on main branch)"))
     nil))

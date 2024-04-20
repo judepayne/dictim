@@ -71,7 +71,7 @@ jobs:
       
 
 workflows:
-  test-workflow:
+  test-and-release-on-main:
     jobs:
       - test
       - release:
