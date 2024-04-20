@@ -59,7 +59,7 @@ jobs:
       - run:
           name: release artifact
           command: |
-            .circleci/script/release
+            sudo .circleci/script/release
 
       - save_cache:
           paths:
@@ -77,5 +77,3 @@ workflows:
           filters:
             branches:
               only: main
-            tags:
-              only: /^\d+\.\d+\.\d+$/
