@@ -38,7 +38,7 @@ jobs:
           key: v1-dependencies-{{ checksum "deps.edn" }}
       - run:
           name: echo TOKEN
-	  command: printenv GITHUB_TOKEN
+          command: printenv GITHUB_TOKEN
   release:
     docker:
       - image: cimg/clojure:1.11.1-openjdk-17.0
