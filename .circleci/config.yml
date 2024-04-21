@@ -58,7 +58,7 @@ jobs:
       - run:
           name: build bb uberjar
           command: |
-            bb uberjar dictim.jar -m dictim
+            bb build
       - run:
           name: release artifact
           command: |

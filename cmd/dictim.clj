@@ -1,5 +1,3 @@
-#!/usr/bin/env bb
-
 ;; babashka script for the cmd line tool
 
 (ns dictim
@@ -17,28 +15,41 @@
   (cli/format-opts (merge spec {:order (vec (keys (:spec spec)))})))
 
 
-;; pretty printing of json and d2. dictim as well?
+(def compile-help
+  "Compiles supplied dictim to d2
+                The value supplied to --compile may be either
+                  - a edn string (in single quotes)
+                  - a file containing edn. Prefix the file name with '@'
+                  - ommitted in which case *std-in* is read")
+
+
+(def parse-help
+  "Parses supplied d2 into dictim
+                The value supplied to --parse may be either
+                  - a d2 string (in single quotes)
+                  - a file containing d2. Prefix the file name with '@'
+                  - ommitted in which case *std-in* is read
+                --parse has various supplemental flags:")
 
 
 (def cli-spec
   {:spec
-   {:compile {:desc "Compiles supplied dictim to d2"
+   {:compile {:desc compile-help
               :alias :c}
-    :parse {:desc "Parses supplied d2 into dictim"
+    :parse {:desc parse-help
             :alias :p}
+    :k {:coerce :boolean
+        :desc "Convert keys to keywords when parsing d2 to dictim syntax edn"}
+    :j {:coerce :boolean
+        :desc "Converts the output of parse to dictim syntax json"}
+    :b {:coerce :boolean
+        :desc "Additional to  -j: prettifies the json output of parse"}    
     :version {:coerce :boolean
               :desc "Returns the version of dictm"
               :alias :v}
     :help {:coerce :boolean
            :desc "Displays this help"
-           :alias :h}
-    :k {:coerce :boolean
-        :desc "Convert keys to keywords"}
-    :j {:coerce :boolean
-        :desc "Converts the output of parse to json"}
-    :beautify {:coerce :boolean
-               :alias :b
-               :desc "Pretty print the output"}}
+           :alias :h}}
    :error-fn
    (fn [{:keys [spec type cause msg option] :as data}]
      (if (= :org.babashka/cli type)
@@ -77,12 +88,15 @@
 
 
 (defn- handle-in [arg]
-  (if (str/starts-with? arg "@")
-    (try
-      (slurp (subs arg 1))
-      (catch Exception ex
-        (throw (Exception. (str "Can't open file " arg)))))
-    arg))
+  (cond
+    (str/starts-with? arg "@") (try
+                                 (slurp (subs arg 1))
+                                 (catch Exception ex
+                                   (throw (Exception. (str "Can't open file " arg)))))
+
+    (true? arg)      (slurp *in*)
+
+    :else arg))
 
 
 (defn- beautify? [opts]

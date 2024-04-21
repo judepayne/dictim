@@ -2,7 +2,9 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
 
-Dictim is a library for representing Terrastruct's [d2](https://github.com/terrastruct/d2) and Graphviz's [dot](https://graphviz.org/doc/info/lang.html) languages as data.
+[![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
+
+Dictim is a library for representing Terrastruct's [d2](https://github.com/terrastruct/d2) and Graphviz's [dot](https://graphviz.org/doc/info/lang.html) languages as data. It is just a subset of Clojure's edn data format.
 It uses Clojure's vectors and maps to represent the d2 language, and provides functions to compile to d2 text as well as parsing d2 text back to the dictim data format.
 
 Support is provided for Clojure and Babshka (with experimental Clojurescript support).
@@ -63,8 +65,15 @@ user> (dictim "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
 
 ```
 
-For details on dictim syntax, the compile, parse and format operations, please see the [wiki](https://github.com/judepayne/dictim/wiki).
+For details on dictim syntax, the compile, parse and other operations, please see the [wiki](https://github.com/judepayne/dictim/wiki).
 
+
+## Command line tool
+
+This project contains a command line tool version (a babashka script) that you can install and use to play with dictim on the command line! See the [wiki](https://github.com/judepayne/dictim/wiki/Command-Line) for details.
+
+
+## Related Projects
 
 This project is the base project for a number of other projects:
 
