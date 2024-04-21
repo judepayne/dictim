@@ -4,11 +4,19 @@
 
 [![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 
-Dictim is a library for representing Terrastruct's [d2](https://github.com/terrastruct/d2) and Graphviz's [dot](https://graphviz.org/doc/info/lang.html) languages as data. It is just a subset of Clojure's edn data format.
-It uses Clojure's vectors and maps to represent the d2 language, and provides functions to compile to d2 text as well as parsing d2 text back to the dictim data format.
+Data driven diagrams.
 
-Support is provided for Clojure and Babshka (with experimental Clojurescript support).
 
+Dictim is a Clojure/ Babashka library for representing a diagram using a subset of Clojure's edn data format. It then allows you to compile the edn into either Terrastruct's [d2](https://github.com/terrastruct/d2) or Graphviz's [dot](https://graphviz.org/doc/info/lang.html) languages. You can use either the d2 or graphviz executable to produce the diagram.
+
+
+Dictim has deeper support for d2. d2 text can be parsed into dictim format.
+
+
+You can also install dictim as a command line tool; details below.
+
+
+Clojurescript support is experimental.
 
 
 ## Release Information
@@ -23,7 +31,7 @@ As a git dep:
 io.github.judepayne/dictim {:git/tag "0.6.7" :git/sha "0ae6788"}
 ``` 
 
-d2 compatibility: 0.6.4
+d2 version compatibility: 0.6.4
 
 
 ## Docs

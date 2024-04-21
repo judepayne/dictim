@@ -7,7 +7,8 @@
             [babashka.cli :as cli]
             [clojure.string :as str]
             [clojure.java.io :as io]
-            [clojure.edn :as edn]))
+            [clojure.edn :as edn])
+  (:refer-clojure :exclude [compile]))
 
 
 (defn show-help
