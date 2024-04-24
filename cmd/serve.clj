@@ -35,7 +35,6 @@
      font-size: 30px;
    }
    </style>"
-   "<script>" (slurp "resources/svg-pan-zoom.js")  "</script>"
    "<script type=\"text/javascript\">
     // use vanilla JS because why not
     window.addEventListener(\"load\", function() {
