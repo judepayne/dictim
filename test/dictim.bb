@@ -4,6 +4,7 @@
 ;; assume: bb, bbin & dictim installed
 
 (require '[babashka.process :refer [shell]])
+(require '[clojure.edn :refer [read-string]])
 
 
 ;; test that dictim is installed
@@ -15,13 +16,10 @@
 
 ;; test compilation
 
-(println (:out (shell {:out :string :in dict} "dictim" "-c")))
-
-
-#_(assert (= (:out (shell {:out :string :in dict} "dictim" "-c"))
-           d2))
+(assert (= (:out (shell {:out :string :in (pr-str dict)} "dictim" "-c"))
+           (str d2 "\n")))
 
 
 ;; test parsing
-#_(assert (= (:out (shell {:out :string :in d2} "dictim" "-p"))
-           dict))
+(assert (= (read-string (:out (shell {:out :string :in d2} "dictim" "-k" "-p")))
+             dict))
