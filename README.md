@@ -4,19 +4,16 @@
 
 [![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 
-Data driven diagrams.
+Diagrams as data: dynamically generate rather than locking away information in hand produced diagrams.
 
+Dictim let's you specify diagrams as data, using Clojure's edn data format (or Json). You can compile the specification to 
+[d2's](https://github.com/terrastruct/d2) text language and use d2 to convert that into a diagram. It's also possible to parse d2 back into edn.
 
-Dictim is a Clojure/ Babashka library for representing a diagram using a subset of Clojure's edn data format. It then allows you to compile the edn into either Terrastruct's [d2](https://github.com/terrastruct/d2) or Graphviz's [dot](https://graphviz.org/doc/info/lang.html) languages. You can use either the d2 or graphviz executable to produce the diagram.
+This is a Clojure/Babashka library with experimental Clojurescript support.
 
+Dictim also comes as a command line tool. Details below.
 
-Dictim has deeper support for d2. d2 text can be parsed into dictim format.
-
-
-You can also install dictim as a command line tool; details below.
-
-
-Clojurescript support is experimental.
+Dictim can also be compiled into Graphviz' dot text language.
 
 
 ## Release Information
@@ -59,7 +56,7 @@ user=> (d2 [:s1 "Shape 1"][:s2 "Shape 2"][:s1 "->" :s2 "reln"])
 
 When sent to the d2 CLI executable:
 
-<img src="img/ex1.png" width="200">
+<img src="img/ex1.png" width="250">
 
 ### From d2 to dictim
 
@@ -78,7 +75,7 @@ For details on dictim syntax, the compile, parse and other operations, please se
 
 ## Command line tool
 
-This project contains a command line tool version (a babashka script) that you can install and use to play with dictim on the command line! See the [wiki](https://github.com/judepayne/dictim/wiki/Command-Line) for details.
+This project contains a command line tool version (a babashka script) that you can install and use to play with dictim on the command line. This makes to easy to create a toolchain that goes directly from dictim edn to a diagram. See the [wiki](https://github.com/judepayne/dictim/wiki/Command-Line) for details.
 
 
 ## Related Projects
