@@ -63,6 +63,19 @@ jobs:
           name: release artifact
           command: |
             .circleci/script/release
+      - run:
+          name: install bbin
+          command: |
+            mkdir -p ~/.local/bin && curl -o- -L https://raw.githubusercontent.com/babashka/bbin/v0.2.1/bbin > ~/.local/bin/bbin && chmod +x ~/.local/bin/bbin
+            echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.$(basename $SHELL)rc && exec $SHELL
+      - run:
+          name: install dictim via bbin
+          command: |
+            bbin install https://github.com/judepayne/dictim/releases/latest/download/dictim.jar
+      - run:
+          name: run dictim command tests
+          command: |
+            bb test/cmd_test.clj
 
       - save_cache:
           paths:

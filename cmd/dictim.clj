@@ -101,11 +101,6 @@
     (json/to-json dict)))
 
 
-(defn- pretty-d2 [d2]
-  (let [lines (str/split d2 #"\n")]
-    (mapv println lines)))
-
-
 (defn- handle-in [arg]
   (cond
      (true? arg)      (slurp *in*)
