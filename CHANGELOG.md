@@ -1,3 +1,9 @@
+	# v.0.7.00
+	- Command Line Tool
+	- Improved documentation
+	- Improved CI
+	- Switches to using main branch only for releases
+
 	# v.0.6.1
 	- Support for converting dictim to/from json
 
@@ -21,4 +27,3 @@
 	# v0.5.7
 	- Numbers now allowed as shape keys
 	- Compatible with d2 v0.2.4
-	
