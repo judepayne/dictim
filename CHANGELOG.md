@@ -2,7 +2,7 @@
 	- Command Line Tool
 	- Improved documentation
 	- Improved CI
-	- Switches to using main branch only for releases
+	- Switch to using main branch only for releases
 
 	# v.0.6.1
 	- Support for converting dictim to/from json

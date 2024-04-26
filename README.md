@@ -4,19 +4,17 @@
 
 [![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 
-Diagrams as data: dynamically generate rather than locking away information in hand produced diagrams.
+Dictim is an edn syntax for expressing a graph diagram, and compiling it to either [d2's](https://github.com/terrastruct/d2) or [Graphviz's](https://graphviz.org) text languages. You can also parse any piece of d2 into dictim syntax.
 
-Dictim let's you specify diagrams as data, using Clojure's edn data format (or Json). You can compile the specification to 
-[d2's](https://github.com/terrastruct/d2) text language and use d2 to convert that into a diagram. It's also possible to parse d2 back into edn.
+Any piece of dictim syntax data can be expressed as json as well as edn.
 
-This is a Clojure/Babashka library with experimental Clojurescript support.
+Dictim supprts both Clojure and Babashka and comes as a library, a command line tool and a microservice (see dictim.server below).
 
-Dictim also comes as a command line tool. Details below.
+## Rationale
 
-Dictim can also be compiled into Graphviz' dot text language.
+Diagrams as data: dynamically generate rather than locking away information in hand produced diagrams. Dynamic diagrams create opportunities to better understand the information being visualized, e.g. group this way or that, style one way or another, dynamically include/ exclude information.
 
-
-## Release Information
+## Library Release Information
 
 Latest release:
 
@@ -75,7 +73,7 @@ For details on dictim syntax, the compile, parse and other operations, please se
 
 ## Command line tool
 
-This project contains a command line tool version (a babashka script) that you can install and use to play with dictim on the command line. This makes to easy to create a toolchain that goes directly from dictim edn to a diagram. See the [wiki](https://github.com/judepayne/dictim/wiki/Command-Line) for details.
+This project contains a command line tool version (a babashka script) that you can install and use to play with dictim on the command line. You can easily create a toolchain that goes directly from dictim edn to a diagram. See the [wiki](https://github.com/judepayne/dictim/wiki/Command-Line) for details.
 
 
 ## Related Projects
