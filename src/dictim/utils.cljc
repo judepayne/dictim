@@ -81,6 +81,7 @@
          (not (empty? (filter vector? e))))     :ctr
     (and (vector? e)
          (direction? (second e)))               :conn
+    (clojure.core/list? e)                      :unknown
     :else                                       :shape))
 
 
