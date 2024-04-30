@@ -166,31 +166,7 @@
  (reduce (fn [acc cur] (or acc cur)) terms))
 
 
-
-;; working reference version
-#_(defmacro dotest [test]
-  (if (single-test? test)
-    `(list (single-test ~'element ~test))
-    
-    (let [[t & ts] test]
-      (if ts
-        (cond
-          (= "and" t)
-          `(and* (dotest ~ts)) ;; returns a single expression
-
-          (single-test? t)
-          `(cons (single-test ~'element ~t) (dotest ~ts)))
-
-        (if (single-test? t)
-          `(list (single-test ~'element ~t))
-
-          (let [[t' ts'] t]
-            (cond
-              (= "and" t')
-              `(list (and* (dotest ~ts'))))))))))
-
-;; play around version
-;; took a day to get right
+;; macros can be so time consuming: took a day to get right!
 (defmacro dotest [test]
   (if (single-test? test)
     `(single-test ~'element ~test)
