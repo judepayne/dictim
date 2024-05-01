@@ -138,10 +138,14 @@
 
 
 (defn- single-test? [t]
-  (and
-   (sequential? t)
-   (get comparators (first t))
-   #_(get accessors (second t))))
+  (println t (type t))
+  (if
+      (and
+       (sequential? t)
+       (get comparators (first t))
+       #_(get accessors (second t)))
+      true
+      false))
 
 
 (defn- nested-test? [nt]
@@ -162,26 +166,71 @@
 (defn and* [terms]
  (reduce (fn [acc cur] (and acc cur)) terms))
 
+
 (defn or* [terms]
- (reduce (fn [acc cur] (or acc cur)) terms))
+  (reduce (fn [acc cur] (or acc cur)) terms))
 
 
-;; macros can be so time consuming: took a day to get right!
-(defmacro dotest [test]
+(defmacro ^{:private true} dotest*
+  "Takes a sym(bol) to takes and a test in the form of nested and/ or clauses e.g.:
+     [\"or\" [\"=\" \":a\" 2] [\"and\" [\"=\" \":a\" 2] [\"=\" \":a\" 2]]]
+   and returns code that converts the test into a function that tests whether the test
+   is true for the value or var specified by sym."
+  [sym test]
   (if (single-test? test)
-    `(single-test ~'element ~test)
+    `(single-test ~sym ~test)
     (let [[t & ts] test]
+      (println ts)
       (if ts
         (cond
           (= "and" t)
-          `(and* (dotest ~ts))
+          `(and* (dotest ~sym ~ts))
 
           (= "or" t)
-          `(or* (dotest ~ts))
+          `(or* (dotest ~sym ~ts))
 
           (single-test? t)
-          `(cons (single-test ~'element ~t) (dotest ~ts)))
-        `(list (dotest ~t))))))
+          `(cons (single-test ~sym ~t) (dotest ~sym ~ts)))
+        `(list (single-test ~sym ~t))))))
+
+
+(defmacro ^{:private true} dotest2
+  "Takes a sym(bol) to takes and a test in the form of nested and/ or clauses e.g.:
+     [\"or\" [\"=\" \":a\" 2] [\"and\" [\"=\" \":a\" 2] [\"=\" \":a\" 2]]]
+   and returns code that converts the test into a function that tests whether the test
+   is true for the value or var specified by sym."
+  [sym test & tests]
+  
+  (println "outside code " "t " test " ts: " tests)
+  (println "              ts nil?: " (nil? tests) " single-test?: " (single-test? test))
+
+  (if tests
+    `(do (println "here" " test: "~test "tests: " (list ~@tests))
+         (cond
+           (= "and" ~test)
+           (and* (dotest2 ~sym ~@tests))
+
+           (= "or" ~test)
+           (or* (dotest2 ~sym ~@tests))
+
+           (single-test? ~test)
+           (cons (single-test ~sym ~test) (dotest2 ~sym ~@tests))))
+    `(do (println "there")
+       (if (single-test? ~test)
+         (list (single-test ~sym ~test))
+         (let [t# (first ~test)
+               ts# (rest ~test)]
+           (cond
+             (= "and" (first ~test))
+             (and* (dotest2 ~sym ~@(rest test)))
+
+             ))))))
+
+
+
+
+#_(let [[t# & ts#] ~test]
+    (throw (Exception. (str t# " " ts#  " must end with a test"))))
 
 
 ;; ***************
