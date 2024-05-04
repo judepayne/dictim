@@ -215,6 +215,10 @@
        false)
 
 
+(check :unknown elem
+       false)
+
+
 (defn all-valid?
   "Validates a collection of dictim elements.
    Throws an error at the first non valid element. Returns nil

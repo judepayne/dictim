@@ -2,8 +2,14 @@ out*
 deploy*
 *~
 .cpcache
-release*
 boo
 .nrepl-port
 todo.md
+<<<<<<< HEAD
 *.jar
+=======
+/target/
+*.jar
+*notes*
+.DS_Store
+>>>>>>> templates-feature

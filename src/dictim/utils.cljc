@@ -81,10 +81,15 @@
          (seq (filter vector? e)))              :ctr
     (and (vector? e)
          (direction? (second e)))               :conn
+<<<<<<< HEAD
     (not (clojure.core/list? e))                :shape
     (clojure.core/list? e)                      :elements
     :else
     (throw (error "element type not recognized"))))
+=======
+    (clojure.core/list? e)                      :unknown
+    :else                                       :shape))
+>>>>>>> templates-feature
 
 
 (defn ctr?
