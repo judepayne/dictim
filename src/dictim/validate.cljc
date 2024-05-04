@@ -12,26 +12,26 @@
 ;; validation
 
 ;; a dynamic var to hold whether :d2 or :dot is the output format.
-(def ^:dynamic output nil)
+(def ^:dynamic ^:private output nil)
 
 
 ;; a dynamic var to hold whether we need to check attr keys as d2 keywords.
-(def ^:dynamic vars?)
+(def ^:dynamic ^:private vars?)
 
 
-(defn is-vars? [k]
+(defn- is-vars? [k]
   (= "vars" (convert-key k)))
 
 
-(defn err [msg]
+(defn- err [msg]
   (throw (error (str msg " is invalid."))))
 
 
-(defmulti valid? elem-type)
+(defmulti ^:private valid? elem-type)
 
 
 #?(:clj
-   (defmacro check
+   (defmacro ^:private check
      "Creates a multimethod with name `valid?` for the dispatch value
       `dispatch-val`. The body should return true/ false depending on
        whether the element defined by `arg-name` is valid."
@@ -145,30 +145,11 @@
         (every? valid-attr? m)))
 
 
-(defn globs-quoted? [k]
+;; globs are allowed in key names but only when the whole name/ first part is quoted.
+(defn- globs-quoted? [k]
   (let [k (first-key-part k)]
     (or (re-matches single-quoted k)
         (re-matches no-asterisk k))))
-
-
-;; globs are allowed in key names but only when the whole name/ first part is quoted.
-
-(defn valid-key? [k v]
-  (and (kstr? k)
-       (let [k' (last-key-part k)]
-         (if (at/d2-keyword? k')
-           (let [val-fn (at/validate-fn k')]
-             (val-fn v))
-           true))))
-
-;; a composite key is when a shape or container has a key with attributes appended
-;; e.g. aShape.style.fill
-(defn composite-key? [k]
-  (let [lp (last-key-part k)]
-    (if (at/d2-keyword? lp)
-      lp
-      false)))
-
 
 (check :shape elem
        (let [[k & opts] elem]
@@ -243,5 +224,5 @@
   {:pre [(contains? #{:d2 :dot} output-format)]}
 
   (binding [output output-format]
-    (and (not (empty? elems))
+    (and (seq elems)
          (every? valid? elems))))

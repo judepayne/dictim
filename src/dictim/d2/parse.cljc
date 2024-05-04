@@ -5,7 +5,7 @@
             #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
             [dictim.attributes :as at]
-            [dictim.utils :refer [error try-parse-primitive line-by-line prn-repl]]))
+            [dictim.utils :refer [error try-parse-primitive]]))
 
 ;; d2 parser v2
 
@@ -25,7 +25,7 @@
 ;; :lit is the value to be used as a literal (if different to :reg)
 ;; :hide? indicates whether to token should be hidden e.g. <hidden-token>
 ;; :not-lit? means not to be used as a literal inserted into the grammar
-(def char-literals
+(def ^:private  char-literals
   {"hash" {:reg "#" :hide? true}
    "period" {:reg "." :hide? true}
    "colon" {:reg ":" :hide? false}
@@ -48,7 +48,7 @@
    "sq-bracketc" {:reg "\\]" :not-lit? true :lit "]"}})
 
 
-(def word-literals
+(def ^:private word-literals
   {"dir-left" {:reg "<-" :not-lit? true}
    "dir-right" {:reg "->" :not-lit? true}
    "dir-both" {:reg "<->" :not-lit? true}
@@ -60,43 +60,41 @@
    "null" {:reg "null" :hide? false}})
 
 
-(def literals (merge char-literals word-literals))
+(def ^:private literals (merge char-literals word-literals))
 
 
 ;; the sets of 'banned' chars required in the grammar.
-(def base-bans
+(def ^:private base-bans
   ["period" "semi" "colon" "line-return" "curlyo" "curlyc"])
 
-(def ctr-key-bans
+(def ^:private ctr-key-bans
   (concat base-bans
           ["glob" "amp" "l-arrow" "r-arrow"]))
 
-(def conn-key-bans
+(def ^:private conn-key-bans
   (concat base-bans
           [ "l-arrow" "r-arrow" "amp" "bracketo" "bracketc"]))
 
-(def attr-key-bans
+(def ^:private attr-key-bans
   (concat base-bans
           ["bracketo" "bracketc"]))  ;;faciliatate differentiation from conn-refs
 
-(def attr-val-bans ["glob" "curlyo" "curlyc" "semi" "line-return"])
+(def ^:private attr-val-bans ["glob" "curlyo" "curlyc" "semi" "line-return"])
 
-(def conn-ref-key-bans
+(def ^:private conn-ref-key-bans
   (concat conn-key-bans ["bracketo" "bracketc"]))
 
-(def label-bans
+(def ^:private label-bans
   ["semi" "pipe" "curlyo" "curlyc" "line-return"])
 
-(def substitution-bans base-bans)
+(def ^:private inner-list-item-bans ["semi" "sq-bracketo" "sq-bracketc" "line-return"])
 
-(def inner-list-item-bans ["semi" "sq-bracketo" "sq-bracketc" "line-return"])
-
-(def dirs ["dir-left" "dir-right" "dir-both" "dir-neither"])
+(def ^:private dirs ["dir-left" "dir-right" "dir-both" "dir-neither"])
 
 
 ;; Functions that generate output to be inserted into the grammar
 
-(defn insta-reg
+(defn- insta-reg
   "Generates a regex that matches any chars apart from the banned;
    a sequence of char names. See map 'insta-quoted-chars' above.
    When a sequence of :negative-lookaheads are also supplied, these
@@ -124,7 +122,7 @@
 
 
 ;; The literals chunk of the grammar
-(def literals-insert
+(def ^:private literals-insert
   (apply str
          (interpose "\n    "
                     (map (fn [[k m]]
@@ -233,15 +231,6 @@
 #_(def parse-d2 (insta/parser (grammar)))
 
 
-(defn cond-keyword
-  "Converts to keyword where possible."
-  [item]
-  (cond
-    (and (string? item) (str/includes? item " "))    item
-    (string? item)                                   (keyword item)
-    :otherwise item))
-
-
 ;; Useful functions to debug the output of parsing
 #?(:clj
    (defn parses-d2 [d2 & kvs]    
@@ -254,7 +243,7 @@
      (count (apply parses-d2 d2 kvs))))
 
 
-(defmacro dbg [body]
+(defmacro ^:private dbg [body]
   `(let [x# ~body]
      (println "dbg:" '~body "=" x#)
      x#))

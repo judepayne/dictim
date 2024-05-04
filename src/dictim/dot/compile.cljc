@@ -1,6 +1,6 @@
-(ns dictim.dot.compile
-  ^{:Author "Jude Payne"
-    :doc "Namespace for transpiling dictim to dot"}
+(ns ^{:Author "Jude Payne"
+      :doc "Namespace for compiling dictim to graphviz' dot"}
+    dictim.dot.compile
   (:require [clojure.string :as str]
             [dictim.format :as f]
             [dictim.utils :refer [kstr? direction? take-til-last elem-type shape? error]]
@@ -8,7 +8,7 @@
   (:refer-clojure :exclude [list]))
 
 
-(defn err [msg]
+(defn- err [msg]
   (throw (error (str msg " is invalid."))))
 
 ;; is the graph directed
@@ -27,10 +27,10 @@
 (def ^:private breadcrumbs (atom nil))
 
 
-(defn containers [] (set (keys @relationships)))
+(defn- containers [] (set (keys @relationships)))
 
 
-(defn container? [id]
+(defn- container? [id]
   (contains? (containers) id))
 
 
@@ -141,10 +141,10 @@
      (when brackets? "]"))))
 
 
-(def attrs (partial attrs-raw false)) ;; can't close over 'sep' as dynamic
+(def ^:private attrs (partial attrs-raw false)) ;; can't close over 'sep' as dynamic
 
 
-(def attrs-elem (partial attrs-raw true ","))
+(def ^:private attrs-elem (partial attrs-raw true ","))
 
 ;; -----------
 ;; connections
