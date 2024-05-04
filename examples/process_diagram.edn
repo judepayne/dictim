@@ -1,0 +1,73 @@
+(["Process View"
+  {:direction "down"
+   :style.fill "'#f7f6f5'"}
+  ["p113"
+   {:style.fill "'#f5f0e1'"}
+   ["app14148" "Flame" {:shape "hexagon", :style {:fill "green"}}]
+   ["app14154" "Data Solar" {:shape "hexagon", :style {}}]
+   ["app14156" "Data sky" {:shape "hexagon", :style {}}]]
+  ["p114"
+   {:style.fill "'#f5f0e1'"}
+   ["app14149"
+    "Data Solar"
+    {:shape "hexagon", :style {:fill "pink"}}]
+   ["app14150"
+    "Flame minor"
+    {:shape "hexagon", :style {:fill "pink"}}]
+   ["app14153" "ARC3" {:shape "hexagon", :style {:fill "pink"}}]
+   ["app14155"
+    "Risk Sheet"
+    {:shape "hexagon", :style {:fill "pink"}}]]
+  ["p112"
+   {:style.fill "'#f5f0e1'"}
+   ["app14147" "ARC3" {:shape "hexagon", :style {:fill "orange"}}]
+   ["app14151" "Booking Flash" {:shape "hexagon", :style {}}]
+   ["app14152" "Book Relay" {:shape "hexagon", :style {}}]]]
+ ["Process View.p114.app14155"
+  "->"
+  "Process View.p114.app14153"
+  "client master"
+  {:style.stroke "'#4eb8ed'",
+   :style.stroke-width "4",
+   :style.font-size "16",
+   :style.font-color "red"}]
+ ["Process View.p113.app14154"
+  "->"
+  "Process View.p114.app14149"
+  "client master"
+  {:style.stroke "'#4eb8ed'",
+   :style.stroke-width "4",
+   :style.font-size "16",
+   :style.font-color "red"}]
+ ["Process View.p114.app14155"
+  "->"
+  "Process View.p113.app14148"
+  "client master"
+  {:style.stroke "'#4eb8ed'",
+   :style.stroke-width "4",
+   :style.font-size "16",
+   :style.font-color "red"}]
+ ["Process View.p113.app14156"
+  "->"
+  "Process View.p112.app14152"
+  "client master"
+  {:style.stroke "'#4eb8ed'",
+   :style.stroke-width "4",
+   :style.font-size "16",
+   :style.font-color "red"}]
+ ["Process View.p114.app14155"
+  "->"
+  "Process View.p112.app14147"
+  "client master"
+  {:style.stroke "'#4eb8ed'",
+   :style.stroke-width "4",
+   :style.font-size "16",
+   :style.font-color "red"}]
+ ["Process View.p114.app14155"
+  "->"
+  "Process View.p112.app14147"
+  "client master"
+  {:style.stroke "'#4eb8ed'",
+   :style.stroke-width "4",
+   :style.font-size "16",
+   :style.font-color "red"}])

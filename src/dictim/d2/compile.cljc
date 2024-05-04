@@ -1,25 +1,22 @@
-(ns dictim.d2.compile
-  ^{:Author "Jude Payne"
-    :doc "Namespace for transpiling dictim to d2"}
-  (:require [clojure.string :as str]
-            [dictim.format :as f]
-            [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type conn-ref? convert-key list?]]
+(ns ^{:Author "Jude Payne"
+      :doc "Namespace for compiling dictim to d2"}
+    dictim.d2.compile
+  (:require [dictim.format :as f]
+            [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type convert-key list?]]
             [dictim.validate :refer [all-valid?]])
   (:refer-clojure :exclude [list?]))
 
 
-(def colon ": ")
+(def ^:private colon ": ")
 
-(def spc " ")
-
-(def period ".")
+(def ^:private spc " ")
 
 
 ;; sep the separator between elements
-(def ^:dynamic sep)
+(def ^:dynamic ^:private sep)
 
 
-(def ^:dynamic inner-list? false)
+(def ^:dynamic ^:private inner-list? false)
 
 
 (defn- de-keyword
@@ -29,7 +26,7 @@
     s))
 
 
-(defn empty-single-entry? [m]
+(defn- empty-single-entry? [m]
   (and (= 1 (count m))
        (map? (second (first m)))
        (empty? (second (first m)))))
@@ -56,7 +53,7 @@
                   (for [[k v] m]
                     (cond
                       (and (map? v) (empty? v)) nil
-                      (and (nil? v)) (str (format-key k) colon "null")
+                      (nil? v)   (str (format-key k) colon "null")
                       (map? v)   (str (format-key k) colon (attrs v))
                       (list? v)  (str (format-key k) colon (binding [inner-list? true] (layout v)))
                       :else      (str (format-key k) colon (de-keyword v))))
@@ -65,7 +62,7 @@
           (if brackets? "\n}" "\n"))))
 
 
-(defn item->str [i]
+(defn- item->str [i]
   (cond
     (nil? i)  "null"
     (kstr? i) (convert-key i)
@@ -115,14 +112,6 @@
       (single-conn el))))
 
 
-(defn- conn-ref->d2 [[k1 dir k2 ar at]]
-  (str "("
-       k1
-       spc dir
-       spc k2
-       ")"
-       ar))
-
 (defmethod layout :conn-ref [[k1 dir k2 ar at]]
   (str "("
        k1
@@ -170,12 +159,12 @@
        (str "}" sep)))
 
 
-(defmethod layout :empty-lines [[em c]]
+(defmethod layout :empty-lines [[_ c]]
   (apply str (repeat c sep)))
 
 
 (defn d2
-  "Converts dictim elements to a (formatted) d2 string.
+  "Converts dictim elements to a formatted d2 string.
    Validates each element, throws an error if invalid."
   [& elems]
 

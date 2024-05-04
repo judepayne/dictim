@@ -83,7 +83,7 @@
 
 (defn- from-json [maybe-json]
   (try
-    (when-let [dict (doall (json/from-json maybe-json))]
+    (when-let [dict (json/from-json maybe-json)]
       dict)
     (catch java.io.IOException ex (do (.getName (class ex)) nil))))
 
@@ -95,10 +95,10 @@
     (catch Exception ex (do (.getName (class ex)) nil))))
 
 
-(defn- to-json [dict & {:keys [pretty?] :or {pretty? false}}]
+(defn- to-json [dict & {:keys [pretty?] :or {pretty? true}}]
   (if (not pretty?)
-    (json/to-json dict {:pretty true})
-    (json/to-json dict)))
+    (json/to-json dict)
+    (json/to-json dict {:pretty true})))
 
 
 (defn- handle-in [arg]
