@@ -1,5 +1,5 @@
 (ns ^{:author "judepayne"
-      :doc "Namespace for common functions."}
+      :doc "Namespace for common dictim utility functions."}
     dictim.utils
   (:refer-clojure :exclude [list?])
   (:require [clojure.string :as str]))
@@ -41,7 +41,7 @@
       vals))
 
 
-(defn conn-ref-ptr?
+(defn- conn-ref-ptr?
   [s]
   (and (vector? s)
        (= 1 (count s))
@@ -78,31 +78,59 @@
          (or (= :list (first e))
              (= "list" (first e))))             :list
     (and (vector? e)
-         (not (empty? (filter vector? e))))     :ctr
+         (seq (filter vector? e)))              :ctr
     (and (vector? e)
          (direction? (second e)))               :conn
+<<<<<<< HEAD
+    (not (clojure.core/list? e))                :shape
+    (clojure.core/list? e)                      :elements
+    :else
+    (throw (error "element type not recognized"))))
+=======
+    (clojure.core/list? e)                      :unknown
     :else                                       :shape))
+>>>>>>> templates-feature
 
 
-(defn ctr? [e] (= :ctr (elem-type e)))
+(defn ctr?
+  "Returns true if the element is a container"
+  [e] (= :ctr (elem-type e)))
 
 
-(defn attrs? [e] (= :attrs (elem-type e)))
+(defn attrs?
+  "Returns true if the element is attrs"
+  [e] (= :attrs (elem-type e)))
 
 
-(defn conn? [e] (= :conn (elem-type e)))
+(defn conn?
+  "Returns true if the element is a connection"
+  [e] (= :conn (elem-type e)))
 
 
-(defn conn-ref? [e] (= :conn-ref (elem-type e)))
+(defn conn-ref?
+  "Returns true if the element is a connection reference"
+  [e] (= :conn-ref (elem-type e)))
 
 
-(defn shape? [e] (= :shape (elem-type e)))
+(defn shape?
+  "Returns true if the element is a shape"
+  [e] (= :shape (elem-type e)))
 
 
-(defn cmt? [e] (= :cmt (elem-type e)))
+(defn cmt?
+  "Returns true if the element is a comment"
+  [e] (= :cmt (elem-type e)))
 
 
-(defn list? [e] (= :list (elem-type e)))
+(defn list?
+  "Returns true if the element is a list"
+  [e] (= :list (elem-type e)))
+
+
+(defn elements?
+  "Returns true if the element is a collection of elements.
+   Does not perform validation."
+  [e] (= :list (elem-type e)))
 
 
 (defn- parse-int [s]
@@ -110,7 +138,7 @@
      (try
        (let [n (Integer/parseInt s)]
          n)
-       (catch Exception e nil))
+       (catch Exception _ nil))
      :cljs
      (let [n (js/parseInt s 10)]
        (if (js/Number.isNan n)
@@ -118,17 +146,17 @@
          n))))
 
 
-(defn parse-float [s]
+(defn- parse-float [s]
   #?(:clj
      (try
        (let [f (Float/parseFloat s)]
          f)
-       (catch Exception e nil))
+       (catch Exception _ nil))
      :cljs
      (let [f (js/parseFloat s 10)]
        (if (js/Number.isNan f)
          nil
-         n))))
+         f))))
 
 
 (defn- parse-bool [s]
@@ -149,11 +177,14 @@
           (if (nil? b)
             p
             b))))
-    #?(:clj (catch Exception e p)
-       :cljs (catch js/Error e p))))
+    #?(:clj (catch Exception _ p)
+       :cljs (catch js/Error _ p))))
 
 
-(defn try-parse-primitive [p]
+(defn try-parse-primitive
+  "Attempts to parse into either a boolean, float or int.
+   Returns the argument directly if the parse was unsuccessful."
+  [p]
   (cond
     (sequential? p)
     (mapv try-parse-primitive* p)
@@ -172,16 +203,17 @@
 
 
 (defn line-by-line
+  "Compares two data structures line by line"
   [a b]
   (dorun (map-indexed
           (fn [index item] (let [same? (= (nth b index) item)]
-                             (if (not same?)
-                               (do (println "-- Mismtach in form " index "-----")
-                                   (println "-- first:")
-                                   (println item)
-                                   (println "-- second:")
-                                   (println (nth b index))
-                                   (println "--------------------------------")))))
+                             (when (not same?)
+                               (println "-- Mismtach in form " index "-----")
+                               (println "-- first:")
+                               (println item)
+                               (println "-- second:")
+                               (println (nth b index))
+                               (println "--------------------------------"))))
           a))
   nil)
 
@@ -189,17 +221,25 @@
 ;; This regexes match a period but only when not inside single quotes
 ;; https://stackoverflow.com/questions/6462578/regex-to-match-all-instances-not-inside-quotes
 
-(def unquoted-period #"\.(?=([^']*'[^']*')*[^']*$)")
+(def unquoted-period
+  "regex for a period that is not (somewhere) inside single quotes"
+  #"\.(?=([^']*'[^']*')*[^']*$)")
 
 
 ;; matches when starts and ends with '
-(def single-quoted #"^'.*'$")
+(def single-quoted
+  "regex that matches any string that is surrounding by single quotes"
+  #"^'.*'$")
 
 ;; does no
-(def no-asterisk #"^[^*]*$")
+(def no-asterisk
+  "regex for any string that does not contain an asterisk"
+  #"^[^*]*$")
 
 
-(defn convert-key [k]
+(defn convert-key
+  "Converts a dictim element key to a string representation."
+  [k]
   (cond
     (number? k) (str k)
     (keyword? k) (name k)

@@ -1,0 +1,6 @@
+([:aShape "A Shape"]
+ [:bShape "Another Shape"]
+ [:aShape "->" :bShape "A connection"]
+ [:bShape "->" :aShape "A back connection"]
+ [:cShape "A third!! Shape"]
+ [:box "A Box" [:aShape "--" :cShapeS]])
