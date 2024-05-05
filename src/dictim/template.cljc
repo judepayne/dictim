@@ -3,7 +3,7 @@
       :doc "Namespace for handling dictim templates"}
     dictim.template
   (:require [dictim.utils :as utils :refer [elem-type kstr? direction? take-til-last]]
-            [clojure.walk :as walk])
+            [clojure.string :as str])
   (:refer-clojure :exclude [key keys test]))
 
 
@@ -37,7 +37,7 @@
 
 
 ;; extract attrs
-(defn- attrs
+(defn attrs
   "Returns the attrs of a dictim element"
   [elem] (->> elem (filter map?) first))
 
@@ -57,7 +57,7 @@
 
 (defn- extract-keys [conn]
   (let [[fs [lk & _]] (take-til-last direction? conn)]
-    (conj (filterv (complement direction?) fs) lk)))
+    (seq (conj (filterv (complement direction?) fs) lk))))
 
 (defmethod keys :shape [elem] nil)
 (defmethod keys :ctr [elem] nil)
@@ -80,7 +80,7 @@
    "attrs" dictim.template/attrs
    "children" dictim.template/children
    "keys" dictim.template/keys
-   "type" dictim.template/element-type})
+   "element-type" dictim.template/element-type})
 
 
 
@@ -109,18 +109,36 @@
 
 ;; allows a test to be specified as data. Useful in over-the-wire scenarios
 
+;; This is dynamically bound to each element being tested
+(def ^{:dynamic true
+       :doc "Implementation detail exposed for testing purposes only!"}
+  *elem*)
+
+
+(defn- matches-test? [t]
+  (and
+   (sequential? t)
+   (= "matches" (first t))
+   (get accessors (second t))
+   (try (re-pattern (nth t 2))
+          true
+          (catch Exception _ false))))
+
+
 (def ^{:private true} comparators
   {"=" =
    "!=" not=
-   "contains" some
-   "doesnt-contains" (complement some)
-   ">" >
-   "<" <
-   "<=" <=
-   ">=" >=})
+
+   ;; decided to hide these as not useful
+   #_"contains" #_some
+   #_"doesnt-contain" #_(complement some)
+   #_">" #_>
+   #_"<" #_<
+   #_"<=" #_<=
+   #_">=" #_>=})
 
 
-(defn- single-test? [t]
+(defn- comparison-test? [t]
   (and
    (sequential? t)
    (get comparators (first t))
@@ -131,35 +149,39 @@
   (and
    (sequential? nt)
    (contains? #{:or "or" :and "and"} (first nt))
-   (every? (fn [t] (or (single-test? t) (nested-test? t))) (rest nt))))
+   (every? (fn [t] (or (matches-test? t) (comparison-test? t) (nested-test? t))) (rest nt))))
 
 
-(defn- valid-test? [t]
-  (or (single-test? t) (nested-test? t)))
+(defn valid-test?
+  "Returns true if a data-form test is valid. A test may be simple, i.e. in the form
+   [<comparator> <accessor> <value>] e.g. [\"=\" \"key\" \"Steve\"]
+   or use the \"and\" \"or\" keywords to arbitrarily nest simple tests. e.g.
+   [\"and\" [\"=\" \"element-type\" \"shape\"]
+             [\"or\" [\"=\" \"key\" \"app14181\"] [\"=\" \"key\" \"app14027\"]]]"
+  [t]
+  (or (matches-test? t) (comparison-test? t) (nested-test? t)))
 
 
-(def ^:dynamic ^:private *elem*)
+(defn- matches-test
+  [test]
+  (let [[_ accessor reg-str] test
+        r (re-pattern reg-str)
+        f (get accessors accessor)
+        v-found (f *elem*)]
+    (if (string? v-found)
+      (re-matches r v-found)
+      false)))
 
 
-(defn- single-test
+(defn- comparison-test
   "Returns code that tests whether the test is true for the item
    specified by sym."
   [test]
-  (let [[comparator func v] test
-        f (get accessors func)
+  (let [[comparator accessor v] test
+        f (get accessors accessor)
         v-found (f *elem*)
-        comp (get comparators comparator (constantly nil))]
-
-    (cond
-      (and (not (coll? v-found))
-           (or (= :contains comparator) (= :doesnt-contain comparator)))
-      (throw (Exception. (str ":contains and :doesnt-contain can only be used on collections.")))
-
-      (coll? v-found)
-      (comp (conj #{} v) v-found)
-
-      :else
-      (comp v-found v))))
+        comp (get comparators comparator (constantly nil))]    
+    (comp v-found v)))
 
 
 (defn- or* [forms]
@@ -187,8 +209,11 @@
       (= "or" (first tests))
       (or* (map #(-test %) (rest tests))))
     
-    (single-test? tests)
-    (single-test tests)
+    (comparison-test? tests)
+    (comparison-test tests)
+
+    (matches-test? tests)
+    (matches-test tests)
 
     :else (throw (Exception. "Not a valid test."))))
 
@@ -263,7 +288,7 @@
      - a function that takes an elem and returns the attrs to be added
        to the elem (or nil).
      - a sequence of test and attribute pairs to be applied if the test succeeds.
-       A simple test has the form [<comparator> <accessor> <value>] where:
+       A comparison test has the form [<comparator> <accessor> <value>] where:
        - <comparator> is a string, one of the `comparators` var's keys in
          this namespace.
        - <accessor> is a string, one of the `accessors` var's keys in this
@@ -271,7 +296,10 @@
          for example its `key` or `label`.
        - <value> is the value to be tested against.
          Example simple test: `[\"=\" \"key\" \"node123\"]`
-       A nested test nests simple tests with `and` and `or` statements.
+       A regex matching test has the form [\"matches\" <accessor> <regex-string>] where:
+       - <accessor> .. same as for comparison test
+       - <regex-string> .. a string representation of a java.util.regex.Pattern
+       A nested test nests comparison/ matching tests with `and` and `or` statements.
          Example nested test:
          `[\"and\" [\"=\" \"type\" \"ctr\"] [\"=\" \"key\" \"node123\"]]`
        Attributes are supplied using standard dictim, e.g. `{:style.fill \"red\"}`

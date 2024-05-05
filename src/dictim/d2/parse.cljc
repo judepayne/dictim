@@ -233,13 +233,17 @@
 
 ;; Useful functions to debug the output of parsing
 #?(:clj
-   (defn parses-d2 [d2 & kvs]    
+   (defn parses-d2
+     "Implementation detail: exposed for testing purposes only"
+     [d2 & kvs]    
      (let [parser (insta/parser (grammar))]
        (apply insta/parses parser d2 kvs))))
 
 
 #?(:clj
-   (defn num-parses [d2 & kvs]
+   (defn num-parses
+     "Implementation detail: exposed for testing purposes only"
+     [d2 & kvs]
      (count (apply parses-d2 d2 kvs))))
 
 

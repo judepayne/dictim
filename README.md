@@ -29,7 +29,7 @@ io.github.judepayne/dictim {:git/tag "0.7.00" :git/sha "0683371"}
 d2 version compatibility: 0.6.4
 
 
-## Docs
+## Docs & API
 
 * [Wiki](https://github.com/judepayne/dictim/wiki)
 
