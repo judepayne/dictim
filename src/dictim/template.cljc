@@ -218,8 +218,9 @@
     :else (throw (Exception. "Not a valid test."))))
 
 
-(defn- test
-  "Checks that that *elem* conforms to the tests."
+(defn test
+  "Checks that that *elem* conforms to the tests.
+   Usage: (binding [*elem* <your-test-elem>] (test <the-test>))"
   [tests]
   (assert (valid-test? tests)
           (str tests " is not a valid test."))
