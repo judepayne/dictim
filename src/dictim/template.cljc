@@ -14,18 +14,27 @@
 ;; *****************************************
 ;; *     accessors for dictim elements     *
 ;; *****************************************
+(defn- -elem-type [elem]
+  (let [in-scope-elems #{:shape :conn :conn-ref :ctr :elements}
+        et (elem-type elem)]
+    (if (contains? in-scope-elems et)
+      et
+      :else)))
+
 
 ;; extract the key
-(defmulti key "Returns the key of a dictim element" elem-type)
+(defmulti key "Returns the key of a dictim element" -elem-type)
 
 (defmethod key :shape [elem] (first elem))
 (defmethod key :ctr [elem] (first elem))
 (defmethod key :conn [elem] nil)
 (defmethod key :conn-ref [elem] nil)
+(defmethod key :elements [elem] nil)
+(defmethod key :else [elem] nil)
 
 
 ;; extract the label
-(defmulti label "Returns the label of a dictim element" elem-type)
+(defmulti label "Returns the label of a dictim element" -elem-type)
 
 (defmethod label :shape [elem] (when (kstr? (second elem)) (second elem)))
 (defmethod label :ctr [elem] (when (kstr? (second elem)) (second elem)))
@@ -34,6 +43,8 @@
   (let [[fs ls] (take-til-last direction? elem)
         maybe-label (first (rest ls))]
     (when (kstr? maybe-label) maybe-label)))
+(defmethod label :elements [elem] nil)
+(defmethod label :else [elem] nil)
 
 
 ;; extract attrs
@@ -43,17 +54,18 @@
 
 
 ;; extract contained (container contents)
-(defmulti children "Returns the children elements of a dictim element" elem-type)
+(defmulti children "Returns the children elements of a dictim element" -elem-type)
 
 (defmethod children :shape [elem] nil)
 (defmethod children :ctr [elem] (filter vector? elem))
 (defmethod children :conn [elem] nil)
 (defmethod children :conn-ref [elem] nil)
 (defmethod children :elements [elem] elem)
+(defmethod children :else [elem] nil)
 
 
 ;; extract keys (only for connections)
-(defmulti keys "returns the keys of a dictim element" elem-type)
+(defmulti keys "returns the keys of a dictim element" -elem-type)
 
 (defn- extract-keys [conn]
   (let [[fs [lk & _]] (take-til-last direction? conn)]
@@ -63,6 +75,8 @@
 (defmethod keys :ctr [elem] nil)
 (defmethod keys :conn [elem] (extract-keys elem))
 (defmethod keys :conn-ref [elem] (extract-keys elem))
+(defmethod keys :elements [elem] nil)
+(defmethod keys :else [elem] nil)
 
 
 ;; extract the element type
@@ -88,7 +102,7 @@
 ;; *          setter for attrs             *
 ;; *****************************************
 
-(defmulti ^:private set-attrs! (fn [elem _] (elem-type elem)))
+(defmulti ^:private set-attrs! (fn [elem _] (-elem-type elem)))
 
 (defn- set-attrs-elem [elem attrs]
   (let [proto (filterv (complement map?) elem)]
@@ -101,6 +115,9 @@
   (let [shape-part (into [] (butlast elem))
         modified (set-attrs-elem shape-part attrs)]
     (conj modified (last elem))))
+(defmethod set-attrs! :elements [elem _] elem)
+(defmethod set-attrs! :else [elem _] elem)
+
 
 
 ;; *****************************************

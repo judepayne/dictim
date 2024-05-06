@@ -7,7 +7,8 @@
   '(["Process View"
      ["p113"
       ["app14149" "Solar Wind"]
-      ["app14027" "Leventine Sky"]]
+      ["app14027" "Leventine Sky"]
+      [:comment "Christine's domain"]]
      ["p114"
       ["app14181" "eBed"]
       ["app14029" "Storm"]]
@@ -39,7 +40,8 @@
     ["Process View"
      ["p113"
       ["app14149" "Solar Wind" {:style {:fill "'#f7f6f5'"}}]
-      ["app14027" "Leventine Sky" {:class "lemony"}]]
+      ["app14027" "Leventine Sky" {:class "lemony"}]
+      [:comment "Christine's domain"]]
      ["p114"
       ["app14181" "eBed" {:class "lemony"}]
       ["app14029" "Storm" {:style {:fill "'#f7f6f5'"}}]]
@@ -50,7 +52,8 @@
   '(["Process View"
      ["p113"
       ["app14149" "Solar Wind" {:class "lemony"}]
-      ["app14027" "Leventine Sky"]]
+      ["app14027" "Leventine Sky"]
+      [:comment "Christine's domain"]]
      ["p114" ["app14181" "eBed"] ["app14029" "Storm" {:class "lemony"}]]
      ["p113" "->" "p114" "various flows"]]))
 
@@ -98,6 +101,4 @@
       (is (true? (t/test ["=" "keys" '(:x "y" :zoo)])))
       (is (true? (t/test ["=" "label" "conn label"]))))))
 
-
-;; testing regex matching tests
 
