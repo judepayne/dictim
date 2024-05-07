@@ -3,6 +3,7 @@
   (:require [dictim.d2.compile :as c]
             [dictim.d2.parse :as p]
             [dictim.json :as json]
+            [hiccup.core :refer [html]]
             [babashka.cli :as cli]
             [clojure.string :as str]
             [clojure.java.io :as io]
@@ -19,7 +20,7 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :parse :k :j :b :watch :layout :theme :scale :version :help]})))
+  (cli/format-opts (merge spec {:order [:compile :parse :k :j :b :watch :layout :theme :d :scale :version :help]})))
 
 
 (def compile-help
@@ -40,7 +41,7 @@
 (def watch-help
   "Watches an edn/ json dictim syntax file and serves the resultant diagram in your default browser.
                 (watch requires d2 to be installed and available on your path)
-                watch has two sub option d2 settings, layout and theme:")
+                watch has three sub option d2 settings, layout, theme and d (debug):")
 
 
 (def cli-spec
@@ -61,6 +62,8 @@
              :alias :l}
     :theme {:desc "d2 theme id. See https://d2lang.com/tour/themes"
             :alias :t}
+    :d {:coerce :boolean
+        :desc "debug for Watch: Shows interim d2 in the browser."}
     :scale {:desc "determines the svg scaling factor used by d2. default is 1.2"
             :alias :s}
     :version {:coerce :boolean
@@ -90,7 +93,7 @@
 
 (defn- from-edn [maybe-edn]
   (try
-    (when-let [dict (edn/read-string (str/replace maybe-edn #"\\n" ""))]
+    (when-let [dict (edn/read-string maybe-edn)]
       dict)
     (catch Exception ex (do (.getName (class ex)) nil))))
 
@@ -186,11 +189,12 @@
      (str "Error: d2 engine error: "(format-error d2 err)))))
 
 
-(defn transform [d2-opts file-contents]
+(defn transform [debug? d2-opts file-contents]
   (try
     (let [[_ dict] (read-data file-contents)
           d2 (compile-fn dict)]
-      (d2->svg d2 d2-opts))
+      (html [:div (d2->svg d2 d2-opts)]
+            [:div (when debug? (str "<b>d2:</b><br>" (str/replace d2 #"\n" "<br>")))]))
     (catch Exception ex
       (.getMessage ex))))
 
@@ -200,13 +204,14 @@
         layout (or (:layout opts) (:l opts))
         theme (or (:theme opts) (:t opts))
         scale (or (:scale opts) (:s opts))
+        debug? (or (:d opts) false)
         d2-opts (cond-> nil
                   layout (assoc :layout layout)
                   theme  (assoc :theme theme)
                   scale  (assoc :scale scale))]
     (cond
       (and (fs/exists? file) (installed? path-to-d2))
-      (serve/start file (partial transform d2-opts))
+      (serve/start file (partial transform debug? d2-opts))
 
       (fs/exists?) (exception "Error: d2 does not appear to be installed on your path.")
       
@@ -218,7 +223,9 @@
         dict (if (:k opts)
                (p/dictim d2 :key-fn keyword)
                (p/dictim d2))]
-    (println (if (:j opts) (to-json dict {:pretty (beautify? opts)}) (apply str dict)))))
+    (if (:j opts)
+      (println (to-json dict {:pretty (beautify? opts)}))
+      (clojure.pprint/pprint dict))))
 
 
 (defn -main

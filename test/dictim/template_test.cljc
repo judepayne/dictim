@@ -1,6 +1,7 @@
 (ns dictim.template-test
   (:require [clojure.test :refer :all]
-            [dictim.template :as t]))
+            [dictim.template :as t]
+            [dictim.template.impl :as timpl]))
 
 
 (def edn
@@ -87,18 +88,17 @@
 
 
 ;; accessors tests
+(def ctr [:aShape "Shape" {:style.fill "red"} [:bShape]])
+(def conn [:x "->" "y" "--" :zoo "conn label"])
+
 
 (deftest accessors
   (testing "Accessors can be used to extract values from elements"
-    (binding [t/*elem* [:aShape "Shape" {:style.fill "red"} [:bShape]]]
-      (is (true? (t/test ["=" "key" :aShape])))
-      (is (true? (t/test ["!=" "key" :bShape])))
-      (is (true? (t/test ["=" "label" "Shape"])))
-      (is (true? (t/test ["!=" "label" "Sh."])))
-      (is (true? (t/test ["=" "attrs" {:style.fill "red"}])))
-      (is (true? (t/test ["=" "children" '([:bShape])]))))
-    (binding [t/*elem* [:x "->" "y" "--" :zoo "conn label"]]
-      (is (true? (t/test ["=" "keys" '(:x "y" :zoo)])))
-      (is (true? (t/test ["=" "label" "conn label"]))))))
-
-
+    (is (true? (t/test ["=" "key" :aShape] ctr)))
+    (is (true? (t/test ["!=" "key" :bShape] ctr)))
+    (is (true? (t/test ["=" "label" "Shape"] ctr)))
+    (is (true? (t/test ["!=" "label" "Sh."] ctr)))
+    (is (true? (t/test ["=" "attrs" {:style.fill "red"}] ctr)))
+    (is (true? (t/test ["=" "children" '([:bShape])] ctr)))
+    (is (true? (t/test ["=" "keys" '(:x "y" :zoo)] conn)))
+    (is (true? (t/test ["=" "label" "conn label"] conn)))))

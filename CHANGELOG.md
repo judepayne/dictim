@@ -1,3 +1,6 @@
+	# v.0.7.10
+	- dictim Templates allow you to separate data from styling
+	- added examples in examples/ folder to play with in cmd line tool --watch
 	# v.0.7.00
 	- Command Line Tool
 	- Improved documentation

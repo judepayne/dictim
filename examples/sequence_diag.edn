@@ -1,0 +1,36 @@
+({:direction "down"}
+ [:seq1 "Core process"
+  {"shape" "sequence_diagram"
+   :style {"stroke" "'#a6a6a6'"
+           :stroke-width 3
+           :border-radius 8
+           :fill "'#e3eefa'"
+           :shadow true}}
+  [:comment
+   "Remember that semicolons allow multiple objects to be defined in one line"]
+  [:comment "Actors will appear from left-to-right as a, b, c, d..."]
+  [:list ["a"] ["b"] ["c"] ["d"]]
+  [:comment "... even if the connections are in a different order"]
+  ["c" "->" "d"]
+  ["d" "->" "a" "close the loop"]
+  ["b" "->" "d"]]
+ [:seq2 "Approval process"
+  {"shape" "sequence_diagram"
+   :style {"stroke" "'#366631'"
+           :stroke-width 3
+           :border-radius 8
+           :fill "honeydew"
+           :shadow true}}
+  ["x" "step 1"] ["y" "step 1"] ["z" "step 3" {:shape :person :style.fill "orange"}]
+  ["x" "->" "y"]
+  ["y" "->" "z"]
+  ["z" "->" "x" "close the loop"]
+  [:seq2a "Sub process Two A"
+   {:shape :sequence_diagram
+    :style {:stroke-width 2
+            :border-radius 12
+            :shadow true}}
+   [:list ["m"] ["n"]]
+   [:m "->" :n "4 eyes check"]]
+  [:z "<->" :seq2a "internal check"]]
+ ["seq1.d" "->" "seq2.x" "Mgr\\napproval" {:style.stroke "red"}])
