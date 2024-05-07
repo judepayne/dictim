@@ -75,7 +75,7 @@ jobs:
       - run:
           name: run dictim command tests
           command: |
-            bb test/cmd_test.clj
+            bb cmd-test
 
       - save_cache:
           paths:

@@ -1,3 +1,5 @@
+	# v.0.7.11
+	- bug fixes for 0.7.10 release. No new functionality
 	# v.0.7.10
 	- dictim Templates allow you to separate data from styling
 	- added examples in examples/ folder to play with in cmd line tool --watch
