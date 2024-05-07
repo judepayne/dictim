@@ -1,0 +1,7 @@
+API.md
+*.jar
+out*
+release_notes.md
+.nrepl*
+.cpcache
+*~
