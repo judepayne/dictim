@@ -11,13 +11,13 @@
 
 
 (def dict [:plan "build the resource"])
-(def d2 "plan: build the resource")
+(def d2 "plan: build the resource\n")
 
 ;; test compilation
 (assert (= (:out (shell {:out :string :in (pr-str dict)} "dictim" "-c"))
-           (str d2 "\n")))
+           d2))
 
 
 ;; test parsing
 (assert (= (read-string (:out (shell {:out :string :in d2} "dictim" "-k" "-p")))
-             dict))
+           (list dict)))
