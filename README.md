@@ -4,11 +4,9 @@
 
 [![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 
-Dictim is an edn syntax for expressing a graph diagram, and compiling it to either [d2's](https://github.com/terrastruct/d2) or [Graphviz's](https://graphviz.org) text languages. You can also parse any piece of d2 into dictim syntax.
+Dictim syntax is an edn/ json syntax for expressing a graph diagram. Dictim is a library for compiling it to either [d2's](https://github.com/terrastruct/d2) or [Graphviz's](https://graphviz.org) text languages. Dictim has also can parse any piece of d2 into dictim syntax.
 
-dictim syntax data can be expressed as json as well as edn.
-
-Dictim supprts both Clojure and Babashka and comes as a library, a command line tool and a microservice (see dictim.server below).
+Dictim supprts both Clojure and Babashka and comes as a library, a command line tool and a microservice (see dictim.server below). Clojurescript support is experimental.
 
 ## Rationale
 
