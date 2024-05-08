@@ -102,3 +102,30 @@
     (is (true? (t/test ["=" "children" '([:bShape])] ctr)))
     (is (true? (t/test ["=" "keys" '(:x "y" :zoo)] conn)))
     (is (true? (t/test ["=" "label" "conn label"] conn)))))
+
+
+;; setter tests
+
+(deftest setters
+  (testing "Setters can set attrs"
+    (is (= (t/set-attrs! [:one] {:style.fill "red"}) [:one {:style.fill "red"}]))
+    (is (= (t/set-attrs! [:one "lbl"] {:style.fill "red"}) [:one "lbl" {:style.fill "red"}]))
+    (is (= (t/set-attrs! [:one [1 2]] {:style.fill "red"}) [:one {:style.fill "red"} [1 2]]))
+    (is (= (t/set-attrs! [:one "lbl" {:style.fill "blue"}[1 2]] {:style.fill "red"})
+           [:one "lbl" {:style.fill "red"} [1 2]]))
+    (is (= (t/set-attrs! [:x "->" :y] {:style.fill "red"}) [:x "->" :y {:style.fill "red"}]))
+    (is (= (t/set-attrs! [:x "->" :y "<-" :z] {:style.fill "red"}) [:x "->" :y "<-" :z {:style.fill "red"}]))
+    (is (= (t/set-attrs! [:x "->" :y "<-" :z "lbl"] {:style.fill "red"})
+           [:x "->" :y "<-" :z "lbl" {:style.fill "red"}]))
+    (is (= (t/set-attrs!
+            [:x "->" :z [0] {:style.fill "blue"}] {:style.fill "red"})
+           [:x "->" :z [0] {:style.fill "red"}])))
+  (testing "Setters can set labels"
+    (is (= (t/set-label! [:one] "lbl") [:one "lbl"]))
+    (is (= (t/set-label! [:one "lblz" {:style.fill "blue"}] "lbl") [:one "lbl" {:style.fill "blue"}]))
+    (is (= (t/set-label! [:one "lblz" {:style.fill "blue"} [1 2]] "lbl")
+           [:one "lbl" {:style.fill "blue"} [1 2]]))
+    (is (= (t/set-label! [:x "->" :z [0] {:style.fill "blue"}] "lbl")
+           [:x "->" :z [0] {:style.fill "blue"}]))
+    (is (= (t/set-label! [:x "->" :z "edge" {:style.fill "blue"}] "lbl")
+           [:x "->" :z "lbl" {:style.fill "blue"}]))))

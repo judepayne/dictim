@@ -15,6 +15,11 @@
 (def children "Returns the children elements of a dictim element" impl/children)
 (def element-type "Returns the string type of a dictim element" impl/element-type)
 
+;; and setters
+
+(def set-attrs! "Returns the elem modified to include/ overwrite with the supplied attribute" impl/set-attrs!)
+(def set-label! "Returns the element modified to include/ overwrite with the supplied label" impl/set-label!)
+
 (def valid-test? "Logical true if the data test supplied is valid" impl/valid-test?)
 
 (defn test
@@ -23,6 +28,13 @@
   [test element]
   (binding [impl/*elem* element]
     (impl/test test)))
+
+(defn template-fn
+  "When passed a sequence of <test> <value> pairs, returns a 1-arity function
+   that evaluates each test against the argument passed to the function and
+   returns the value associated with the first true test."
+  [tests]
+  (impl/template-fn tests))
 
 
 (defn- principal-elem? [form]
@@ -92,7 +104,7 @@
                    (if (principal-elem? form)
                      (let [attrs (attrs-fn form)]
                        (if attrs
-                         (impl/set-attrs! form attrs)
+                         (set-attrs! form attrs)
                          form))
                      form))
          old-dirs (reduce merge (filter map? dict))

@@ -1,3 +1,5 @@
+	# v.0.7.12
+	- exposed additional fns in template ns: template-fn, set-attrs!, set-label!
 	# v.0.7.11
 	- bug fixes for 0.7.10 release. No new functionality
 	# v.0.7.10

@@ -93,7 +93,7 @@
 
 
 ;; *****************************************
-;; *          setter for attrs             *
+;; *                setters                *
 ;; *****************************************
 
 (defmulti set-attrs! (fn [elem _] (-elem-type elem)))
@@ -111,6 +111,30 @@
     (conj modified (last elem))))
 (defmethod set-attrs! :elements [elem _] elem)
 (defmethod set-attrs! :else [elem _] elem)
+
+
+(defmulti set-label! (fn [elem _] (-elem-type elem)))
+
+(defn- set-label-shp-ctr [elem label]
+  (let [[pre post] (split-at 1 elem)
+        elem* (if (kstr? (first post))
+               (concat pre [label] (rest post))
+               (concat pre [label] post))]
+    (into [] elem*)))
+
+
+
+(defmethod set-label! :shape [elem label] (set-label-shp-ctr elem label))
+(defmethod set-label! :ctr [elem label] (set-label-shp-ctr elem label))
+(defmethod set-label! :conn-ref [elem _] elem) ;;conn-ref's can't have labels
+(defmethod set-label! :elements [elems _] elems) ;;elements can't have labels
+(defmethod set-label! :else [elem _] elem)
+(defmethod set-label! :conn [elem label]
+  (let [[fs ls] (take-til-last direction? elem)
+        lss (if (kstr? (second ls))
+              (cons (first ls) (cons label (rest (rest ls))))
+              (cons (first ls) (cons label (rest ls))))]
+    (into [] (concat fs lss))))
 
 
 ;; *****************************************
@@ -248,7 +272,10 @@
 
 
 (defn template-fn
-  [styles]
+  "When passed a sequence of <test> <value> pairs, returns a 1-arity function
+   that evaluates each test against the argument passed to the function and
+   returns the value associated with the first true test."
+  [tests]
   (fn [element]
     (binding [*elem* element]
-      (styles* styles))))
+      (styles* tests))))
