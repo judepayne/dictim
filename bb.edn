@@ -22,7 +22,8 @@
                         :source-paths ["src/dictim/d2/compile.cljc"
                                        "src/dictim/d2/parse.cljc"
                                        "src/dictim/dot/compile.cljc"
-                                       "src/dictim/template.cljc"
                                        "src/dictim/flat.cljc"
                                        "src/dictim/json.cljc"
-                                       "src/dictim/format.cljc"]}}}}
+                                       "src/dictim/format.cljc"
+                                       "src/dictim/tests.cljc"
+                                       "src/dictim/template.cljc"]}}}}

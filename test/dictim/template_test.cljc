@@ -1,7 +1,7 @@
 (ns dictim.template-test
   (:require [clojure.test :refer :all]
             [dictim.template :as t]
-            [dictim.template.impl :as timpl]))
+            [dictim.tests :as tests]))
 
 
 (def edn
@@ -94,38 +94,51 @@
 
 (deftest accessors
   (testing "Accessors can be used to extract values from elements"
-    (is (true? (t/test ["=" "key" :aShape] ctr)))
-    (is (true? (t/test ["!=" "key" :bShape] ctr)))
-    (is (true? (t/test ["=" "label" "Shape"] ctr)))
-    (is (true? (t/test ["!=" "label" "Sh."] ctr)))
-    (is (true? (t/test ["=" "attrs" {:style.fill "red"}] ctr)))
-    (is (true? (t/test ["=" "children" '([:bShape])] ctr)))
-    (is (true? (t/test ["=" "keys" '(:x "y" :zoo)] conn)))
-    (is (true? (t/test ["=" "label" "conn label"] conn)))))
+    (is (true? (tests/test-elem ["=" "key" :aShape] ctr)))
+    (is (true? (tests/test-elem ["!=" "key" :bShape] ctr)))
+    (is (true? (tests/test-elem ["=" "label" "Shape"] ctr)))
+    (is (true? (tests/test-elem ["!=" "label" "Sh."] ctr)))
+    (is (true? (tests/test-elem ["=" "attrs" {:style.fill "red"}] ctr)))
+    (is (true? (tests/test-elem ["=" "children" '([:bShape])] ctr)))
+    (is (true? (tests/test-elem ["=" "keys" '(:x "y" :zoo)] conn)))
+    (is (true? (tests/test-elem ["=" "label" "conn label"] conn)))))
 
 
 ;; setter tests
 
 (deftest setters
   (testing "Setters can set attrs"
-    (is (= (t/set-attrs! [:one] {:style.fill "red"}) [:one {:style.fill "red"}]))
-    (is (= (t/set-attrs! [:one "lbl"] {:style.fill "red"}) [:one "lbl" {:style.fill "red"}]))
-    (is (= (t/set-attrs! [:one [1 2]] {:style.fill "red"}) [:one {:style.fill "red"} [1 2]]))
-    (is (= (t/set-attrs! [:one "lbl" {:style.fill "blue"}[1 2]] {:style.fill "red"})
+    (is (= (tests/set-attrs! [:one] {:style.fill "red"}) [:one {:style.fill "red"}]))
+    (is (= (tests/set-attrs! [:one "lbl"] {:style.fill "red"}) [:one "lbl" {:style.fill "red"}]))
+    (is (= (tests/set-attrs! [:one [1 2]] {:style.fill "red"}) [:one {:style.fill "red"} [1 2]]))
+    (is (= (tests/set-attrs! [:one "lbl" {:style.fill "blue"}[1 2]] {:style.fill "red"})
            [:one "lbl" {:style.fill "red"} [1 2]]))
-    (is (= (t/set-attrs! [:x "->" :y] {:style.fill "red"}) [:x "->" :y {:style.fill "red"}]))
-    (is (= (t/set-attrs! [:x "->" :y "<-" :z] {:style.fill "red"}) [:x "->" :y "<-" :z {:style.fill "red"}]))
-    (is (= (t/set-attrs! [:x "->" :y "<-" :z "lbl"] {:style.fill "red"})
+    (is (= (tests/set-attrs! [:x "->" :y] {:style.fill "red"}) [:x "->" :y {:style.fill "red"}]))
+    (is (= (tests/set-attrs! [:x "->" :y "<-" :z] {:style.fill "red"}) [:x "->" :y "<-" :z {:style.fill "red"}]))
+    (is (= (tests/set-attrs! [:x "->" :y "<-" :z "lbl"] {:style.fill "red"})
            [:x "->" :y "<-" :z "lbl" {:style.fill "red"}]))
-    (is (= (t/set-attrs!
+    (is (= (tests/set-attrs!
             [:x "->" :z [0] {:style.fill "blue"}] {:style.fill "red"})
            [:x "->" :z [0] {:style.fill "red"}])))
   (testing "Setters can set labels"
-    (is (= (t/set-label! [:one] "lbl") [:one "lbl"]))
-    (is (= (t/set-label! [:one "lblz" {:style.fill "blue"}] "lbl") [:one "lbl" {:style.fill "blue"}]))
-    (is (= (t/set-label! [:one "lblz" {:style.fill "blue"} [1 2]] "lbl")
+    (is (= (tests/set-label! [:one] "lbl") [:one "lbl"]))
+    (is (= (tests/set-label! [:one "lblz" {:style.fill "blue"}] "lbl") [:one "lbl" {:style.fill "blue"}]))
+    (is (= (tests/set-label! [:one "lblz" {:style.fill "blue"} [1 2]] "lbl")
            [:one "lbl" {:style.fill "blue"} [1 2]]))
-    (is (= (t/set-label! [:x "->" :z [0] {:style.fill "blue"}] "lbl")
+    (is (= (tests/set-label! [:x "->" :z [0] {:style.fill "blue"}] "lbl")
            [:x "->" :z [0] {:style.fill "blue"}]))
-    (is (= (t/set-label! [:x "->" :z "edge" {:style.fill "blue"}] "lbl")
+    (is (= (tests/set-label! [:x "->" :z "edge" {:style.fill "blue"}] "lbl")
            [:x "->" :z "lbl" {:style.fill "blue"}]))))
+
+
+(def m
+    {:a "sky"
+     :b [1 2 3]
+     :c 4})
+
+
+(deftest test-elem-is-map
+  (testing "Tests can run on maps rather than dictim elements"
+    (is (true? (tests/test-elem ["=" :a "sky"] m)))
+    (is (true? (tests/test-elem ["contains" :b 2] m)))
+    (is (true? (tests/test-elem [">" :c 3] m)))))

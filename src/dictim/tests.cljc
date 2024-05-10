@@ -1,8 +1,8 @@
 (ns
-    ^{:author "judepayne" :no-doc true}
-    dictim.template.impl
-  (:require [dictim.utils :as utils :refer [elem-type kstr? direction? take-til-last]]
-            [clojure.string :as str])
+    ^{:author "judepayne"}
+    dictim.tests
+  (:require [dictim.utils :as utils :refer [elem-type kstr? direction?
+                                            take-til-last error]])
   (:refer-clojure :exclude [key keys test]))
 
 
@@ -22,10 +22,10 @@
 
 (defmethod key :shape [elem] (first elem))
 (defmethod key :ctr [elem] (first elem))
-(defmethod key :conn [elem] nil)
-(defmethod key :conn-ref [elem] nil)
-(defmethod key :elements [elem] nil)
-(defmethod key :else [elem] nil)
+(defmethod key :conn [_] nil)
+(defmethod key :conn-ref [_] nil)
+(defmethod key :elements [_] nil)
+(defmethod key :else [_] nil)
 
 
 ;; extract the label
@@ -35,11 +35,11 @@
 (defmethod label :ctr [elem] (when (kstr? (second elem)) (second elem)))
 (defmethod label :conn-ref [elem] (when (map? (last elem)) (last elem)))
 (defmethod label :conn [elem]
-  (let [[fs ls] (take-til-last direction? elem)
+  (let [[_ ls] (take-til-last direction? elem)
         maybe-label (first (rest ls))]
     (when (kstr? maybe-label) maybe-label)))
-(defmethod label :elements [elem] nil)
-(defmethod label :else [elem] nil)
+(defmethod label :elements [_] nil)
+(defmethod label :else [_] nil)
 
 
 ;; extract attrs
@@ -51,12 +51,12 @@
 ;; extract contained (container contents)
 (defmulti children "Returns the children elements of a dictim element" -elem-type)
 
-(defmethod children :shape [elem] nil)
+(defmethod children :shape [_] nil)
 (defmethod children :ctr [elem] (filter vector? elem))
-(defmethod children :conn [elem] nil)
-(defmethod children :conn-ref [elem] nil)
+(defmethod children :conn [_] nil)
+(defmethod children :conn-ref [_] nil)
 (defmethod children :elements [elem] elem)
-(defmethod children :else [elem] nil)
+(defmethod children :else [_] nil)
 
 
 ;; extract keys (only for connections)
@@ -66,12 +66,12 @@
   (let [[fs [lk & _]] (take-til-last direction? conn)]
     (seq (conj (filterv (complement direction?) fs) lk))))
 
-(defmethod keys :shape [elem] nil)
-(defmethod keys :ctr [elem] nil)
+(defmethod keys :shape [_] nil)
+(defmethod keys :ctr [_] nil)
 (defmethod keys :conn [elem] (extract-keys elem))
 (defmethod keys :conn-ref [elem] (extract-keys elem))
-(defmethod keys :elements [elem] nil)
-(defmethod keys :else [elem] nil)
+(defmethod keys :elements [_] nil)
+(defmethod keys :else [_] nil)
 
 
 ;; extract the element type
@@ -84,19 +84,21 @@
 
 (def ^{:private true}
   accessors
-  {"key" dictim.template.impl/key
-   "label" dictim.template.impl/label
-   "attrs" dictim.template.impl/attrs
-   "children" dictim.template.impl/children
-   "keys" dictim.template.impl/keys
-   "element-type" dictim.template.impl/element-type})
+  {"key" dictim.tests/key
+   "label" dictim.tests/label
+   "attrs" dictim.tests/attrs
+   "children" dictim.tests/children
+   "keys" dictim.tests/keys
+   "element-type" dictim.tests/element-type})
 
 
 ;; *****************************************
 ;; *                setters                *
 ;; *****************************************
 
-(defmulti set-attrs! (fn [elem _] (-elem-type elem)))
+(defmulti set-attrs!
+  "Sets the attrs of a dictim element"
+  (fn [elem _] (-elem-type elem)))
 
 (defn- set-attrs-elem [elem attrs]
   (let [proto (filterv (complement map?) elem)]
@@ -113,7 +115,9 @@
 (defmethod set-attrs! :else [elem _] elem)
 
 
-(defmulti set-label! (fn [elem _] (-elem-type elem)))
+(defmulti set-label!
+  "Sets the attrs of a dictim element"
+  (fn [elem _] (-elem-type elem)))
 
 (defn- set-label-shp-ctr [elem label]
   (let [[pre post] (split-at 1 elem)
@@ -144,7 +148,8 @@
 ;; allows a test to be specified as data. Useful in over-the-wire scenarios
 
 ;; This is dynamically bound to each element being tested
-(def ^{:dynamic true
+(def ^{:private true
+       :dynamic true
        :doc "Implementation detail exposed for testing purposes only!"}
   *elem*)
 
@@ -153,7 +158,7 @@
   (and
    (sequential? t)
    (= "matches" (first t))
-   (get accessors (second t))
+   #_(get accessors (second t))
    (try (re-pattern (nth t 2))
           true
           (catch Exception _ false))))
@@ -163,27 +168,26 @@
   {"=" =
    "!=" not=
 
-   ;; decided to hide these as not useful
-   #_"contains" #_some
-   #_"doesnt-contain" #_(complement some)
-   #_">" #_>
-   #_"<" #_<
-   #_"<=" #_<=
-   #_">=" #_>=})
+   "contains" some
+   "doesnt-contain" (complement some)
+   ">" >
+   "<" <
+   "<=" <=
+   ">=" >=})
 
 
 (defn- comparison-test? [t]
   (and
    (sequential? t)
    (get comparators (first t))
-   (get accessors (second t))))
+   #_(get accessors (second t))))
 
 
 (defn- nested-test? [nt]
   (and
    (sequential? nt)
    (contains? #{:or "or" :and "and"} (first nt))
-   (every? (fn [t] (or (matches-test? t) (comparison-test? t) (nested-test? t))) (rest nt))))
+   (every? (fn [t] (or :else "else" (matches-test? t) (comparison-test? t) (nested-test? t))) (rest nt))))
 
 
 (defn valid-test?
@@ -193,29 +197,40 @@
    [\"and\" [\"=\" \"element-type\" \"shape\"]
              [\"or\" [\"=\" \"key\" \"app14181\"] [\"=\" \"key\" \"app14027\"]]]"
   [t]
-  (or (matches-test? t) (comparison-test? t) (nested-test? t)))
+  (or (= t :else) (= t "else") (matches-test? t) (comparison-test? t) (nested-test? t)))
 
 
 (defn- matches-test
+  "tests whether the matches test is true for *elem*
+   *elem* may be either a dictim element or a map."
   [test]
   (let [[_ accessor reg-str] test
         r (re-pattern reg-str)
-        f (get accessors accessor)
-        v-found (f *elem*)]
+        v-found (if-let [f (get accessors accessor)]
+                  (f *elem*)
+                  (get *elem* accessor))] ;; assume a map
     (if (string? v-found)
       (re-matches r v-found)
       false)))
 
 
 (defn- comparison-test
-  "Returns code that tests whether the test is true for the item
-   specified by sym."
+  "tests whether the comparison test is true for *elem*
+   *elem* may be either a dictim element or a map."
   [test]
   (let [[comparator accessor v] test
-        f (get accessors accessor)
-        v-found (f *elem*)
-        comp (get comparators comparator (constantly nil))]    
-    (comp v-found v)))
+        v-found (if-let [f (get accessors accessor)]
+                  (f *elem*)
+                  (get *elem* accessor)) ;; assume a map
+        comp (get comparators comparator (constantly nil))]
+    (cond
+      (contains? #{"contains" "doesnt-contain"} comparator)
+      (if (sequential? v-found)
+        (comp #(= v %) v-found)
+        (throw (error (str "contains/ doesnt-contain can only be used on sequential"
+                           " items in test: " test))))
+      
+      :else (comp v-found v))))
 
 
 (defn- or* [forms]
@@ -232,16 +247,16 @@
           forms))
 
 
-(defn- -test
+(defn- test-impl
   [tests]
   (cond
     (nested-test? tests)
     (cond
       (= "and" (first tests))
-      (and* (map #(-test %) (rest tests)))
+      (and* (map #(test-impl %) (rest tests)))
 
       (= "or" (first tests))
-      (or* (map #(-test %) (rest tests))))
+      (or* (map #(test-impl %) (rest tests))))
     
     (comparison-test? tests)
     (comparison-test tests)
@@ -249,32 +264,42 @@
     (matches-test? tests)
     (matches-test tests)
 
+    (or (contains? #{:else "else"} tests))
+    true
+
     :else (throw (Exception. "Not a valid test."))))
 
 
-(defn test
-  "Checks that that *elem* conforms to the tests.
-   Usage: (binding [dictim.template.impl/*elem* <your-test-elem>] (test <the-test>))"
+(defn- test
   [tests]
   (assert (valid-test? tests)
           (str tests " is not a valid test."))
-  (-test tests))
+  (test-impl tests))
+
+
+(defn test-elem
+  "Checks that that elem conforms to the tests."
+  [tests elem]
+  (binding [*elem* elem]
+    (test tests)))
 
 
 (defn- styles*
   [styles]
   (when styles
-    (if (test (first styles))
+    (if (test (first styles))   ;; use the private -test function
       (if (next styles)
         (second styles)
         (throw (IllegalArgumentException. "styles requires an even number of forms")))
       (styles* (next (next styles))))))
 
 
-(defn template-fn
+(defn test-fn
   "When passed a sequence of <test> <value> pairs, returns a 1-arity function
    that evaluates each test against the argument passed to the function and
-   returns the value associated with the first true test."
+   returns the value associated with the first true test. Either `:else` or `\"else\"`
+   can be used in the second last position to create a catch all clause in the
+   function returned."
   [tests]
   (fn [element]
     (binding [*elem* element]

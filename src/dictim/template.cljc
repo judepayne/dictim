@@ -4,37 +4,8 @@
     dictim.template
   (:require [dictim.utils :as utils :refer [elem-type elements?]]
             [clojure.string :as str]
-            [dictim.template.impl :as impl])
+            [dictim.tests :as tests])
   (:refer-clojure :exclude [key keys test]))
-
-;; import accessors
-
-(def key "Returns the key of a dictim element" impl/key)
-(def keys "Returns the keys of a dictim connection/ connection reference" impl/keys)
-(def label "Returns the label of a dictim element" impl/label)
-(def children "Returns the children elements of a dictim element" impl/children)
-(def element-type "Returns the string type of a dictim element" impl/element-type)
-
-;; and setters
-
-(def set-attrs! "Returns the elem modified to include/ overwrite with the supplied attribute" impl/set-attrs!)
-(def set-label! "Returns the element modified to include/ overwrite with the supplied label" impl/set-label!)
-
-(def valid-test? "Logical true if the data test supplied is valid" impl/valid-test?)
-
-(defn test
-  "Runs the data test against the supplied element.
-  e.g. (test [\"=\" \"key\" :app01] [:app01 \"Solar Sky\"]) => true"
-  [test element]
-  (binding [impl/*elem* element]
-    (impl/test test)))
-
-(defn template-fn
-  "When passed a sequence of <test> <value> pairs, returns a 1-arity function
-   that evaluates each test against the argument passed to the function and
-   returns the value associated with the first true test."
-  [tests]
-  (impl/template-fn tests))
 
 
 (defn- principal-elem? [form]
@@ -99,12 +70,12 @@
    (assert (or (nil? directives) (map? directives)))
    (let [attrs-fn (if (fn? template)
                     template
-                    (impl/template-fn template))
+                    (tests/test-fn template))
          edit-fn (fn [form]
                    (if (principal-elem? form)
                      (let [attrs (attrs-fn form)]
                        (if attrs
-                         (set-attrs! form attrs)
+                         (tests/set-attrs! form attrs)
                          form))
                      form))
          old-dirs (reduce merge (filter map? dict))
