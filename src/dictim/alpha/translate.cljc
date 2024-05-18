@@ -3,7 +3,7 @@
     :doc "Namespace for translating d2 flavour dictim to dot and visa versa."}
   (:require [clojure.string :as str]
             [clojure.walk :refer [walk]]
-            [dictim.attributes :as d2ats]))
+            [dictim.d2.attributes :as d2ats]))
 
 
 ;; This is `alpha` functionality. d2 and graphviz cannot be made to be equivalent.

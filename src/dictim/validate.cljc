@@ -2,7 +2,7 @@
       :doc "Namespace for validating dictim."}
     dictim.validate
   (:require [clojure.string :as str]
-            [dictim.attributes :as at]
+            [dictim.d2.attributes :as at]
             [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type error list?
                                   conn-ref? unquoted-period single-quoted no-asterisk convert-key]])
   (:refer-clojure :exclude [list?])

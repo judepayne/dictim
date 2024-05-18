@@ -184,7 +184,7 @@
                             "width" 100,
                             "height" 200,
                             "style"
-                            {"stroke-width" 0,
+                            {"stroke-width" 1,
                              "fill" "\"#44C7B1\"",
                              "shadow" true,
                              "border-radius" 5}}]
@@ -199,7 +199,7 @@
                          ["api1" "->" "cache lb"]
                          ["api3" "->" "cache lb"]
                          ["cache lb.class" "load balancer"]))
-           "direction: right\nclasses:   {\n  load balancer:  {\n    label: load\\nbalancer\n    width: 100\n    height: 200\n    style:  {\n      stroke-width: 0\n      fill: \"#44C7B1\"\n      shadow: true\n      border-radius: 5\n    }\n  }\n  unhealthy:  {\n    style:  {\n      fill: \"#FE7070\"\n      stroke: \"#F69E03\"\n    }\n  }\n}\nweb traffic -> web lb\nweb lb.class: load balancer\nweb lb -> api1\nweb lb -> api2\nweb lb -> api3\napi2.class: unhealthy\napi1 -> cache lb\napi3 -> cache lb\ncache lb.class: load balancer"))))
+           "direction: right\nclasses:   {\n  load balancer:  {\n    label: load\\nbalancer\n    width: 100\n    height: 200\n    style:  {\n      stroke-width: 1\n      fill: \"#44C7B1\"\n      shadow: true\n      border-radius: 5\n    }\n  }\n  unhealthy:  {\n    style:  {\n      fill: \"#FE7070\"\n      stroke: \"#F69E03\"\n    }\n  }\n}\nweb traffic -> web lb\nweb lb.class: load balancer\nweb lb -> api1\nweb lb -> api2\nweb lb -> api3\napi2.class: unhealthy\napi1 -> cache lb\napi3 -> cache lb\ncache lb.class: load balancer"))))
 
 
 (deftest globs

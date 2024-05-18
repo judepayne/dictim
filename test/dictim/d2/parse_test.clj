@@ -321,7 +321,7 @@
                   "width" 100,
                   "height" 200,
                   "style"
-                  {"stroke-width" 0,
+                  {"stroke-width" 1,
                    "fill" "\"#44C7B1\"",
                    "shadow" true,
                    "border-radius" 5}},

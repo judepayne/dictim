@@ -4,7 +4,7 @@
   (:require [clojure.string :as str]
             #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
-            [dictim.attributes :as at]
+            [dictim.d2.attributes :as at]
             [dictim.utils :refer [error try-parse-primitive]]))
 
 ;; d2 parser v2
