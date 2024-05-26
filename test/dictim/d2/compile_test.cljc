@@ -305,8 +305,8 @@
 (deftest arrays
   ;;arrays are lists inside attr vals
   (testing "arrays compile"
-    (is (= (c/d2 [:data {:shape "sql_table" :a {:constraint [:list "PK" "...${base-constraints}"]}}])
-           "data:  {\n  shape: sql_table\n  a:  {\n    constraint: [PK; ...${base-constraints}]\n    \n  }\n}"))))
+    (is (= (c/d2 [:data {:shape "sql_table"} [:a {:constraint [:list "PK" "...${base-constraints}"]}]])
+           "data:   {\n  shape: sql_table\n  a:  {\n    constraint: [PK; ...${base-constraints}]\n    \n  }\n}"))))
 
 
 (deftest imports
@@ -325,3 +325,353 @@
   (testing "The 'empty-lines' marker can be a string"
     (is (= (apply c/d2 '(["One"]["empty-lines" 2]["Two"]))
            "One\n\n\nTwo"))))
+
+
+;; Keys and Attrs in depth
+
+;; style keys
+
+(deftest attr-opacity
+  (testing "valid and invalid values for 'opacity'"
+    (is (c/d2 {:style.opacity 0}))
+    (is (c/d2 {:style.opacity 1}))
+    (is (c/d2 {:style.opacity 0.45})))
+  (testing "invalid values for 'opacity'"
+    (is (thrown? Exception (c/d2 {:style.opacity 1.1})))
+    (is (thrown? Exception (c/d2 {:style.opacity "red"})))
+    (is (thrown? Exception (c/d2 {:opacity 0.5})))))
+
+
+(deftest attr-stroke
+  (testing "valid values for 'stroke'"
+    (is (c/d2 {:style.stroke "red"}))
+    (is (c/d2 {:style.stroke "'#EDE'"})))
+  (testing "invalid values for 'stroke'"
+    (is (thrown? Exception (c/d2 {:style.stroke 1.1})))
+    (is (thrown? Exception (c/d2 {:style.stroke "#EDE"})))  ; need single quotes
+    (is (thrown? Exception (c/d2 {:style.stroke "redz"})))
+    (is (thrown? Exception (c/d2 {:style.stroke "EDEz"})))))
+
+
+(deftest attr-fill
+  (testing "valid values for 'fill'"
+    (is (c/d2 {:style.fill "red"}))
+    (is (c/d2 {:style.fill "'#EDE'"})))
+  (testing "invalid values for 'fill'"
+    (is (thrown? Exception (c/d2 {:style.fill 1.1})))
+    (is (thrown? Exception (c/d2 {:style.fill "#EDE"})))  ; need single quotes
+    (is (thrown? Exception (c/d2 {:style.fill "redz"})))
+    (is (thrown? Exception (c/d2 {:style.fill "EDEz"})))))
+
+
+(deftest attr-fill-pattern
+  (testing "valid values for 'fill-pattern'"
+    (is (c/d2 {:style.fill-pattern "dots"}))
+    (is (c/d2 {:style.fill-pattern "lines"}))
+    (is (c/d2 {:style.fill-pattern "grain"}))
+    (is (c/d2 {:style.fill-pattern "none"})))
+  (testing "invalid values for 'fill-pattern-pattern'"
+    (is (thrown? Exception (c/d2 {:style.fill-pattern 1.1})))
+    (is (thrown? Exception (c/d2 {:fill-pattern "dots"})))
+    (is (thrown? Exception (c/d2 {:style.fill-pattern "spots"})))))
+
+
+(deftest attr-stroke-width
+  (testing "valid values for 'stroke-width'"
+    (is (c/d2 {:style.stroke-width 1}))
+    (is (c/d2 {:style.stroke-width 5}))
+    (is (c/d2 {:style.stroke-width 15})))
+  (testing "invalid values for 'stroke-width'"
+    (is (thrown? Exception (c/d2 {:style.stroke-width 0.9})))
+    (is (thrown? Exception (c/d2 {:style.stroke-width "red"})))
+    (is (thrown? Exception (c/d2 {:stroke-width 5})))))
+
+
+(deftest attr-stroke-dash
+  (testing "valid values for 'stroke-dash'"
+    (is (c/d2 {:style.stroke-dash 1}))
+    (is (c/d2 {:style.stroke-dash 5}))
+    (is (c/d2 {:style.stroke-dash 10})))
+  (testing "invalid values for 'stroke-dash'"
+    (is (thrown? Exception (c/d2 {:style.stroke-dash 0.9})))
+    (is (thrown? Exception (c/d2 {:style.stroke-dash "red"})))
+    (is (thrown? Exception (c/d2 {:stroke-dash 5})))))
+
+
+(deftest attr-border-radius
+  (testing "valid values for 'border-radius'"
+    (is (c/d2 {:style.border-radius 1}))
+    (is (c/d2 {:style.border-radius 10}))
+    (is (c/d2 {:style.border-radius 20})))
+  (testing "invalid values for 'border-radius'"
+    (is (thrown? Exception (c/d2 {:style.border-radius 1.3})))
+    (is (thrown? Exception (c/d2 {:style.border-radius "red"})))
+    (is (thrown? Exception (c/d2 {:style.border-radius 21})))
+    (is (thrown? Exception (c/d2 {:border-radius 5})))))
+
+
+(deftest attr-shadow
+  (testing "valid values for 'shadow'"
+    (is (c/d2 {:style.shadow true}))
+    (is (c/d2 {:style.shadow false}))
+    (is (c/d2 {:style.shadow "true"})))
+  (testing "invalid values for 'shadow'"
+    (is (thrown? Exception (c/d2 {:style.shadow 0.9})))
+    (is (thrown? Exception (c/d2 {:style.shadow "red"})))
+    (is (thrown? Exception (c/d2 {:shadow false})))))
+
+
+(deftest attr-3d
+  (testing "valid values for '3d'"
+    (is (c/d2 {:style.3d true}))
+    (is (c/d2 {:style.3d false}))
+    (is (c/d2 {:style.3d "true"})))
+  (testing "invalid values for '3d'"
+    (is (thrown? Exception (c/d2 {:style.3d 0.9})))
+    (is (thrown? Exception (c/d2 {:style.3d "red"})))
+    (is (thrown? Exception (c/d2 {:3d false})))))
+
+
+(deftest attr-multiple
+  (testing "valid values for 'multiple'"
+    (is (c/d2 {:style.multiple true}))
+    (is (c/d2 {:style.multiple false}))
+    (is (c/d2 {:style.multiple "true"})))
+  (testing "invalid values for 'multiple'"
+    (is (thrown? Exception (c/d2 {:style.multiple 0.9})))
+    (is (thrown? Exception (c/d2 {:style.multiple "red"})))
+    (is (thrown? Exception (c/d2 {:multiple false})))))
+
+
+(deftest attr-font
+  (testing "valid values for 'mono'"
+    (is (c/d2 {:style.font "mono"})))
+  (testing "invalid values for 'mono'"
+    (is (thrown? Exception (c/d2 {:style.font "sans"})))
+    (is (thrown? Exception (c/d2 {:font "mono"})))))
+
+
+(deftest attr-font-size
+  (testing "valid values for 'font-size'"
+    (is (c/d2 {:style.font-size 8}))
+    (is (c/d2 {:style.font-size 50}))
+    (is (c/d2 {:style.font-size 100})))
+  (testing "invalid values for 'font-size'"
+    (is (thrown? Exception (c/d2 {:style.font-size 7})))
+    (is (thrown? Exception (c/d2 {:style.font-size 50.1})))
+    (is (thrown? Exception (c/d2 {:style.font-size 101})))))
+
+
+(deftest attr-font-color
+  (testing "valid values for 'font-color'"
+    (is (c/d2 {:style.font-color "red"}))
+    (is (c/d2 {:style.font-color "'#EDE'"})))
+  (testing "invalid values for 'font-color'"
+    (is (thrown? Exception (c/d2 {:style.font-color 1.1})))
+    (is (thrown? Exception (c/d2 {:style.font-color "#EDE"})))  ; need single quotes
+    (is (thrown? Exception (c/d2 {:style.font-color "redz"})))
+    (is (thrown? Exception (c/d2 {:style.font-color "EDEz"})))))
+
+
+(deftest attr-animated
+  (testing "valid values for 'animated'"
+    (is (c/d2 {:style.animated true}))
+    (is (c/d2 {:style.animated false}))
+    (is (c/d2 {:style.animated "true"})))
+  (testing "invalid values for 'animated'"
+    (is (thrown? Exception (c/d2 {:style.animated 0.9})))
+    (is (thrown? Exception (c/d2 {:style.animated "red"})))
+    (is (thrown? Exception (c/d2 {:animated false})))))
+
+
+(deftest attr-bold
+  (testing "valid values for 'bold'"
+    (is (c/d2 {:style.bold true}))
+    (is (c/d2 {:style.bold false}))
+    (is (c/d2 {:style.bold "true"})))
+  (testing "invalid values for 'bold'"
+    (is (thrown? Exception (c/d2 {:style.bold 0.9})))
+    (is (thrown? Exception (c/d2 {:style.bold "red"})))
+    (is (thrown? Exception (c/d2 {:bold false})))))
+
+
+(deftest attr-italic
+  (testing "valid values for 'italic'"
+    (is (c/d2 {:style.italic true}))
+    (is (c/d2 {:style.italic false}))
+    (is (c/d2 {:style.italic "true"})))
+  (testing "invalid values for 'italic'"
+    (is (thrown? Exception (c/d2 {:style.italic 0.9})))
+    (is (thrown? Exception (c/d2 {:style.italic "red"})))
+    (is (thrown? Exception (c/d2 {:italic false})))))
+
+
+(deftest attr-underline
+  (testing "valid values for 'underline'"
+    (is (c/d2 {:style.underline true}))
+    (is (c/d2 {:style.underline false}))
+    (is (c/d2 {:style.underline "true"})))
+  (testing "invalid values for 'underline'"
+    (is (thrown? Exception (c/d2 {:style.underline 0.9})))
+    (is (thrown? Exception (c/d2 {:style.underline "red"})))
+    (is (thrown? Exception (c/d2 {:underline false})))))
+
+
+(deftest attr-text-transform
+  (testing "valid values for 'text-transform'"
+    (is (c/d2 {:style.text-transform "uppercase"}))
+    (is (c/d2 {:style.text-transform "lowercase"}))
+    (is (c/d2 {:style.text-transform "title"}))
+    (is (c/d2 {:style.text-transform "none"})))
+  (testing "invalid values for 'text-transform-pattern'"
+    (is (thrown? Exception (c/d2 {:style.text-transform 1.1})))
+    (is (thrown? Exception (c/d2 {:text-transform "dots"})))
+    (is (thrown? Exception (c/d2 {:style.text-transform "spots"})))))
+
+
+;; Extending to shapes
+
+(deftest ways-styles-can-be-expressed
+  (testing "valid expressions"
+    (is (c/d2 [:aShape.style.fill "red"]))
+    (is (c/d2 [:aShape.style {:fill "red"}])))
+  (testing "invalid expressions"
+    (is (thrown? Exception (c/d2 [:aShape.fill "red"])))
+    (is (thrown? Exception (c/d2 [:aShape {:fill "red"}])))
+    (is (thrown? Exception (c/d2 [:aShape.style {:label "red"}])))))
+
+
+;; other keys
+
+;; non-style attributes are:
+;;  shape, label, source-arrowhead, target-arrowhead, near, icon, width, height, constraint, direction,
+;;  class, grid-rows, grid-columns
+
+
+(deftest attr-shape
+  (testing "valid values for 'shape'"
+    (is (c/d2 {:shape "square"}))
+    (is (c/d2 {:shape "page"}))
+    (is (c/d2 {:shape "hexagon"})))
+  (testing "invalid values for 'shape'"
+    (is (thrown? Exception (c/d2 {:shape 1})))
+    (is (thrown? Exception (c/d2 {:shape "octogon"})))
+    (is (thrown? Exception (c/d2 {:shape true})))))
+
+
+(deftest attr-label
+  (testing "valid values for 'label'"
+    (is (c/d2 {:label "A shape"}))
+    (is (c/d2 {:label :theShape}))
+    (is (c/d2 {:label 1})))
+  (testing "invalid values for 'label'"
+    (is (thrown? Exception (c/d2 {:label [1 2]})))
+    (is (thrown? Exception (c/d2 {:label true})))))
+
+
+(deftest attr-near
+  (testing "valid values for 'near'"
+    (is (c/d2 {:near "top-left"}))
+    (is (c/d2 {:near :top-left}))
+    (is (c/d2 {:near "bottom-center"})))
+  (testing "invalid values for 'near'"
+    (is (thrown? Exception (c/d2 {:near "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:near :left})))
+    (is (thrown? Exception (c/d2 {:near true})))))
+
+
+(deftest attr-direction
+  (testing "valid values for 'direction'"
+    (is (c/d2 {:direction "up"}))
+    (is (c/d2 {:direction :up}))
+    (is (c/d2 {:direction "right"})))
+  (testing "invalid values for 'direction'"
+    (is (thrown? Exception (c/d2 {:direction "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:direction 1})))
+    (is (thrown? Exception (c/d2 {:direction true})))))
+
+
+(deftest attr-icon
+  (testing "valid values for 'icon'"
+    (is (c/d2 {:icon "/file/system/icon.png"})))
+  (testing "invalid values for 'icon'"
+    (is (thrown? Exception (c/d2 {:icon 1})))
+    (is (thrown? Exception (c/d2 {:icon :left})))
+    (is (thrown? Exception (c/d2 {:icon true})))))
+
+
+(deftest attr-width
+  (testing "valid values for 'width'"
+    (is (c/d2 {:width 100}))
+    (is (c/d2 {:width 213}))
+    (is (c/d2 {:width 12})))
+  (testing "invalid values for 'width'"
+    (is (thrown? Exception (c/d2 {:width "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:width :left})))
+    (is (thrown? Exception (c/d2 {:width true})))))
+
+
+(deftest attr-height
+  (testing "valid values for 'height'"
+    (is (c/d2 {:height 100}))
+    (is (c/d2 {:height 213}))
+    (is (c/d2 {:height 12})))
+  (testing "invalid values for 'height'"
+    (is (thrown? Exception (c/d2 {:height "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:height :left})))
+    (is (thrown? Exception (c/d2 {:height true})))))
+
+
+(deftest attr-constraint
+  (testing "valid values for 'constraint'"
+    (is (c/d2 {:constraint "a_constraint"})))
+  (testing "invalid values for 'constraint'"
+    (is (thrown? Exception (c/d2 {:constraint 1})))
+    (is (thrown? Exception (c/d2 {:constraint true})))))
+
+
+(deftest attr-class
+  (testing "valid values for 'class'"
+    (is (c/d2 {:class "a_class"}))
+    (is (c/d2 {:class :a_class}))
+    (is (c/d2 {:class 1})))
+  (testing "invalid values for 'class'"
+    (is (thrown? Exception (c/d2 {:class [1 2]})))
+    (is (thrown? Exception (c/d2 {:class true})))))
+
+
+(deftest attr-grid-rows
+  (testing "valid values for 'grid-rows'"
+    (is (c/d2 {:grid-rows 10}))
+    (is (c/d2 {:grid-rows 5}))
+    (is (c/d2 {:grid-rows 12})))
+  (testing "invalid values for 'grid-rows'"
+    (is (thrown? Exception (c/d2 {:grid-rows "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:grid-rows :left})))
+    (is (thrown? Exception (c/d2 {:grid-rows true})))
+    (is (thrown? Exception (c/d2 {:grid-rows [1 2]})))))
+
+
+(deftest attr-grid-columns
+  (testing "valid values for 'grid-columns'"
+    (is (c/d2 {:grid-columns 10}))
+    (is (c/d2 {:grid-columns 5}))
+    (is (c/d2 {:grid-columns 12})))
+  (testing "invalid values for 'grid-columns'"
+    (is (thrown? Exception (c/d2 {:grid-columns "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:grid-columns :left})))
+    (is (thrown? Exception (c/d2 {:grid-columns true})))
+    (is (thrown? Exception (c/d2 {:grid-columns [1 2]})))))
+
+
+;; Testing contexts
+
+(deftest attr-context
+  (testing "valid contexts"
+    (is (c/d2 {:classes.uno.style.fill "red"}))
+    (is (c/d2 {:classes.uno.target-arrowhead.style.filled true})))
+  (testing "invalid contexts"
+    (is (thrown? Exception (c/d2 {:style.grid-columns 4})))
+    (is (thrown? Exception (c/d2 {:classes.uno.fill "red"})))
+    (is (thrown? Exception (c/d2 {:classes.uno.style.filled true})))
+    (is (thrown? Exception (c/d2 {:classes.uno.target-arrowhead.filled true})))))

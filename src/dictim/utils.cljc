@@ -221,6 +221,12 @@
   #"\.(?=([^']*'[^']*')*[^']*$)")
 
 
+;; unquoted period or ampersand
+(def unquoted-period-or-ampersand
+  "regex for an unquoted period or an ampersand"
+  #"([&]|\.(?=([^']*'[^']*')*[^']*$))")
+
+
 ;; matches when starts and ends with '
 (def single-quoted
   "regex that matches any string that is surrounding by single quotes"

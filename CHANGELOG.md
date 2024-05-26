@@ -1,3 +1,6 @@
+	# 0.8.0
+	- Proper validity checking of d2 attributes
+	
 	# v.0.7.13
 	- Minor release to support dictim.server switch to use dictim.tests
 	# v.0.7.12

@@ -3,11 +3,16 @@
       :doc "Namespace for handling d2 reserved keywords."}
     dictim.d2.attributes
   (:require [dictim.utils
-             :refer [try-parse-primitive kstr?]
+             :refer [try-parse-primitive kstr? error]
              :rename {try-parse-primitive tpp}]
             [clojure.string :as str]))
 
+
+(defn- err [msg]
+  (throw (error msg)))
+
 ;; keep all d2 reserved keywords in one place to make updating easier
+
 
 (def ^:private shapes #{"rectangle" "square" "page" "parallelogram" "document" "cylinder" "queue" "package" "step" "callout" "stored_data" "person" "diamond" "oval" "circle" "hexagon" "cloud" "sql_table" "class" "sequence_diagram" "text"})
 
@@ -42,70 +47,202 @@
          (<= v upper))))
 
 
+;; ** How 'contexts' work **
+;; style etc. at nil/ under source-arrowhead/ target-arrowhead/ */  ** => [nil source-a....]
+;; style attrs -> under style  [:last "style"]
+;; filled: under src/tgt then a style
+
+(def ^:private star-ctx [#{nil "source-arrowhead" "target-arrowhead"}])
+(def ^:private top-level-ctx [#{nil "source-arrowhead" "target-arrowhead" "*" "**"}])
+(def ^:private style-ctx [[:last "style"]])
+
+
+(declare ^:private style-attrs)
+
+
 (def d2-attributes-map
-  {"shape" {:validate-fn (fn [v] (contains? shapes (dekey v)))}
-   "label" {:validate-fn (fn [v] (kstr? v))}
-   "source-arrowhead" {:validate-fn (fn [v] true)}
-   "target-arrowhead" {:validate-fn (fn [v] true)}
-   "style" {:validate-fn (fn [v] true)}
-   "near" {:validate-fn (fn [v] (let [v (dekey v)]
+  {"*" {:context star-ctx :validate-fn (constantly true)}
+   "**" {:context star-ctx :validate-fn (constantly true)}
+   "shape" {:context top-level-ctx :validate-fn (fn [v] (contains? shapes (dekey v)))}
+   "label" {:context top-level-ctx :validate-fn (fn [v] (kstr? v))}
+   "source-arrowhead" {:validate-fn (constantly true)}
+   "target-arrowhead" {:validate-fn (constantly true)}
+   "style" {:context top-level-ctx
+            :validate-fn (fn [v]
+                           (let [v (dekey v)]
+                             (contains? style-attrs v)))}
+   "near" {:context top-level-ctx
+           :validate-fn (fn [v] (let [v (dekey v)]
                                   (contains?
                                    #{"top-left" "top-center" "top-right"
                                      "center-left" "center-right"
                                      "bottom-left" "bottom-center" "bottom-right"}
                                    v)))}
-   "icon" {:validate-fn (fn [v] (string? v))}
-   "width" {:validate-fn (fn [v] (integer? (tpp v)))}
-   "height" {:validate-fn (fn [v] (integer? (tpp v)))}
-   "constraint" {:validate-fn (fn [v] (string? v))}
-   "direction" {:validate-fn (fn [v] (let [v (dekey v)]
-                                       (contains?
-                                        #{"up" "down" "left" "right"}
-                                        v)))}
-   "opacity" {:validate-fn (fn [v] (let [v (tpp v)]
+   "icon" {:context top-level-ctx :validate-fn (fn [v] (string? v))}
+   "width" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
+   "height" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
+   "constraint" {:context top-level-ctx :validate-fn (fn [v] (string? v))}
+   "direction" {:context top-level-ctx :validate-fn (fn [v] (let [v (dekey v)]
+                                                              (contains?
+                                                               #{"up" "down" "left" "right"}
+                                                               v)))}
+   "opacity" {:context style-ctx :style? true
+              :validate-fn (fn [v] (let [v (tpp v)]
                                      (and (or (float? v) (integer? v))
                                           (>= v 0)
-                                          (<= 0 v ))))}
-   "fill" {:validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
-   "stroke" {:validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
-   "stroke-width" {:validate-fn (partial int-between? 1 15)}
-   "stroke-dash" {:validate-fn (partial int-between? 1 10)}
-   "border-radius" {:validate-fn (partial int-between? 0 20)}
-   "font-color" {:validate-fn (fn [v] (string? (dekey v)))}
-   "shadow" {:validate-fn (fn [v] (boolean? (tpp v)))}
-   "multiple" {:validate-fn (fn [v] (boolean? (tpp v)))}
-   "3d" {:validate-fn (fn [v] (boolean? (tpp v)))}
-   "animated" {:validate-fn (fn [v] (boolean? (tpp v)))}
+                                          (<= v 1))))}
+   "fill" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
+   "filled" {:context [#{"source-arrowhead" "target-arrowhead"} "style"]
+             :validate-fn (fn [v] (boolean? (tpp v)))}
+   "stroke" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
+   "stroke-width" {:context style-ctx :style? true :validate-fn (partial int-between? 1 15)}
+   "stroke-dash" {:context style-ctx :style? true :validate-fn (partial int-between? 1 10)}
+   "border-radius" {:context style-ctx :style? true :validate-fn (partial int-between? 0 20)}
+   "font-color" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
+   "shadow" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
+   "multiple" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
+   "3d" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
+   "animated" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
    "link" {:validate-fn (fn [v] (string? v))}
-   "font-size" {:validate-fn (partial int-between? 8 100)}
+   "font-size" {:context style-ctx :style? true :validate-fn (partial int-between? 8 100)}
    "tooltip" {:validate-fn (fn [v] (string? v))}
-   "filled" {:validate-fn (fn [v] (boolean? (tpp v)))}
-   "italic" {:validate-fn (fn [v] (boolean? (tpp v)))}
-   "bold" {:validate-fn (fn [v] (boolean? (tpp v)))}
-   "double-border" {:validate-fn (fn [v] (boolean? (tpp v)))}
-   "underline" {:validate-fn (fn [v] (boolean? (tpp v)))}
-   "font" {:validate-fn (fn [v] (= "mono" (str v)))}
-   "fill-pattern" {:validate-fn (fn [v] (let [v (dekey v)]
+   "italic" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
+   "bold" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
+   "double-border" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
+   "underline" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
+   "font" {:context style-ctx :style? true :validate-fn (fn [v] (= "mono" (str v)))}
+   "fill-pattern" {:context style-ctx :style? true
+                   :validate-fn (fn [v] (let [v (dekey v)]
                                           (contains?
                                            #{"dots" "lines" "grain" "none"} v)))}
-   "class" {:validate-fn (fn [v] (kstr? v))}
-   "grid-rows" {:validate-fn (fn [v] (integer? (tpp v)))}
-   "grid-columns" {:validate-fn (fn [v] (integer? (tpp v)))}
-   "text-transform" {:validate-fn (fn [v] (let [v (dekey v)]
-                                            (contains? #{"uppercase" "lowercase" "title" "none"} v)))}})
+   "class" {:context top-level-ctx :validate-fn (fn [v] (kstr? v))}
+   "grid-rows" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
+   "grid-columns" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
+   "text-transform" {:context style-ctx :style? true
+                     :validate-fn
+                     (fn [v]
+                       (let [v (dekey v)]
+                         (contains? #{"uppercase" "lowercase" "title" "none"} v)))}})
 
 
-(defn validate-fn [d2-keyword]
-  (:validate-fn (get d2-attributes-map d2-keyword)))
+;; ********* Public api *************
 
 
-(def d2-attributes (into #{} (keys d2-attributes-map)))
+;; ********* Context *************
+;; context is whether an attribute occurs in the right position, e.g.
+;; is `fill` under a `style` key.
 
 
-(defn d2-keyword?
-  [w]
-  (contains? d2-attributes (name w)))
+(defn- matches-context? [context ref-context]
+  (let [[c1 & crest] context
+        [r1 & rrest] ref-context]
+    (cond
+      (set? r1)  (if (contains? r1 c1)
+                   (matches-context? crest rrest)
+                   false)
+
+      (vector? r1) (if (and (= :last (first r1))
+                            (= (second r1) (last context)))
+                     true
+                     false)
+
+      :else (= r1 c1))))
 
 
+(defn- ref-ctx [k] (-> (get d2-attributes-map k) :context))
+
+
+(defn- str-context [ctx]
+  (apply str
+         (interpose " > "
+                    (map
+                     (fn [ci]
+                       (if (set? ci)
+                         (apply str
+                                (interpose "/"
+                                           (map #(str "'" % "'") ci)))
+                         (str "'" ci "'")))
+                     ctx))))
+
+
+(defn- context-error [k context ref-context elem]
+  (cond
+    (and context
+         ref-context)    (err (str
+                               "'" k "' can only come after: "
+                               (str-context ref-context) ", in " elem))
+
+    context              (err (str
+                               "'" k "' cannot come after '"
+                               (last context) "', in " elem))
+
+    ref-context          (err (str
+                               "'" k "' must come after "
+                               (str-context ref-context) ", in " elem))))
+
+
+(defn in-context?
+  "Checks whether the provided context of the d2-keyword k is in the right context.
+   Throws an error if not."
+  [k ctx elem]
+  (let [ref-ctx (ref-ctx k)]
+    (if (matches-context? ctx ref-ctx)
+      true
+      (context-error k ctx ref-ctx elem))))
+
+
+;; ********* Validation *************
+
+(defn- validation-error [k v elem]
+  (err (str "attr: '" k " " v "' failed validation, in " elem)))
+
+
+(defn- validation-fn [k] (-> (get d2-attributes-map k) :validate-fn))
+
+
+(defn validate-attr [elem k v]
+  (let [f (validation-fn k)]
+    (try
+      (if (f v)
+        true
+        (validation-error k v elem))
+      (catch Exception _ (validation-error k v elem)))))
+
+
+(defn validate-attrs [elem k vs]
+  (every?
+   (fn [v] (validate-attr elem k v))
+   vs))
+
+
+;; ********* Attrs *************
+
+(def ^:private d2-attributes (into #{} (keys d2-attributes-map)))
+
+
+(defn key?
+  "Is k a d2 key"
+  [k]
+  (contains? d2-attributes (name k)))
+
+
+;; ****(used in parsing)******
+
+(def ^:private style-attrs
+  (into #{} (cons "filled"
+                  (keys
+                   (filter
+                    (fn [[_ v]] (= (:context v) [[:last "style"]]))
+                    d2-attributes-map)))))
+
+
+(defn style-attr? [d2-keyword]
+  (contains? style-attrs d2-keyword))
+
+
+;; remove '*' and '**' as required for parsing conn-keys
 (defn d2-keys []
-  (apply str (interpose "|" (map #(str "'" % "'") d2-attributes))))
+  (apply str
+         (interpose "|"
+                    (map #(str "'" % "'")
+                         (->> d2-attributes (remove #(or (= % "*") (= % "**"))))))))

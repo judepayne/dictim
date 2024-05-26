@@ -2,9 +2,10 @@
       :doc "Namespace for validating dictim."}
     dictim.validate
   (:require [clojure.string :as str]
-            [dictim.d2.attributes :as at]
-            [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type error list?
-                                  conn-ref? unquoted-period single-quoted no-asterisk convert-key]])
+            [dictim.d2.attributes :as atd2]
+            [dictim.utils :as utils
+             :refer [kstr? direction? take-til-last elem-type error list?
+                     unquoted-period-or-ampersand single-quoted no-asterisk convert-key]])
   (:refer-clojure :exclude [list?])
   #?(:cljs (:require-macros [dictim.validate :refer [check]])))
 
@@ -15,16 +16,32 @@
 (def ^:dynamic ^:private output nil)
 
 
-;; a dynamic var to hold whether we need to check attr keys as d2 keywords.
-(def ^:dynamic ^:private vars?)
+;; a dynamic var to whether we are inside a d2 'style'.
+(def ^:dynamic ^:private in-style? false)
 
 
-(defn- is-vars? [k]
+;; an atom to hold a queue of elements being processed
+(def ^:private elem-q (atom []))
+
+
+(defn- push-elem [elem]
+  (swap! elem-q conj elem))
+
+
+(defn- style? [k]
+  (= "style" (convert-key k)))
+
+
+(defn- vars? [k]
   (= "vars" (convert-key k)))
 
 
+(defn- classes? [k]
+  (= "classes" (convert-key k)))
+
+
 (defn- err [msg]
-  (throw (error (str msg " is invalid."))))
+  (throw (error msg)))
 
 
 (defmulti ^:private valid? elem-type)
@@ -38,16 +55,16 @@
      [dispatch-val arg-name body]
      (let [arg (symbol arg-name)]
        `(defmethod ~(symbol "valid?") ~dispatch-val [~arg]
-          (if ~body
+          (if (do (push-elem ~arg) ~body)
             true
-            (dictim.validate/err ~arg))))))
+            (dictim.validate/err (str ~arg " is invalid.")))))))
 
 
 (defn- valid-single-connection?
   [[k1 dir k2 & opts]]
-  (and (and (kstr? k1) (not (is-vars? k1)))
+  (and (and (kstr? k1) (not (vars? k1)))
        (direction? dir)
-       (and (kstr? k2) (not (is-vars? k2)))
+       (and (kstr? k2) (not (vars? k2)))
        (case (count opts)
          0 true
          1 (or (kstr? (first opts))
@@ -67,7 +84,7 @@
      (kstr? lk)
      (every?
       (fn [[k d]]
-        (and (and (kstr? k) (not (is-vars? k)))
+        (and (and (kstr? k) (not (vars? k)))
              (direction? d)))
       conns)
      (case (count opts)
@@ -84,45 +101,83 @@
              (every? (complement list?) (rest li))))
 
 
+(defn- key-parts [s]
+  (-> s convert-key (str/split unquoted-period-or-ampersand)
+      (->> (remove #(= "" %)))))
+
+
 (defn- last-key-part [s]
-  (-> s convert-key (str/split unquoted-period) last))
+  (-> s key-parts last))
 
 
 (defn- first-key-part [s]
-  (-> s convert-key (str/split unquoted-period) first))
+  (-> s key-parts first))
 
 
-(defn- valid-d2-attr-key? [k]
-  (kstr? k))
+(defn- d2-key-parts [s]
+  (->> s key-parts (filter atd2/key?)))
 
 
-(defn- valid-d2-attr? [[k v]]
-  ;; if we're in :vars, don't peform d2-keyword checks. optional; checks
-  (binding [vars? (or vars? (= (convert-key k) "vars"))]
-    (and
-     (valid-d2-attr-key? k)
-     (cond
-       (list? v)          (valid? v)
-       
-       (map? v)           (valid? v)
+(defn- just-d2-key [s]
+  (let [ps (d2-key-parts s)]
+    (when (first ps)
+      (str/join "." ps))))
 
-       (and (not (map? v))
-            (not vars?))
-       (let [k' (last-key-part k)]
-         (and (at/d2-keyword? k')
-              (or
-               (let [val-fn (at/validate-fn k')]
-                 (val-fn v))
-               (nil? v) ;; attributes can be 'nulled'. See the d2 tour overrides page.
-               )))
 
-       (and (not (map? v))
-            vars?)
-       (let [k' (last-key-part k)]
-         (if (at/d2-keyword? k')
-           (let [val-fn (at/validate-fn k')]
-             (val-fn v))
-           true))))))
+(defn- restruc-attr
+  "Normalizes a map entry, stringifying keys and nesting any composite keys."
+  [[k v]]
+  (let [parts (key-parts k)]
+    (letfn [(down [parts]
+              (if (next parts)
+                {(first parts) (down (next parts))}
+                {(first parts) v}))]
+      [(first parts) (if (next parts)
+                       (down (next parts))
+                       v)])))
+
+
+;; var to hold whether we're in non-d2-keyword part of nest attr map.
+;; this can  only occur at the head of the map, e.g. with classes.
+(def ^:private ^:dynamic *non-d2-pre?* false)
+
+
+(defn- valid-d2-attr?
+  "Validates a d2 attr. k may be a composite keyword e.g. aShape.style.fill
+   and v a value or a (nested) map. When the key is composite, can have a number of
+   keys which are not d2 keywords, followed by a number of keys which are. non d2
+   keywords are only allowed at the beginning when the first is 'classes' or 'vars'
+   (or the internal dynamic var *non-pre-d2?* is bound to true)."
+  ([[k v]] (valid-d2-attr? [k v] []))
+  ([[k v] ctx]
+   (let [[k v] (restruc-attr [k v])]
+     (and (kstr? k)
+          (cond
+            (list? v)             (valid? v)
+
+            (vars? k)             true ;; no further validation necessary
+
+            (classes? k)          (if (map? v)
+                                    (binding [*non-d2-pre?* true]
+                                      (every? valid-d2-attr? v))
+                                    (err "The value of 'classes' must be a map."))
+
+            (and (map? v)
+             (atd2/key? k))    (let [elem (peek @elem-q)]
+                                    (when (atd2/in-context? k ctx elem)
+                                      (and (atd2/validate-attrs elem k (keys v))
+                                           (binding [*non-d2-pre?* false]
+                                             (every? #(valid-d2-attr? % (conj ctx k)) v)))))
+            
+            (atd2/key? k)      (let [elem (peek @elem-q)]
+                                    (when (atd2/in-context? k ctx elem)
+                                      (atd2/validate-attr elem k v)))
+
+            (and *non-d2-pre?*
+                 (map? v))        (every? valid-d2-attr? v)
+
+            
+            :else                 (err (str " unknown d2 keyword: " k)))))))
 
 
 (defn- valid-dot-attr? [[k v]]
@@ -151,14 +206,32 @@
     (or (re-matches single-quoted k)
         (re-matches no-asterisk k))))
 
+;; for cases when the key embeds attr keys e.g. :myShape.style.fill "red"
+(defn- valid-inline-d2-attr?
+  [elem]
+  (let [[k & opts] elem]
+    (if-let [d2-k (just-d2-key k)]
+      (valid? {d2-k (first opts)})
+      (if (map? (first opts))
+        (valid? (first opts))
+        true))))
+
+
+(defn- valid-inline-attr? [attr]
+  (case output
+    :d2 (valid-inline-d2-attr? attr)
+    :dot true))
+
+
 (check :shape elem
        (let [[k & opts] elem]
-         (and (and (kstr? k) (globs-quoted? k) (not (is-vars? k)))
+         (and (and (kstr? k) (globs-quoted? k) (not (vars? k)))
+              (valid-inline-attr? elem)
               (case (count opts)
                 0 true
                 1 (or (kstr? (first opts))
                       (nil? (first opts))
-                      (valid? (first opts)))
+                      (map? (first opts)))
                 2 (let [[label attrs] opts]
                     (and (or (kstr? label) (nil? label))
                          (valid? attrs)))
@@ -190,7 +263,8 @@
 (check :ctr elem
        (let [[k & opts] elem]
         (and
-         (and (kstr? k) (globs-quoted? k) (not (is-vars? k)))
+         (and (kstr? k) (globs-quoted? k) (not (vars? k)))
+         (valid-inline-attr? elem)
          (or (and (or (nil? (first opts)) (kstr? (first opts))) ;; label & attrs
                   (valid? (second opts))
                   (or (nil? (rest (rest opts)))
@@ -198,7 +272,9 @@
              (and (or (nil? (first opts)) (kstr? (first opts))) ;; just the label
                   (or (nil? (rest opts))
                       (every? valid? (rest opts))))
-             (and (valid? (first opts)) ;; just the attrs
+             (and (if (style? (last-key-part k))
+                        (binding [in-style? true] (valid? (first opts)))
+                        (valid? (first opts))) ;; just the attrs
                   (every? valid? (rest opts)))
              (every? valid? opts) ;; no label or attrs
              (nil? opts)))))

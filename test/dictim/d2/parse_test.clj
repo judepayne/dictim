@@ -358,7 +358,7 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["a" ["b" ["c"]]] {"**.style.border-radius" 7})))))
-  (testing "can parse & (filters what globs can target"
+  (testing "can parse & (filters what globs can target)"
     (let [d2 "bravo team.shape: person
               charlie team.shape: person
               command center.shape: cloud
