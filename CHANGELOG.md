@@ -1,3 +1,6 @@
+	# 0.8.2
+	- fix to json parse
+
 	# 0.8.1
 	- Better prettified json from parse in cmd line tool
 

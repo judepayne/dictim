@@ -52,9 +52,8 @@
             :alias :p}
     :k {:coerce :boolean
         :desc "Convert keys to keywords when parsing d2 to dictim syntax edn"}
-    :json {:coerce :boolean
-           :alias :j
-           :desc "Converts the output of parse to dictim syntax json"}
+    :j {:coerce :boolean
+        :desc "Converts the output of parse to dictim syntax json"}
     :b {:coerce :boolean
         :desc "Additional to  -j: prettifies the json output of parse"}
     :watch {:desc watch-help
@@ -218,7 +217,7 @@
         dict (if (:k opts)
                (p/dictim d2 :key-fn keyword)
                (p/dictim d2))]
-    (if (:json opts)
+    (if (:j opts)
       (println (json/to-json dict {:pretty (:b opts)}))
       (clojure.pprint/pprint dict))))
 
