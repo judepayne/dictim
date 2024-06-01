@@ -52,8 +52,9 @@
             :alias :p}
     :k {:coerce :boolean
         :desc "Convert keys to keywords when parsing d2 to dictim syntax edn"}
-    :j {:coerce :boolean
-        :desc "Converts the output of parse to dictim syntax json"}
+    :json {:coerce :boolean
+           :alias :j
+           :desc "Converts the output of parse to dictim syntax json"}
     :b {:coerce :boolean
         :desc "Additional to  -j: prettifies the json output of parse"}
     :watch {:desc watch-help
@@ -98,12 +99,6 @@
     (catch Exception ex (do (.getName (class ex)) nil))))
 
 
-(defn- to-json [dict & {:keys [pretty?] :or {pretty? true}}]
-  (if (not pretty?)
-    (json/to-json dict)
-    (json/to-json dict {:pretty true})))
-
-
 (defn- handle-in [arg]
   (cond
      (true? arg)      (slurp *in*)
@@ -112,7 +107,7 @@
 
 
 (defn- beautify? [opts]
-  (or (:beautify opts) (:b opts)))
+  (when (:b opts) true))
 
 
 (defn- read-data [data]
@@ -223,8 +218,8 @@
         dict (if (:k opts)
                (p/dictim d2 :key-fn keyword)
                (p/dictim d2))]
-    (if (:j opts)
-      (println (to-json dict {:pretty (beautify? opts)}))
+    (if (:json opts)
+      (println (json/to-json dict {:pretty (:b opts)}))
       (clojure.pprint/pprint dict))))
 
 

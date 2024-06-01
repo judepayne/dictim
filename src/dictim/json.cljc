@@ -1,15 +1,19 @@
 (ns ^{:author "judepayne"
       :doc "Namespace for converting dictim to/ from json."}
     dictim.json
-  (:require [cheshire.core :as json]))
+  (:require [cheshire.core :as json]
+            [dictim.format :refer [fmt-json]]))
 
 
 ;; serialization/ deserialization of dictim to json
 
+
 (defn to-json
   "Serializes the dictim to json."
   [dictim & {:as opts}]
-  (json/generate-string dictim opts))
+  (if (:pretty opts)
+    (fmt-json (json/generate-string dictim (dissoc opts :pretty)))
+    (json/generate-string dictim opts)))
 
 
 (defn- vector-in-vector? [coll]

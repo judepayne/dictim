@@ -64,3 +64,23 @@
        (str acc cur)))
    nil
    (-> d2s trim-lines)))
+
+
+(defn fmt-json
+  "Formats a json string. :tab is the width of one indentation step."
+  [jss & {:keys [tab]
+          :or {tab 2}}]
+  (reset! indentation-counter 0)
+  (reset! tab-value tab)
+  (reduce
+   (fn [acc cur]
+     (case cur
+       \[      (str acc \[ \newline (ind!) (tabs))
+       \]      (str acc \newline (outd!) (tabs) \])
+       \{      (str acc \{ \newline (ind!) (tabs))
+       \}      (str acc \newline (outd!) (tabs) \})
+       \,      (str acc \, \newline (tabs))
+
+       (str acc cur)))
+   nil
+   jss))
