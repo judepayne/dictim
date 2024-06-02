@@ -2,9 +2,7 @@
   (:require [org.httpkit.server :refer [run-server as-channel send!]]
             [hiccup.core :refer [html]]
             [babashka.pods :as pods]
-            [clojure.java.browse :refer [browse-url]]
-            [babashka.cli :as cli]
-            [babashka.fs :as fs]))
+            [clojure.java.browse :refer [browse-url]]))
 
 
 (pods/load-pod 'org.babashka/fswatcher "0.0.3")

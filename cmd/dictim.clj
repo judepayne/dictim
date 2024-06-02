@@ -8,6 +8,7 @@
             [babashka.cli :as cli]
             [clojure.string :as str]
             [clojure.java.io :as io]
+            [clojure.pprint :as pp]
             [clojure.edn :as edn]
             [serve :as serve]
             [babashka.fs :as fs]
@@ -76,8 +77,8 @@
            :desc "Displays this help"
            :alias :h}}
    :error-fn
-   (fn [{:keys [spec type cause msg option] :as data}]
-     (if (= :org.babashka/cli type)
+   (fn [{:keys [spec type cause msg option]}]
+     (when (= :org.babashka/cli type)
        (case cause
          :require
          (println
@@ -106,10 +107,6 @@
      (true? arg)      (slurp *in*)
 
     :else arg))
-
-
-(defn- beautify? [opts]
-  (when (:b opts) true))
 
 
 (defn- read-data [data]
@@ -156,7 +153,7 @@
 (defn installed? [the-command]
   (try
     (:out (shell {:out :string} "command -v" the-command))
-    (catch Exception ex false)))
+    (catch Exception _ false)))
 
 
 (def path-to-d2 "d2")
@@ -174,9 +171,8 @@
 ;; correct command line is:   echo "x -> y: hello" | d2 --layout tala -
 (defn d2->svg
   "Takes a string of d2, and returns a string containing SVG."
-  [d2 & {:keys [d2-exec-path layout theme scale]
-         :or {d2-exec-path path-to-d2
-              layout d2-default-layout
+  [d2 & {:keys [layout theme scale]
+         :or {layout d2-default-layout
               theme d2-default-theme
               scale d2-default-scale}}]
   (let [{:keys [out err]} (shell {:out :string :in d2} "d2" "--layout" layout
@@ -216,16 +212,15 @@
 
 
 (defn- parse [opts]
-  (let [d2 (handle-in (or (:parse opts) (:p opts)))
-        dict (if (:k opts)
-               (p/dictim d2 :key-fn keyword)
-               (p/dictim d2))
-        dict (if (:r opts)
-               (tmp/remove-styles dict)
-               dict)]
-    (if (:j opts)
-      (println (json/to-json dict {:pretty (:b opts)}))
-      (clojure.pprint/pprint dict))))
+  (cond-> (handle-in (or (:parse opts) (:p opts)))
+    (:k opts)            (p/dictim :key-fn keyword)
+    (not (:k opts))      p/dictim
+
+    (:r opts)            tmp/remove-styles
+
+    (:j opts)            (-> (json/to-json {:pretty (:b opts)}) println)
+
+    (not (:j opts))      pp/pprint))
 
 
 (defn -main
@@ -252,6 +247,3 @@
         (println (str "Error: Unknown option\n" (show-help cli-spec))))
       (catch Exception ex
         (println (str "Error: " (.getMessage ex)))))))
-
-
-#_(-main *command-line-args*)
