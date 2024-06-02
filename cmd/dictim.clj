@@ -3,6 +3,7 @@
   (:require [dictim.d2.compile :as c]
             [dictim.d2.parse :as p]
             [dictim.json :as json]
+            [dictim.template :as tmp]
             [hiccup.core :refer [html]]
             [babashka.cli :as cli]
             [clojure.string :as str]
@@ -56,6 +57,8 @@
         :desc "Converts the output of parse to dictim syntax json"}
     :b {:coerce :boolean
         :desc "Additional to  -j: prettifies the json output of parse"}
+    :r {:coerce :boolean
+        :desc "Removes styles (attributes) from parsed d2, including any vars"}
     :watch {:desc watch-help
             :alias :w}
     :layout {:desc "d2 layout engine name; dagre/ elk/ tala"
@@ -216,7 +219,10 @@
   (let [d2 (handle-in (or (:parse opts) (:p opts)))
         dict (if (:k opts)
                (p/dictim d2 :key-fn keyword)
-               (p/dictim d2))]
+               (p/dictim d2))
+        dict (if (:r opts)
+               (tmp/remove-styles dict)
+               dict)]
     (if (:j opts)
       (println (json/to-json dict {:pretty (:b opts)}))
       (clojure.pprint/pprint dict))))

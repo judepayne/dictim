@@ -1,3 +1,6 @@
+	# Unreleased
+	- -r cmd line option with parse to remove styles
+
 	# 0.8.2
 	- fix to json parse
 
