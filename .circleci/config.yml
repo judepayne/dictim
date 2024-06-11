@@ -144,7 +144,7 @@ workflows:
       - test
       - mac:
           requires:
-	    - test
+            - test
       - release:
           requires:
             - test
