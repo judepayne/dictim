@@ -81,17 +81,17 @@ jobs:
       #      chmod +x install
       #      sudo ./install
       #      .circleci/script/release
-      - run:
-          name: Run tests
-          command: #TODO
+      #- run:
+      #    name: Run tests
+      #    command: #TODO
       - save_cache:
           paths:
             - ~/.m2
             - ~/graalvm-ce-java17-22.3.0
           key: mac-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
-      - store_artifacts:
-          path: /tmp/release
-          destination: release
+      #- store_artifacts:
+      #    path: /tmp/release
+      #    destination: release
 
 
   release:
