@@ -1,4 +1,4 @@
-{:paths ["src" "cmd" "resources"]
+{:paths ["src" "resources"]
  :deps {io.github.babashka/instaparse-bb {:git/sha "059045f6a8450bda74eb30136ddd2c5475f788d1"}}
  :tasks
  {test:bb {:extra-paths ["test"]
@@ -9,7 +9,7 @@
            :org.babashka/cli {:coerce {:nses [:symbol]
                                        :vars [:symbol]}}}
   cmd-test (shell "bb test/cmd_test.clj")
-  build (shell "bb uberjar dictim.jar -m dictim")
+  build (shell "bb uberjar dictim.jar -m cmd.dictim")
   release-artifact
   {:extra-paths [".build"]
    :extra-deps {io.github.borkdude/gh-release-artifact {:git/sha "05f8d8659e6805d513c59447ff41dc8497878462"}}

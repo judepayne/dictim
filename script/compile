@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+if [ -z "$GRAALVM_HOME" ]; then
+    echo "Please set GRAALVM_HOME"
+    exit 1
+fi
+
+export JAVA_HOME=$GRAALVM_HOME
+export PATH=$GRAALVM_HOME/bin:$PATH
+
+if [ -d bin ]; then
+    rm -r bin
+fi
+mkdir bin
+
+clojure -T:build uber
+
+"$GRAALVM_HOME/bin/gu" install native-image
+
+VERSION=$(cat resources/VERSION)
+
+args=(-jar "bin/dictim_jvm.jar"
+      -H:Name=bin/dictim-$VERSION
+      -H:+ReportExceptionStackTraces
+      --features=clj_easy.graal_build_time.InitClojureClasses
+      --verbose
+      --no-fallback
+      --no-server
+      "-J-Xmx3g"
+     )
+
+if [ "$DICTIM_STATIC" = "true" ]; then
+    args+=("--static")
+    if [ "DICTIM_MUSL" = "true" ]; then
+        args+=("--libc=musl"
+               # see https://github.com/oracle/graal/issues/3398
+               "-H:CCompilerOption=-Wl,-z,stack-size=2097152")
+    else
+        # see https://github.com/oracle/graal/issues/3737
+        args+=("-H:+StaticExecutableWithDynamicLibC")
+    fi
+fi
+
+"$GRAALVM_HOME/bin/native-image" "${args[@]}"

@@ -39,7 +39,7 @@
 
 (defn- remove-n [s n]
   (let [c (count s)]
-    (.substring s 0 (- c n))))
+    (subs s 0 (- c n))))
 
 
 (defn fmt
