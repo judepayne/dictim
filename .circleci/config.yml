@@ -80,7 +80,7 @@ jobs:
             curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
             chmod +x install
             sudo ./install
-            .circleci/script/release
+            .circleci/script/release-binary
       #- run:
       #    name: Run tests
       #    command: #TODO
