@@ -5,7 +5,7 @@ set -eo pipefail
 rm -rf /tmp/release
 mkdir -p /tmp/release
 cp bin/dictim /tmp/release
-VERSION=$(cat resources/POD_BABASHKA_INSTAPARSE_VERSION)
+VERSION=$(cat resources/VERSION)
 
 pushd /tmp/release
 
