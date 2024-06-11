@@ -74,13 +74,13 @@ jobs:
           command: |
             script/compile
           no_output_timeout: 30m
-     # - run:
-      #    name: Release
-      #    command: |
-      #      curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
-      #      chmod +x install
-      #      sudo ./install
-      #      .circleci/script/release
+      - run:
+          name: Release
+          command: |
+            curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
+            chmod +x install
+            sudo ./install
+            .circleci/script/release
       #- run:
       #    name: Run tests
       #    command: #TODO
@@ -94,7 +94,7 @@ jobs:
       #    destination: release
 
 
-  release:
+  release-bb:
     docker:
       - image: cimg/clojure:1.11.1-openjdk-17.0
 
@@ -117,7 +117,7 @@ jobs:
       - run:
           name: release artifact
           command: |
-            .circleci/script/release
+            .circleci/script/release-bb
       - run:
           name: install bbin
           command: |
@@ -145,7 +145,7 @@ workflows:
       - mac:
           requires:
             - test
-      - release:
+      - release-bb:
           requires:
             - test
           filters:

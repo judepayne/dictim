@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+rm -rf /tmp/release
+mkdir -p /tmp/release
+cp bin/dictim /tmp/release
+VERSION=$(cat resources/POD_BABASHKA_INSTAPARSE_VERSION)
+
+pushd /tmp/release
+
+## release binary as zip archive
+
+APP_ARCH=${APP_ARCH:-amd64}
+
+zip "dictim-$VERSION-$APP_PLATFORM-$APP_ARCH.zip" dictim
+
+rm dictim
+
+popd
+
+bb release-artifact --file "/tmp/release/dictim-$VERSION-$APP_PLATFORM-$APP_ARCH.zip"
