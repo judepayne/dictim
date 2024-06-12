@@ -75,13 +75,14 @@ jobs:
           no_output_timeout: 30m
       - run:
           name: Run tests
-          command: bb bin-cmd-test
-      - run:
-          name: Release
           command: |
             curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
             chmod +x install
             sudo ./install
+            bb bin-cmd-test
+      - run:
+          name: Release
+          command: |
             .circleci/script/release-binary
       - save_cache:
           paths:
@@ -136,13 +137,14 @@ jobs:
           no_output_timeout: 30m
       - run:
           name: Run tests
-          command: bb bin-cmd-test
-      - run:
-          name: Release
           command: |
             curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
             chmod +x install
             sudo ./install
+            bb bin-cmd-test
+      - run:
+          name: Release
+          command: |
             .circleci/script/release-binary
       - save_cache:
           paths:
@@ -198,13 +200,14 @@ jobs:
           no_output_timeout: 30m
       - run:
           name: Run tests
-          command: bb bin-cmd-test
-      - run:
-          name: Release
           command: |
             curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
             chmod +x install
             sudo ./install
+            bb bin-cmd-test
+      - run:
+          name: Release
+          command: |
             .circleci/script/release-binary
       - save_cache:
           paths:
