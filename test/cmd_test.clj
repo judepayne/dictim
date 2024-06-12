@@ -68,5 +68,5 @@ ABC4 -> 1STR: rates trade data
            dict-json))
 
 
-(assert (= (:out (shell {:out :string :in d2-2} "dictim" "-j" "-b" "-p"))
+(assert (= (:out (shell {:out :string :in d2-2} dictim-cmd "-j" "-b" "-p"))
             dict-json-pretty))

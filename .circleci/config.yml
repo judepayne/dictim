@@ -46,7 +46,6 @@ jobs:
     environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java17-22.3.0/Contents/Home
       APP_PLATFORM: macos # used in release script
-      APP_TEST_ENV: native
     steps:
       - checkout
       - run:
@@ -75,23 +74,143 @@ jobs:
             script/compile
           no_output_timeout: 30m
       - run:
+          name: Run tests
+          command: bb bin-cmd-test
+      - run:
           name: Release
           command: |
             curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
             chmod +x install
             sudo ./install
             .circleci/script/release-binary
-      - run:
-          name: Run tests
-          command: bb bin-cmd-test
       - save_cache:
           paths:
             - ~/.m2
             - ~/graalvm-ce-java17-22.3.0
           key: mac-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
-      #- store_artifacts:
-      #    path: /tmp/release
-      #    destination: release
+
+  linux:
+    docker:
+      - image: cimg/clojure:1.11.1-openjdk-17.0
+    working_directory: ~/repo
+    environment:
+      GRAALVM_HOME: /home/circleci/graalvm-ce-java17-22.3.0
+      APP_PLATFORM: linux # used in release script
+      APP_ARCH: amd64 # used in release script
+      DICTIM_STATIC: "true"
+      DICTIM_MUSL: "true"
+    steps:
+      - checkout
+      - run:
+          name: Get rid of erroneous git config
+          command: |
+              rm -rf ~/.gitconfig
+      - restore_cache:
+          keys:
+            - linux-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+      - run:
+          name: Install Clojure
+          command: |
+            wget https://download.clojure.org/install/linux-install-1.11.1.1149.sh
+            chmod +x linux-install-1.11.1.1149.sh
+            sudo ./linux-install-1.11.1.1149.sh
+      - run:
+          name: Install native dev tools
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install build-essential zlib1g-dev
+            sudo -E script/setup-musl
+      - run:
+          name: Download GraalVM
+          command: |
+            cd ~
+            ls -la
+            if ! [ -d graalvm-ce-java17-22.3.0 ]; then
+              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.0/graalvm-ce-java17-linux-amd64-22.3.0.tar.gz
+              tar xzf graalvm-ce-java17-linux-amd64-22.3.0.tar.gz
+            fi
+      - run:
+          name: Build binary
+          command: |
+            script/compile
+          no_output_timeout: 30m
+      - run:
+          name: Run tests
+          command: bb bin-cmd-test
+      - run:
+          name: Release
+          command: |
+            curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
+            chmod +x install
+            sudo ./install
+            .circleci/script/release-binary
+      - save_cache:
+          paths:
+            - ~/.m2
+            - ~/graalvm-ce-java17-22.3.0
+          key: linux-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+
+  linux-aarch64:
+    machine:
+      enabled: true
+      image: ubuntu-2004:current
+    resource_class: arm.large
+    working_directory: ~/repo
+    environment:
+      GRAALVM_HOME: /home/circleci/graalvm-ce-java17-22.3.0
+      APP_PLATFORM: linux # used in release script
+      APP_ARCH: aarch64 # used in release script
+      DICTIM_STATIC: "true"
+    steps:
+      - checkout
+      - run:
+          name: Get rid of erroneous git config
+          command: |
+              rm -rf ~/.gitconfig
+      - restore_cache:
+          keys:
+            - linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+      - run:
+          name: Install Clojure
+          command: |
+            wget https://download.clojure.org/install/linux-install-1.11.1.1149.sh
+            chmod +x linux-install-1.11.1.1149.sh
+            sudo ./linux-install-1.11.1.1149.sh
+      - run:
+          name: Install native dev tools
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install build-essential zlib1g-dev
+      - run:
+          name: Download GraalVM
+          command: |
+            script/check_glibc.sh
+            cd ~
+            ls -la
+            if ! [ -d graalvm-ce-java17-22.3.0 ]; then
+              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.0/graalvm-ce-java17-linux-aarch64-22.3.0.tar.gz
+              tar xzf graalvm-ce-java17-linux-aarch64-22.3.0.tar.gz
+            fi
+      - run:
+          name: Build binary
+          command: |
+            script/compile
+          no_output_timeout: 30m
+      - run:
+          name: Run tests
+          command: bb bin-cmd-test
+      - run:
+          name: Release
+          command: |
+            curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
+            chmod +x install
+            sudo ./install
+            .circleci/script/release-binary
+      - save_cache:
+          paths:
+            - ~/.m2
+            - ~/graalvm-ce-java17-22.3.0
+          key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 
 
   release-bb:
@@ -145,6 +264,21 @@ workflows:
       - mac:
           requires:
             - test
+	  filters:
+	    branches:
+	      only: main
+      - linux:
+          requires:
+            - test
+	  filters:
+	    branches:
+	      only: main	    
+      - linux-aarch64:
+          requires:
+            - test
+	  filters:
+	    branches:
+	      only: main	    
       - release-bb:
           requires:
             - test
