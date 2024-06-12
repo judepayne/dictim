@@ -8,7 +8,8 @@
            :exec-args {:dirs ["test"]}
            :org.babashka/cli {:coerce {:nses [:symbol]
                                        :vars [:symbol]}}}
-  cmd-test (shell "bb test/cmd_test.clj")
+  bb-cmd-test (shell "bb test/cmd_test.clj --native? false")
+  bin-cmd-test (shell "bb test/cmd_test.clj --native? true")  
   build (shell "bb uberjar dictim.jar -m cmd.dictim")
   release-artifact
   {:extra-paths [".build"]

@@ -81,9 +81,9 @@ jobs:
             chmod +x install
             sudo ./install
             .circleci/script/release-binary
-      #- run:
-      #    name: Run tests
-      #    command: #TODO
+      - run:
+          name: Run tests
+          command: bb bin-cmd-test
       - save_cache:
           paths:
             - ~/.m2
@@ -130,7 +130,7 @@ jobs:
       - run:
           name: run dictim command tests
           command: |
-            bb cmd-test
+            bb bb-cmd-test
 
       - save_cache:
           paths:
