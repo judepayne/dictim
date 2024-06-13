@@ -215,6 +215,9 @@ jobs:
             - ~/graalvm-ce-java17-22.3.0
           key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 
+# cur-dir: C:\Users\circleci\project
+# 
+
   windows:
     resource_class: 'windows.medium'
     machine:
@@ -229,7 +232,7 @@ jobs:
       - run: Write-Host $env:JAVA_HOME
       - run: Invoke-WebRequest 'https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi' -OutFile 'clojure.msi'
       - run: Write-Host (Get-Item .).FullName
-      - run: Write-Host Get-ChildItem -Force
+      - run: Write-Host (Get-ChildItem -Force)
       
   release-bb:
     docker:
