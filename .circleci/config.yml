@@ -221,13 +221,15 @@ jobs:
       image: 'windows-server-2019-vs2019:2024.05.1'
       shell: 'powershell.exe -ExecutionPolicy Bypass'
     environment:
-      GRAALVM_HOME: C:\projects\babashka\graalvm\graalvm-ce-java17-22.3.0
+      GRAALVM_HOME: C:\projects\babashka\graalvm\graalvm-ce-java17-22.3.0 #C:\Program Files\OpenJDK\jdk-21.0.2
       DICTIM_XMX: "-J-Xmx5g"
     steps:
       - checkout
       - run: Write-Host 'Hello, Windows'
       - run: Write-Host $env:JAVA_HOME
       - run: Invoke-WebRequest 'https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi' -OutFile 'clojure.msi'
+      - run: Write-Host (Get-Item .).FullName
+      - run: Write-Host Get-ChildItem -Force
       
   release-bb:
     docker:
