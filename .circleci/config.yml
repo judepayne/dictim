@@ -227,8 +227,7 @@ jobs:
       - checkout
       - run: Write-Host 'Hello, Windows'
       - run: Write-Host $env:JAVA_HOME
-
-https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi
+      - run: Invoke-WebRequest 'https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi' -OutFile 'clojure.msi'
       
   release-bb:
     docker:
