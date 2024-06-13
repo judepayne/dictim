@@ -218,7 +218,7 @@ jobs:
   windows:
     resource_class: 'windows.medium'
     machine:
-      image: 'windows-server-2022-gui:current'
+      image: 'windows-server-2019-vs2019:2024.05.1'
       shell: 'powershell.exe -ExecutionPolicy Bypass'
     environment:
       GRAALVM_HOME: C:\projects\babashka\graalvm\graalvm-ce-java17-22.3.0
@@ -226,9 +226,10 @@ jobs:
     steps:
       - checkout
       - run: Write-Host 'Hello, Windows'
+      - run: Write-Host $env:JAVA_HOME
+
+https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi
       
-
-
   release-bb:
     docker:
       - image: cimg/clojure:1.11.1-openjdk-17.0
