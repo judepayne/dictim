@@ -124,11 +124,11 @@
     (empty? dict)
     (exception "Error: no dictim to compile")
 
-    (or dict (and (list? dict) (every? coll? dict)))
-    (if (list? dict)
-      (apply c/d2 dict) 
-      (c/d2 dict))
-      
+    (and (sequential? dict) (every? coll? dict))
+    (apply c/d2 dict)
+
+    dict
+    (c/d2 dict)
 
     :else
     (exception "Error: Could not read input as valid dictim syntax")))

@@ -6,13 +6,16 @@
 ;; assume: bb, bbin & dictim installed
 (require '[babashka.cli :as cli])
 
-(def cli-options {:native? {:default true}})
+(def cli-options {:cmd {:default :bin}})
 
 
-(def native? (:native? (cli/parse-opts *command-line-args* {:spec cli-options})))
-
-
-(def dictim-cmd (if native? "./bin/dictim" "dictim"))
+(def dictim-cmd
+  (get
+   {:bin "./bin/dictim"
+    :win "dictim.exe"
+    :bbin "dictim"
+    :bb "bb dictim.jar"}
+   (:cmd (cli/parse-opts *command-line-args* {:spec cli-options}))))
 
 
 (require '[babashka.process :refer [shell]])
@@ -70,3 +73,12 @@ ABC4 -> 1STR: rates trade data
 
 (assert (= (:out (shell {:out :string :in d2-2} dictim-cmd "-j" "-b" "-p"))
             dict-json-pretty))
+
+
+
+(def d2
+  "direction: up\n1STR:   {\n  db: sql server\n  1.5TB:  {\n    shape: cylinder\n  }\n  middle_tier: java\n  spring boot:  {\n    style.border-radius: 8\n  }\n  queue: kafka  {\n    shape: queue\n  }\n  processor: C++ grid  {\n    style.multiple: true\n  }\n  gui: react\n  gui\n  db <-> middle_tier\n  middle_tier <-> gui\n  middle_tier <-> queue\n  queue <-> processor\n}\nABC1 -> 1STR: client ref data\nABC1 -> 1STR: instrument ref data\nABC2 -> 1STR: equities trade data\nABC3 -> 1STR: fx trades data\nABC4 -> 1STR: rates trade data\n1STR -> XYZ1: MIFID reg reports\n1STR -> XYZ2: Other reg reports\n")
+
+
+(assert (= (:out (shell {:out :string :in dict-json} dictim-cmd "-c"))
+           d2))

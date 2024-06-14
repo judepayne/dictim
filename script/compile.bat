@@ -29,7 +29,7 @@ call %GRAALVM_HOME%\bin\native-image.cmd ^
   "--no-fallback" ^
   "--no-server" ^
   "-J-Xmx3g" ^
-  "pod.babashka.instaparse"
+  "dictim"
 
 if %errorlevel% neq 0 exit /b %errorlevel%
 
