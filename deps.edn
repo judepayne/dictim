@@ -21,5 +21,4 @@
                                  {:git/url   "https://github.com/clj-easy/graal-config"
                                   :git/sha   "0dc2862e1b1c9871eef4c306ef77da3610a2bd93"
                                   :deps/root "config/cheshire/cheshire"}
-                                 com.github.clj-easy/graal-build-time      {:mvn/version "1.0.5"}
-                                 babashka/process         {:mvn/version "0.5.22"}}}}}
+                                 com.github.clj-easy/graal-build-time      {:mvn/version "1.0.5"}}}}}
