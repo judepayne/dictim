@@ -240,7 +240,7 @@ jobs:
       - restore_cache:
          key: large-downloads
       - run: Get-ChildItem -Force
-     #  - run: .\.circleci\script\check-cached.ps1
+      - run: .\.circleci\script\check-cached.ps1
      #  - run: msiexec.exe /i clojure.msi /qn
      # # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
      # # - run: Expand-Archive bb.zip .
