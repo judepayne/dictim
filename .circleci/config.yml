@@ -234,7 +234,7 @@ jobs:
            # fallback to using the latest cache if no exact match is found
            - v1-dependencies-      
       - restore_cache:
-         keys: downloads
+         key: large-downloads
       - run:
           name: manage large downloads
 	  cmd: C:Users\cicrcleci\project\.circleci\script\check-cached.bat
@@ -243,7 +243,7 @@ jobs:
             - graalvm.zip
             - bb.zip
             - clojure.msi               
-          keys: downloads
+          key: large-downloads
       - run:
           name: Install Clojure
 	  cmd: msiexec.exe /i clojure.msi /qn
