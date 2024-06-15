@@ -246,11 +246,11 @@ jobs:
           key: large-downloads
       - run:
           name: Install Clojure
-	  cmd: msiexec.exe /i clojure.msi /qn
+          cmd: msiexec.exe /i clojure.msi /qn
      # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
       - run:
           name: Install bb
-	  cmd: Expand-Archive bb.zip .
+          cmd: Expand-Archive bb.zip .
      # - run: C:\Users\circleci\project\script\compile.bat
       - save_cache:
           paths:
