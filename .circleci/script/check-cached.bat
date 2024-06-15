@@ -1,6 +1,8 @@
 if (Test-Path -Path 'clojure.msi' -PathType Leaf) {
   Write-Host 'downloading Clojure..'
   Invoke-WebRequest 'https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi' -OutFile 'clojure.msi'
+} else {
+  Write-Host 'Clojure available from cache'
 }
 
 if (Test-Path -Path 'graalvm') {
