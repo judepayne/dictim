@@ -29,4 +29,5 @@
                                        "src/dictim/json.cljc"
                                        "src/dictim/format.cljc"
                                        "src/dictim/tests.cljc"
-                                       "src/dictim/template.cljc"]}}}}
+                                       "src/dictim/template.cljc"]}}
+  uber (clojure "-T:build uber")}}
