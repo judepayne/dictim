@@ -1,5 +1,3 @@
-"Test presence of large downloads from .circleci caching"
-
 if (Test-Path 'clojure.msi') {
   Invoke-WebRequest 'https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi' -OutFile 'clojure.msi'
 }
