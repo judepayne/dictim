@@ -215,6 +215,9 @@ jobs:
             - ~/graalvm-ce-java17-22.3.0
           key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 
+# cur-dir: C:\Users\circleci\project
+# 
+
   windows:
     resource_class: 'windows.medium'
     machine:
@@ -228,29 +231,26 @@ jobs:
       - restore_cache:
          keys:
            - v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+           # fallback to using the latest cache if no exact match is found
            - v1-dependencies-      
-      - restore_cache:
-         key: large-downloads
-      - run:
-          name: manage large downloads
-          cmd: C:Users\cicrcleci\project\.circleci\script\check-cached.bat
-      - save-cache:
-          paths:
-            - graalvm.zip
-            - bb.zip
-            - clojure.msi               
-          key: large-downloads
-      - run:
-          name: Install Clojure
-          cmd: msiexec.exe /i clojure.msi /qn
-      - run:
-          name: Install bb
-          cmd: Expand-Archive bb.zip .
+     # - run: echo $JAVA_HOME #Write-Host $env:JAVA_HOME
+     # - run: ls -la
+     # - run: pwd
+      - run: C:Users\cicrcleci\project\.circleci\script\check-cached.bat
+      - run: msiexec.exe /i clojure.msi /qn
+     # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
+      - run: Expand-Archive bb.zip .
      # - run: C:\Users\circleci\project\script\compile.bat
       - save_cache:
           paths:
             - C:\Users\circleci\.m2
           key: v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+      - save_cache:
+         paths:
+	   - graalvm
+	   - clojure.msi
+	   - bb.zip
+	 key: large-downloads
       
   release-bb:
     docker:
