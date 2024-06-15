@@ -215,9 +215,6 @@ jobs:
             - ~/graalvm-ce-java17-22.3.0
           key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 
-# cur-dir: C:\Users\circleci\project
-# 
-
   windows:
     resource_class: 'windows.medium'
     machine:
@@ -231,7 +228,6 @@ jobs:
       - restore_cache:
          keys:
            - v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
-           # fallback to using the latest cache if no exact match is found
            - v1-dependencies-      
       - restore_cache:
          key: large-downloads
@@ -247,7 +243,6 @@ jobs:
       - run:
           name: Install Clojure
           cmd: msiexec.exe /i clojure.msi /qn
-     # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
       - run:
           name: Install bb
           cmd: Expand-Archive bb.zip .
