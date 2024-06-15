@@ -248,7 +248,7 @@ jobs:
           paths:
             - C:\Users\circleci\.m2
             - graalvm.zip
-	    - bb.zip
+            - bb.zip
           key: v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
       
   release-bb:
