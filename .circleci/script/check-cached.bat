@@ -1,4 +1,4 @@
-if (Test-Path 'clojure.msi') {
+if (Test-Path -Path 'clojure.msi' -PathType Leaf) {
   Invoke-WebRequest 'https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi' -OutFile 'clojure.msi'
 }
 
@@ -7,6 +7,6 @@ if (Test-Path -Path 'graalvm') {
   Expand-Archive graalvm.zip graalvm
 }
 
-if (Test-Path 'bb.zip') {
+if (Test-Path -Path 'bb.zip' -PathType Leaf) {
   Invoke-WebRequest 'https://github.com/borkdude/babashka/releases/download/v1.0.169/babashka-1.0.169-windows-amd64.zip' -OutFile 'bb.zip'
 }
