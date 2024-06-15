@@ -235,7 +235,7 @@ jobs:
            - v2-dependencies-      
       - restore_cache:
          key: large-downloads
-      - run: C:Users\circleci\project\.circleci\script\check-cached.bat
+      - run: C:\Users\circleci\project\.circleci\script\check-cached.bat
       - run: msiexec.exe /i clojure.msi /qn
      # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
       - run: Expand-Archive bb.zip .
