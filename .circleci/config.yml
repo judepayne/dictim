@@ -230,13 +230,12 @@ jobs:
       - checkout
       - restore_cache:
          keys:
-           - v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+           - v2-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
            # fallback to using the latest cache if no exact match is found
-           - v1-dependencies-      
-     # - run: echo $JAVA_HOME #Write-Host $env:JAVA_HOME
-     # - run: ls -la
-     # - run: pwd
-      - run: C:Users\cicrcleci\project\.circleci\script\check-cached.bat
+           - v2-dependencies-      
+      - restore_cache:
+         key: large-downloads
+      - run: C:Users\circleci\project\.circleci\script\check-cached.bat
       - run: msiexec.exe /i clojure.msi /qn
      # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
       - run: Expand-Archive bb.zip .
@@ -244,7 +243,7 @@ jobs:
       - save_cache:
           paths:
             - C:\Users\circleci\.m2
-          key: v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+          key: v2-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
       - save_cache:
          paths:
            - graalvm
