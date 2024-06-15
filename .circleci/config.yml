@@ -247,9 +247,9 @@ jobs:
           key: v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
       - save_cache:
          paths:
-	   - graalvm
-	   - clojure.msi
-	   - bb.zip
+           - graalvm
+           - clojure.msi
+           - bb.zip
 	 key: large-downloads
       
   release-bb:
