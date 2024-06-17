@@ -22,15 +22,15 @@ clojure.exe -T:build uber
 call %GRAALVM_HOME%\bin\gu.cmd install native-image
 
 call %GRAALVM_HOME%\bin\native-image.cmd ^
-  "-cp" "bin\dictim_jvm.jar" ^
+  "-jar" "bin\dictim_jvm.jar" ^
   "-H:Name=bin\dictim.exe" ^
   "-H:+ReportExceptionStackTraces" ^
+  "--features=clj_easy.graal_build_time.InitClojureClasses" ^
   "--report-unsupported-elements-at-runtime" ^
   "--verbose" ^
   "--no-fallback" ^
   "--no-server" ^
-  "-J-Xmx3g" ^
-  "dictim"
+  "-J-Xmx3g"
 
 if %errorlevel% neq 0 exit /b %errorlevel%
 
