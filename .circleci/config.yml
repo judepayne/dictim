@@ -228,29 +228,23 @@ jobs:
       DICTIM_XMX: "-J-Xmx5g"
     steps:
       - checkout
-      # - run: Invoke-WebRequest 'https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi' -OutFile 'clojure.msi'
-      # - run: Invoke-WebRequest 'https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.0/graalvm-ce-java17-windows-amd64-22.3.0.zip'  -OutFile 'graalvm.zip'
-      # - run: Expand-Archive graalvm.zip graalvm
-      # - run: Invoke-WebRequest 'https://github.com/borkdude/babashka/releases/download/v1.0.169/babashka-1.0.169-windows-amd64.zip' -OutFile 'bb.zip'
-     #  - restore_cache:
-     #     keys:
-     #       - v2-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
-     #       # fallback to using the latest cache if no exact match is found
-     #       - v2-dependencies-
-      - run: echo $env:GRAALVM_HOME
+      - restore_cache:
+         keys:
+           - v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+           # fallback to using the latest cache if no exact match is found
+           - v1-dependencies-
       - restore_cache:
          key: large-downloads
       - run: Get-ChildItem -Force
       - run: .\.circleci\script\check-cached.ps1
       - run: msiexec.exe /i clojure.msi /qn
-     # # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
       - run: C:\'Program Files (x86)\Microsoft Visual Studio'\2019\Community\VC\Auxiliary\Build\vcvars64.bat
       - run: Expand-Archive bb.zip .
       - run: C:\Users\circleci\project\script\compile.bat
-     #  - save_cache:
-     #      paths:
-     #        - C:\Users\circleci\.m2
-     #      key: v2-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+      - save_cache:
+          paths:
+            - C:\Users\circleci\.m2
+          key: v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
       - save_cache:
          paths:
            - graalvm
