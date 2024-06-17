@@ -16,7 +16,7 @@ echo Please set GRAALVM_HOME
 exit /b
 )
 
-bb uber
+clojure.exe -T:build uber
 
 
 rem call %GRAALVM_HOME%\bin\gu.cmd install native-image
