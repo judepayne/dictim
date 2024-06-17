@@ -7,6 +7,7 @@ if "%GRAALVM_HOME%"=="" (
 
 set JAVA_HOME=%GRAALVM_HOME%
 set PATH=%GRAALVM_HOME%\bin;%PATH%
+set PATH="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64_x86";%PATH%
 
 set /P VERSION=< resources\VERSION
 echo Building version %VERSION%
