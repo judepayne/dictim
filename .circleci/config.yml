@@ -224,7 +224,7 @@ jobs:
       image: 'windows-server-2019-vs2019:2024.05.1'
       shell: 'powershell.exe -ExecutionPolicy Bypass'
     environment:
-      GRAALVM_HOME: C:\Users\circleci\project\graalvm
+      GRAALVM_HOME: C:\Users\circleci\project\graalvm\graalvm-ce-java17-22.3.0\
       DICTIM_XMX: "-J-Xmx5g"
     steps:
       - checkout
@@ -236,13 +236,15 @@ jobs:
      #     keys:
      #       - v2-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
      #       # fallback to using the latest cache if no exact match is found
-     #       - v2-dependencies-      
+     #       - v2-dependencies-
+      - run: echo $env:GRRALVM_HOME
       - restore_cache:
          key: large-downloads
       - run: Get-ChildItem -Force
       - run: .\.circleci\script\check-cached.ps1
       - run: msiexec.exe /i clojure.msi /qn
      # # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
+      - run: C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat
       - run: Expand-Archive bb.zip .
       - run: C:\Users\circleci\project\script\compile.bat
      #  - save_cache:
