@@ -20,5 +20,6 @@ if (Test-Path -Path 'bb.zip' -PathType Leaf) {
   Write-Host 'Babashka available from cache'
 } else {
   Write-Host 'downloading Babashka..'
-  Invoke-WebRequest 'https://github.com/borkdude/babashka/releases/download/v1.0.169/babashka-1.0.169-windows-amd64.zip' -OutFile 'bb.zip'
+  Invoke-WebRequest 'https://github.com/borkdude/babashka/releases/download/v1.3.190/babashka-1.3.190-windows-amd64.zip' -OutFile 'bb.zip'
 }
+  Invoke-WebRequest 'https://github.com/borkdude/babashka/releases/download/v1.3.190/babashka-1.3.190-windows-amd64.zip' -OutFile 'bb.zip'

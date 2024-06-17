@@ -216,7 +216,7 @@ jobs:
           key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 
 # cur-dir: C:\Users\circleci\project
-# 
+# "https://github.com/clojure/brew-install/releases/download/1.11.3.1463/clojure-tools.zip"
 
   windows:
     resource_class: 'windows.medium'
