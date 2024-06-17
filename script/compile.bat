@@ -18,6 +18,7 @@ exit /b
 
 bb uber
 
+
 rem call %GRAALVM_HOME%\bin\gu.cmd install native-image
 
 rem call %GRAALVM_HOME%\bin\native-image.cmd ^
