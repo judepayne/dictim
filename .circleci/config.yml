@@ -244,7 +244,7 @@ jobs:
       - run: .\.circleci\script\check-cached.ps1
       - run: msiexec.exe /i clojure.msi /qn
      # # - run: cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
-      - run: & "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
+      - run: C:\'Program Files (x86)\Microsoft Visual Studio'\2019\Community\VC\Auxiliary\Build\vcvars64.bat
       - run: Expand-Archive bb.zip .
       - run: C:\Users\circleci\project\script\compile.bat
      #  - save_cache:
