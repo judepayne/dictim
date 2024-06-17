@@ -19,20 +19,20 @@ exit /b
 clojure.exe -T:build uber
 
 
-rem call %GRAALVM_HOME%\bin\gu.cmd install native-image
+call %GRAALVM_HOME%\bin\gu.cmd install native-image
 
-rem call %GRAALVM_HOME%\bin\native-image.cmd ^
-rem   "-cp" "bin\dictim_jvm.jar" ^
-rem   "-H:Name=bin\dictim.exe" ^
-rem   "-H:+ReportExceptionStackTraces" ^
-rem   "--report-unsupported-elements-at-runtime" ^
-rem   "--verbose" ^
-rem   "--no-fallback" ^
-rem   "--no-server" ^
-rem   "-J-Xmx3g" ^
-rem   "dictim"
+call %GRAALVM_HOME%\bin\native-image.cmd ^
+  "-cp" "bin\dictim_jvm.jar" ^
+  "-H:Name=bin\dictim.exe" ^
+  "-H:+ReportExceptionStackTraces" ^
+  "--report-unsupported-elements-at-runtime" ^
+  "--verbose" ^
+  "--no-fallback" ^
+  "--no-server" ^
+  "-J-Xmx3g" ^
+  "dictim"
 
-rem if %errorlevel% neq 0 exit /b %errorlevel%
+if %errorlevel% neq 0 exit /b %errorlevel%
 
-rem echo Creating zip archive
-rem jar -cMf dictim-%VERSION%-windows-amd64.zip bin\dictim.exe
+echo Creating zip archive
+jar -cMf dictim-%VERSION%-windows-amd64.zip bin\dictim.exe
