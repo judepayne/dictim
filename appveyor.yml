@@ -7,7 +7,7 @@ image: Visual Studio 2017
 clone_folder: C:\projects\dictim
 
 environment:
-  GRAALVM_HOME: C:\projects\babashka\graalvm\graalvm-ce-java17-22.3.0
+  GRAALVM_HOME: C:\projects\dictim\graalvm\graalvm-ce-java17-22.3.0
   BABASHKA_XMX: "-J-Xmx5g"
 
 cache:
