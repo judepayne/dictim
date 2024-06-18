@@ -28,7 +28,7 @@ build_script:
 
     powershell -Command "if (Test-Path('bb.exe')) { return } else { Expand-Archive bb.zip . }"
 
-    powershell -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi', 'clojure.msi') }"
+    powershell -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi', 'clojure.msi')"
 
     powershell -Command "msiexec.exe /i clojure.msi /qn"
 
