@@ -4,7 +4,7 @@ version: "v-{build}"
 
 image: Visual Studio 2017
 
-clone_folder: C:\projects\babashka
+clone_folder: C:\projects\dictim
 
 environment:
   GRAALVM_HOME: C:\projects\babashka\graalvm\graalvm-ce-java17-22.3.0
@@ -28,7 +28,7 @@ build_script:
 
     powershell -Command "if (Test-Path('bb.exe')) { return } else { Expand-Archive bb.zip . }"
 
-    powershell -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi', 'clojure.msi')"
+    powershell -Command "if (Test-Path('clojure.exe')) { return } else { (New-Object Net.WebClient).DownloadFile('https://github.com/casselc/clj-msi/releases/download/v1.11.3.1463/clojure-1.11.3.1463.msi', 'clojure.msi') }"
 
     powershell -Command "msiexec.exe /i clojure.msi /qn"
 
