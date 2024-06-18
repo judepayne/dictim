@@ -38,3 +38,5 @@ build_script:
     set /P VERSION=< resources\VERSION
 
     set ARCHIVE=dictim-%VERSION%-windows-amd64.zip
+
+    bb release-artifact --file %ARCHIVE%
