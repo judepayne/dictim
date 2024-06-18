@@ -43,6 +43,7 @@ jobs:
   mac:
     macos:
       xcode: "14.0.0"
+    resource_class: "macos.m1.large.gen1"
     environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java17-22.3.0/Contents/Home
       APP_PLATFORM: macos # used in release script
@@ -215,41 +216,38 @@ jobs:
             - ~/graalvm-ce-java17-22.3.0
           key: linux-aarch64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 
-# cur-dir: C:\Users\circleci\project
-# "https://github.com/clojure/brew-install/releases/download/1.11.3.1463/clojure-tools.zip"
-
-  windows:
-    resource_class: 'windows.medium'
-    machine:
-      image: 'windows-server-2019-vs2019:2024.05.1'
-      shell: 'powershell.exe -ExecutionPolicy Bypass'
-    environment:
-      GRAALVM_HOME: C:\Users\circleci\project\graalvm\graalvm-ce-java17-22.3.0\
-      DICTIM_XMX: "-J-Xmx5g"
-    steps:
-      - checkout
-      - restore_cache:
-         keys:
-           - v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
-           # fallback to using the latest cache if no exact match is found
-           - v1-dependencies-
-      - restore_cache:
-         key: large-downloads
-      - run: .\.circleci\script\check-cached.ps1
-      - run: msiexec.exe /i clojure.msi /qn
-      - run: C:\'Program Files (x86)\Microsoft Visual Studio'\2019\Community\VC\Auxiliary\Build\vcvarsall.bat
-      - run: Expand-Archive bb.zip .
-      - run: C:\Users\circleci\project\script\compile.bat
-      - save_cache:
-          paths:
-            - C:\Users\circleci\.m2
-          key: v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
-      - save_cache:
-         paths:
-           - graalvm
-           - clojure.msi
-           - bb.zip
-         key: large-downloads
+  # windows:
+  #   resource_class: 'windows.medium'
+  #   machine:
+  #     image: 'windows-server-2019-vs2019:2024.05.1'
+  #     shell: 'powershell.exe -ExecutionPolicy Bypass'
+  #   environment:
+  #     GRAALVM_HOME: C:\Users\circleci\project\graalvm\graalvm-ce-java17-22.3.0\
+  #     DICTIM_XMX: "-J-Xmx5g"
+  #   steps:
+  #     - checkout
+  #     - restore_cache:
+  #        keys:
+  #          - v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+  #          # fallback to using the latest cache if no exact match is found
+  #          - v1-dependencies-
+  #     - restore_cache:
+  #        key: large-downloads
+  #     - run: .\.circleci\script\check-cached.ps1
+  #     - run: msiexec.exe /i clojure.msi /qn
+  #     - run: C:\'Program Files (x86)\Microsoft Visual Studio'\2019\Community\VC\Auxiliary\Build\vcvarsall.bat
+  #     - run: Expand-Archive bb.zip .
+  #     - run: C:\Users\circleci\project\script\compile.bat
+  #     - save_cache:
+  #         paths:
+  #           - C:\Users\circleci\.m2
+  #         key: v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
+  #     - save_cache:
+  #        paths:
+  #          - graalvm
+  #          - clojure.msi
+  #          - bb.zip
+  #        key: large-downloads
       
   release-bb:
     docker:
@@ -298,29 +296,29 @@ jobs:
 workflows:
   test-and-release-on-main:
     jobs:
-      # - test
-      # - mac:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - linux:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - linux-aarch64:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      - windows
-      # - release-bb:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
+      - test
+      - mac:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - linux:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - linux-aarch64:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+#      - windows
+      - release-bb:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
