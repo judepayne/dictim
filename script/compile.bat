@@ -23,7 +23,7 @@ rem call %GRAALVM_HOME%\bin\gu.cmd install native-image
 
 call %GRAALVM_HOME%\bin\native-image.cmd ^
   "-jar" "bin\dictim_jvm.jar" ^
-  "-H:Name=bin\dictim.exe" ^
+  "-H:Name=bin\dictim" ^
   "-H:+ReportExceptionStackTraces" ^
   "--features=clj_easy.graal_build_time.InitClojureClasses" ^
   "--report-unsupported-elements-at-runtime" ^
