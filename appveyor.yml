@@ -7,7 +7,7 @@ image: Visual Studio 2022
 clone_folder: C:\projects\dictim
 
 environment:
-  GRAALVM_HOME: C:\projects\dictim\graalvm\graalvm-ce-java17-22.3.0
+  GRAALVM_HOME: C:\projects\dictim\graalvm\graalvm-community-openjdk-21.0.2+13.1
   BABASHKA_XMX: "-J-Xmx5g"
 
 cache:
@@ -18,6 +18,7 @@ cache:
 build_script:
 
 - cmd: >-
+    call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
 
     powershell -Command "if (Test-Path('graalvm')) { return } else { (New-Object Net.WebClient).DownloadFile('https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_windows-x64_bin.zip', 'graalvm.zip') }"
 
