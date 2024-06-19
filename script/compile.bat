@@ -19,19 +19,18 @@ exit /b
 
 bb uber
 
-call %GRAALVM_HOME%\bin\gu.cmd install native-image
+rem call %GRAALVM_HOME%\bin\gu.cmd install native-image
 
 call %GRAALVM_HOME%\bin\native-image.cmd ^
   "-jar" "bin\dictim_jvm.jar" ^
   "-H:Name=bin\dictim.exe" ^
   "-H:+ReportExceptionStackTraces" ^
-  "-H:-CheckToolchain" ^
   "--features=clj_easy.graal_build_time.InitClojureClasses" ^
   "--report-unsupported-elements-at-runtime" ^
   "--verbose" ^
   "--no-fallback" ^
   "--no-server" ^
-  "-J-Xmx3g"
+  "-J-Xmx4g"
 
 if %errorlevel% neq 0 exit /b %errorlevel%
 
