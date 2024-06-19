@@ -47,7 +47,7 @@ deploy:
   description: 'dictim release %VERSION%'
   provider: GitHub
   auth_token:
-    secure: wc1t+ZLDldNPTC6DlMrh4GeD83f4VlSX36Pj5tQsCDHuJsco9Vmg3P9Xg61o5Ow5HWGq5I92Yt2HeojHgI/t7drWyaND1SMR6YgrCBV2sS9sjAEeWCuPl+0t61bBzxZ0
+    secure: WWh40ZF9jIwDEVvuQx9fgNh8g7JwuxFtqEhT1jAHpIeLuwNyVKcnq/sP8aqmvGOz
   artifact: /.*\.zip/
   draft: true
   prerelease: false
