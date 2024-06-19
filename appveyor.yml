@@ -41,17 +41,4 @@ build_script:
 
     set ARCHIVE=dictim-%VERSION%-windows-amd64.zip
 
-
-deploy:
-  tag: v$(APPVEYOR_BUILD_VERSION)
-  description: 'dictim release %VERSION%'
-  provider: GitHub
-  auth_token:
-    secure: WWh40ZF9jIwDEVvuQx9fgNh8g7JwuxFtqEhT1jAHpIeLuwNyVKcnq/sP8aqmvGOz
-  artifact: /.*\.zip/
-  draft: true
-  prerelease: false
-  force_update: true
-  on:
-    branch: main
-    APPVEYOR_REPO_TAG: false
+    bb release-artifact --file %ARCHIVE%

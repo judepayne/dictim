@@ -15,7 +15,7 @@
   build (shell "bb uberjar dictim.jar -m cmd.dictim")
   release-artifact
   {:extra-paths [".build"]
-   :extra-deps {io.github.borkdude/gh-release-artifact {:git/sha "05f8d8659e6805d513c59447ff41dc8497878462"}}
+   :extra-deps {io.github.borkdude/gh-release-artifact {:git/tag "v0.2.1" :git/sha "4a9a74f"}}
    :task (exec 'release-artifact/release)}
   quickdoc {:doc "Invoke quickdoc"
             :extra-deps {io.github.borkdude/quickdoc {:git/sha "7c8bef54eda28367193ec433af01bb940114f012"}}
