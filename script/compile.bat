@@ -36,4 +36,3 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo Creating zip archive
 jar -cMf dictim-%VERSION%-windows-amd64.zip bin\dictim.exe
-

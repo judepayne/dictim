@@ -12,7 +12,7 @@
 (def dictim-cmd
   (get
    {:bin "./bin/dictim"
-    :win "dictim.exe"
+    :win "bin\dictim.exe"
     :bbin "dictim"
     :bb "bb dictim.jar"}
    (:cmd (cli/parse-opts *command-line-args* {:spec cli-options}))))

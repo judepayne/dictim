@@ -35,6 +35,8 @@ build_script:
 - cmd: >-
     call script/compile.bat
 
+    bb win-cmd-test
+
     set /P VERSION=< resources\VERSION
 
     set ARCHIVE=dictim-%VERSION%-windows-amd64.zip
