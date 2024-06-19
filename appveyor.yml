@@ -9,8 +9,6 @@ clone_folder: C:\projects\dictim
 environment:
   GRAALVM_HOME: C:\projects\dictim\graalvm\graalvm-community-openjdk-21.0.2+13.1
   BABASHKA_XMX: "-J-Xmx5g"
-  GITHUB_TOKEN:
-    secure: wc1t+ZLDldNPTC6DlMrh4GeD83f4VlSX36Pj5tQsCDHuJsco9Vmg3P9Xg61o5Ow5HWGq5I92Yt2HeojHgI/t7drWyaND1SMR6YgrCBV2sS9sjAEeWCuPl+0t61bBzxZ0
 
 cache:
   - '%USERPROFILE%\.m2 -> deps.edn'
