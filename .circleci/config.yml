@@ -43,8 +43,8 @@ jobs:
   mac:
     macos:
       xcode: "14.0.0"
-#    resource_class: "macos.m1.medium.gen1"
-    environment:
+   resource_class: "macos.m1.medium.gen1"
+   environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java17-22.3.0/Contents/Home
       APP_PLATFORM: macos # used in release script
     steps:
