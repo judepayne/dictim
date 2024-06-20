@@ -95,7 +95,7 @@
    "filled" {:context [#{"source-arrowhead" "target-arrowhead"} "style"]
              :validate-fn (fn [v] (boolean? (tpp v)))}
    "stroke" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
-   "stroke-width" {:context style-ctx :style? true :validate-fn (partial int-between? 1 15)}
+   "stroke-width" {:context style-ctx :style? true :validate-fn (partial int-between? 0 15)}
    "stroke-dash" {:context style-ctx :style? true :validate-fn (partial int-between? 1 10)}
    "border-radius" {:context style-ctx :style? true :validate-fn (partial int-between? 0 20)}
    "font-color" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))}

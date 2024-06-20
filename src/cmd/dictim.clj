@@ -31,7 +31,8 @@
   "Compiles supplied dictim to d2
                 The value supplied to --compile may be either
                   - a edn/ json dictim syntax string (in single quotes)
-                  - ommitted in which case *std-in* is read")
+                  - ommitted in which case *std-in* is read
+                --compile has one sub-option:")
 
 
 (def parse-help
@@ -52,6 +53,8 @@
   {:spec
    {:compile {:desc compile-help
               :alias :c}
+    :template {:desc "Path to an edn/ json template file"
+               :alias :m}
     :parse {:desc parse-help
             :alias :p}
     :k {:coerce :boolean
@@ -134,10 +137,23 @@
     (exception "Error: Could not read input as valid dictim syntax")))
 
 
+(defn- apply-template-file [dict template-file]
+  (try
+    (let [[_ {template :template directives :directives}] (read-data (slurp template-file))]
+      (if template
+        (tmp/add-styles dict template directives)
+        (exception "Error: template file must have a 'template' key")))
+    (catch Exception ex
+      (exception "Error: template file not found"))))
+
+
 (defn- compile [opts]
   (let [input (handle-in (or (:compile opts) (:c opts)))
-        [_ dict] (read-data input)]
-    (-> dict compile-fn println)))
+        [_ dict] (read-data input)
+        template-file (or (:template opts) (:m opts))]
+    (if template-file
+      (-> (apply-template-file dict template-file) compile-fn println)
+      (-> dict compile-fn println))))
 
 
 (defn- format-error [s err]
