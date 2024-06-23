@@ -2,6 +2,9 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
 
+> [!WARNING]
+> circleci Mac builds currently failing due to brownout of x86 mac hosts. Will be fixed by 1 July 2024
+
 [![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 
 Dictim syntax is an edn/ json syntax for expressing a graph diagram. Dictim is a library for compiling it to either [d2's](https://github.com/terrastruct/d2) or [Graphviz's](https://graphviz.org) text languages, and parsing any piece of d2 (back) into dictim syntax.
