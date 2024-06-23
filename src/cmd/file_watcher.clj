@@ -1,6 +1,7 @@
 (ns cmd.file-watcher
   (:require [clojure.core.async :as async :refer [chan go-loop <! alt! timeout thread close!]]
-            [babashka.fs :as fs]))
+            [babashka.fs :as fs])
+  (:refer-clojure :exclude [add-watch]))
 
 
 (defn- periodically
@@ -15,8 +16,34 @@
 
 
 (defn- stop-periodically
-  [loop]
-  (close! loop))
+  [channel]
+  (close! channel))
+
+
+;; state
+(def ^:private active-watches (atom nil))
+
+(defn- set-add-watch! [path modified watch-chan]
+  (swap! active-watches
+         assoc
+         path
+         {:modified modified :watch-chan watch-chan}))
+
+(defn- set-stop-watching! [path]
+  (swap! active-watches dissoc path))
+
+
+(defn- set-last-modified! [path modified]
+  (swap! active-watches assoc-in [path :modified] modified))
+
+
+(defn- path-last-modified [path]
+  (:modified (get @active-watches path)))
+
+
+(defn- path-channel [path]
+  (:watch-chan (get @active-watches path)))
+;;
 
 
 (defn- file-exists?
@@ -24,10 +51,6 @@
   (if (fs/exists? path)
     true
     (throw (Exception. "The file does not exist"))))
-
-
-(def ^:private modified
-  (atom nil))
 
 
 (defn- last-modified
@@ -38,29 +61,25 @@
 (defn- watch-fn [path f]
   (fn []
     (let [m (last-modified path)]
-      (when (not= m (get @modified path))
+      (when (not= m (path-last-modified path))
         (f)
-        (swap! modified assoc path m)))))
+        (set-last-modified! path m)))))
 
 
-(def ^:private watch-chan (atom nil))
-
-
-(defn watch
+(defn add-watch
   "Watches the file at path and calls f each time it's modified"
   [path f]
   (when (file-exists? path)
-    (swap! modified assoc path (last-modified path))
-    (swap! watch-chan
-           assoc path
-           (periodically
-            (watch-fn path f)
-            300))))
+    (set-add-watch!
+     path
+     (last-modified path)
+     (periodically
+      (watch-fn path f)
+      300))))
 
 
 (defn stop-watching
   "Stop watching the file at path"
   [path]
-  (let [wc (get @watch-chan path)]
-    (stop-periodically wc)
-    (swap! watch-chan dissoc path)))
+  (stop-periodically (path-channel path))
+  (set-stop-watching! path))

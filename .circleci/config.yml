@@ -36,9 +36,6 @@ jobs:
           paths:
             - ~/.m2
           key: v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
-      - run:
-          name: echo TOKEN
-          command: printenv GITHUB_TOKEN
 
   mac:
     macos:

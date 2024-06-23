@@ -14,8 +14,32 @@
 (def ^:dynamic *ip* "localhost")
 
 
-;; target is the file to watch
-(def file (atom nil))
+;; a cached sequence of files' contents that are being watched
+(def files (atom [])) 
+
+
+(defn- cache-files [paths]
+  (mapv
+   (fn [path] (swap! files conj [path (slurp path)]))
+   paths))
+
+
+(defn- index-of-path [path cached-files]
+  (reduce (fn [acc [cached-path cached-contents]]
+            (if (= path cached-path)
+              (reduced acc)
+              (inc acc)))
+          0
+          cached-files))
+
+
+(defn- recache-file [path]
+  (let [index (index-of-path path @files)]
+    (swap! files assoc index [path (slurp path)])))
+
+
+(defn- cached-file-contents []
+  (map second @files))
 
 
 ;; transform-fn to be applied to file's (new) contents
@@ -63,7 +87,15 @@
 
 
 ;; Our app
-(defn- body [] (@transform (slurp @file)))
+
+;; body updates the cache of files we are watching contents
+;; and then applies the transform function over that cache.
+(defn- body
+  ([]
+   (apply @transform (cached-file-contents)))
+  ([path]
+   (recache-file path)
+   (apply @transform (cached-file-contents))))
 
 
 (defn- app [req]
@@ -108,29 +140,30 @@
 
 (def ^:private writechmod (keyword "write|chmod"))
 
-
-(defn- start-watch [tgt]
-  (fw/watch tgt
-            #(do (notify-clients (body))
-                 (println (now) "broadcasting update"))))
+;; TODO add a watch for each file
+(defn- start-watch [paths]
+  (mapv
+   (fn [path]
+     (fw/add-watch path
+                   #(do (notify-clients (body path))
+                        (println (now) "broadcasting update"))))
+   paths))
 
 
 (defn- stop-watch [path]
   (fw/stop-watching path))
 
 
-(defn- set-tgt-file [tgt] (reset! file tgt))
-
-
-(defn start [tgt transform-fn]
-  (set-tgt-file tgt)
+(defn start [transform-fn & paths]
+  (cache-files paths)
   (reset! transform transform-fn)
-  (start-watch tgt)
+  (start-watch paths)
   (start-server)
   nil)
 
 ;; for development
-(defn stop [path]
-  (stop-watch path)
+(defn stop [& paths]
+  (map fw/stop-watching paths)
+  (reset! files [])
   (stop-server)
   (println (str (now) " stopped serving.")))
