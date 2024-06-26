@@ -333,7 +333,9 @@
         out-path (or (:output opts) (:o opts))
         f (fn [] (with-open [out-data (io/writer out-path)]
                    (binding [*out* out-data]
-                     (parse-impl opts (slurp path)))))]
+                     (->>
+                      (parse-impl opts (slurp path))
+                      (parse-print opts)))))]
     (f) ;; do once when first called
     (fw/add-watch path f)
     @(promise)))
