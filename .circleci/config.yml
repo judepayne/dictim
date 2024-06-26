@@ -43,6 +43,7 @@ jobs:
     environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java17-22.3.0/Contents/Home
       APP_PLATFORM: macos # used in release script
+      APP_ARCH: arm64 # used in release script
     steps:
       - checkout
       - run:
@@ -51,7 +52,7 @@ jobs:
               rm -rf ~/.gitconfig
       - restore_cache:
           keys:
-            - mac-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+            - mac-arm64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
       - run:
           name: Install Clojure
           command: |
@@ -85,7 +86,7 @@ jobs:
           paths:
             - ~/.m2
             - ~/graalvm-ce-java17-22.3.0
-          key: mac-amd64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
+          key: mac-arm64-{{ checksum "deps.edn" }}-{{ checksum ".circleci/config.yml" }}
 
   linux:
     docker:
