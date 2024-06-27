@@ -64,7 +64,7 @@ jobs:
             ls -la
             if ! [ -d graalvm-community-openjdk-22.0.1+8.1]; then
               curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-22.0.1/graalvm-community-jdk-22.0.1_macos-aarch64_bin.tar.gz
-              tar graalvm-community-jdk-22.0.1_macos-aarch64_bin.tar.gz
+              tar xzf graalvm-community-jdk-22.0.1_macos-aarch64_bin.tar.gz
             fi
       - run:
           name: Build binary
