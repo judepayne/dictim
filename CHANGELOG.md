@@ -1,4 +1,6 @@
-	# Unreleased
+	# 0.8.3
+	- apply-template added to cmd line tool
+	- watching parse and watching compile added to cmd line tool
 	- -r cmd line option with parse to remove styles
 
 	# 0.8.2
