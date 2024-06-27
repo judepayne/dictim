@@ -56,7 +56,7 @@ jobs:
       - run:
           name: Install Clojure
           command: |
-            .circleci/script/install-clojure /usr/local
+            sudo .circleci/script/install-clojure /usr/local
       - run:
           name: Download GraalVM
           command: |
