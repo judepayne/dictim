@@ -664,6 +664,42 @@
     (is (thrown? Exception (c/d2 {:grid-columns [1 2]})))))
 
 
+(deftest attr-horizontal-gap
+  (testing "valid values for 'horizontal-gap'"
+    (is (c/d2 {:horizontal-gap 10}))
+    (is (c/d2 {:horizontal-gap 5}))
+    (is (c/d2 {:horizontal-gap 12})))
+  (testing "invalid values for 'horizontal-gap'"
+    (is (thrown? Exception (c/d2 {:horizontal-gap "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:horizontal-gap :left})))
+    (is (thrown? Exception (c/d2 {:horizontal-gap true})))
+    (is (thrown? Exception (c/d2 {:horizontal-gap [1 2]})))))
+
+
+(deftest attr-vertical-gap
+  (testing "valid values for 'vertical-gap'"
+    (is (c/d2 {:vertical-gap 10}))
+    (is (c/d2 {:vertical-gap 5}))
+    (is (c/d2 {:vertical-gap 12})))
+  (testing "invalid values for 'vertical-gap'"
+    (is (thrown? Exception (c/d2 {:vertical-gap "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:vertical-gap :left})))
+    (is (thrown? Exception (c/d2 {:vertical-gap true})))
+    (is (thrown? Exception (c/d2 {:vertical-gap [1 2]})))))
+
+
+(deftest attr-grid-gap
+  (testing "valid values for 'grid-gap'"
+    (is (c/d2 {:grid-gap 10}))
+    (is (c/d2 {:grid-gap 5}))
+    (is (c/d2 {:grid-gap 12})))
+  (testing "invalid values for 'grid-gap'"
+    (is (thrown? Exception (c/d2 {:grid-gap "to-the-right"})))
+    (is (thrown? Exception (c/d2 {:grid-gap :left})))
+    (is (thrown? Exception (c/d2 {:grid-gap true})))
+    (is (thrown? Exception (c/d2 {:grid-gap [1 2]})))))
+
+
 ;; Testing contexts
 
 (deftest attr-context

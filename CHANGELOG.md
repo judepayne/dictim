@@ -1,3 +1,6 @@
+	# 0.8.4
+	- added horizontal-gap, vertical-gap and grid-gap attrs
+
 	# 0.8.3
 	- apply-template added to cmd line tool
 	- watching parse and watching compile added to cmd line tool

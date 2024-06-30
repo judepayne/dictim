@@ -118,6 +118,9 @@
    "class" {:context top-level-ctx :validate-fn (fn [v] (kstr? v))}
    "grid-rows" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
    "grid-columns" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
+   "vertical-gap" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
+   "horizontal-gap" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
+   "grid-gap" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}
    "text-transform" {:context style-ctx :style? true
                      :validate-fn
                      (fn [v]
