@@ -267,21 +267,21 @@ workflows:
           filters:
             branches:
               only: main
-      # - linux:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - linux-aarch64:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - release-bb:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
+      - linux:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - linux-aarch64:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - release-bb:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
