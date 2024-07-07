@@ -59,30 +59,64 @@
      ["p113" "->" "p114" "various flows"]]))
 
 
-(deftest adding-styles
-  (testing "I can add styles and directives to a piece of dictim"
-    (is (= (t/add-styles edn template dirs)
+(def dirs2
+  '({:random 1}
+    {:direction :right
+     :classes
+     {"lemony"
+      {:style
+       {:fill "'#ebe96e'"
+        :border-radius 5}}}}))
+
+
+(def decorated-edn3
+  '({:random 1}
+    {:direction :right}
+    {:classes {"lemony" {:style {:fill "'#ebe96e'", :border-radius 5}}}}
+    ["Process View"
+     ["p113"
+      ["app14149" "Solar Wind" {:style {:fill "'#f7f6f5'"}}]
+      ["app14027"
+       "Leventine Sky"
+       {:style {:fill "'#f7f6f5'"}, :class "lemony"}]
+      [:comment "Christine's domain"]]
+     ["p114"
+      ["app14181" "eBed" {:style {:fill "'#f7f6f5'"}, :class "lemony"}]
+      ["app14029" "Storm" {:style {:fill "'#f7f6f5'"}}]]
+     ["p113" "->" "p114" "various flows"]]))
+
+
+(deftest apply-template
+  (testing "I can override styles and directives to a piece of dictim"
+    (is (= (t/apply-template edn {:template template :directives dirs} false)
            decorated-edn)
-        (= (t/add-styles edn template2)
-           decorated-edn2))))
+        (= (t/apply-template edn {:template template2} false)
+           decorated-edn2)))
+  (testing "I can merge styles and directives to a piece of dictim"
+    (is (= (t/apply-template edn {:template template :directives dirs2} true)
+             decorated-edn3)
+          #_(= (t/apply-template edn {:template template2} false)
+             decorated-edn2))))
 
 
 (deftest removing-styles
   (testing "I can remove all styles"
-    (is (= (t/remove-styles decorated-edn)
+    (is (= (t/remove-attrs decorated-edn)
            edn))))
 
 
 (deftest directives
   (testing "directives are preserved"
-    (is (= (t/add-styles '({:direction :right} [:ashape "A Shape"])
-                         '(["=" "label" "A Shape"] {:style.fill "blue"}))
+    (is (= (t/apply-template
+            '({:direction :right} [:ashape "A Shape"])
+            {:template '(["=" "label" "A Shape"] {:style.fill "blue"})}
+            true)
            '({:direction :right} [:ashape "A Shape" {:style.fill "blue"}])))))
 
 
 (deftest vars
   (testing "vars are preserved when specified in remove-styles"
-    (is (= (t/remove-styles '({:direction :right} {"vars" {:a 2}} [:ashape "A Shape"])
+    (is (= (t/remove-attrs '({:direction :right} {"vars" {:a 2}} [:ashape "A Shape"])
                             :retain-vars? true)
            '({"vars" {:a 2}} [:ashape "A Shape"])))))
 

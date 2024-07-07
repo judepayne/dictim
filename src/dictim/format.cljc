@@ -12,8 +12,12 @@
 (def ^:private tab-value (atom 0))
 
 
-;; atom to determine if whether inside a var or not
+;; atom to determine whether inside a var or not
 (def ^:private in-var? (atom false))
+
+
+;; atom to determine whether inside a bracket and on the same line or not
+(def ^:private in-inline-bracket? (atom false))
 
 
 ;; indent: i.e. increase indentation counter by tab-value
@@ -50,16 +54,20 @@
   (reset! tab-value tab)
   (reduce
    (fn [acc cur]
-     (case cur
-       \{        (if (= (last acc) \$)
-                   (do (reset! in-var? true) (str acc cur))
-                   (do (ind!) (str acc \space \{)))
+      (case cur
+       \{        (do (reset! in-inline-bracket? true)
+                     (if (= (last acc) \$)
+                       (do (reset! in-var? true) (str acc cur))
+                       (do (ind!) (str acc \{))))
        
-       \}        (if @in-var?
-                   (do (reset! in-var? false) (str acc cur))
-                   (do (outd!) (str (remove-n acc @tab-value) \})))
+       \}        (cond
+                   @in-var? (do (reset! in-var? false) (str acc cur))
+
+                   @in-inline-bracket? (do (outd!) (str acc cur))
+                   
+                   :else (do (outd!) (str (remove-n acc @tab-value) \})))
        
-       \newline  (str acc \newline (tabs))
+       \newline  (do (reset! in-inline-bracket? false) (str acc \newline (tabs)))
        
        (str acc cur)))
    nil

@@ -1,3 +1,15 @@
+        # 0.8.5
+        - added --graph/-g option to cmd line tool
+	- added graphspec and tests
+	  - graphspec allows you to express a diagram as a graph
+	  - interface inspired by Zac Tellman's Rhizome
+	  - interface is pure data, so can be used over the wire
+	- Compile output improvements
+	  - inline (put on single line) attrs where possible
+	  - inlining controlled by an opts public atom
+	  - fixed bug in ctr layout which inserted an additional space
+	  - changed the formatter to work with new compile output
+
 	# 0.8.4
 	- added horizontal-gap, vertical-gap and grid-gap attrs
 

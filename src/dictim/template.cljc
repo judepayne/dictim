@@ -36,23 +36,38 @@
   (walk-dictim (partial prewalk-dictim f) identity (f element)))
 
 
-(defn- combine-directives
-  [old new]
-  (let [comb (merge old new)]
-    (seq (reduce (fn [a [k v]] (conj a {k v})) [] comb))))
+(defn deep-merge [v & vs]
+  (letfn [(rec-merge [v1 v2]
+            (if (and (map? v1) (map? v2))
+              (merge-with deep-merge v1 v2)
+              v2))]
+    (if (some identity vs)
+      (reduce #(rec-merge %1 %2) v vs)
+      v)))
 
 
-(defn add-styles
+(defn- prep-directives
+  ([new] (prep-directives nil new))
+  ([old new]
+   (reduce
+    (fn [acc [k v]]
+      (conj acc {k v}))
+    []
+    (deep-merge old new))))
+
+
+(defn apply-template
   "Walks the supplied dictim edn and decorates with attrs and top level directives.
-   template can be either:
+   A template is map with the key `:template` and optionally `:directives`
+   The value under the `:template` key can be either:
      - a function that takes an elem and returns the attrs to be added
        to the elem (or nil).
-     - a sequence of test and attribute pairs to be applied if the test succeeds.
-       A comparison test has the form [<comparator> <accessor> <value>] where:
-       - <comparator> is a string, one of the `comparators` var's keys in
-         this namespace.
-       - <accessor> is a string, one of the `accessors` var's keys in this
-         namespace. Accessors allow you to access values of a dictim element,
+     - a sequence of test and attribute maps  pairs to be applied if the test succeeds.
+     A comparison test has the form [<comparator> <accessor> <value>] where:
+       - <comparator> is a string, one of 'matches' '=' '!=' 'contains' 'doesnt-contain'
+         '>' '<' '<=' or '>='
+       - <accessor> is a string, one of 'key' 'label' 'attrs' 'keys' 'children'
+         or 'element-type'. Accessors allow you to access values of a dictim element,
          for example its `key` or `label`.
        - <value> is the value to be tested against.
          Example simple test: `[\"=\" \"key\" \"node123\"]`
@@ -63,24 +78,37 @@
          Example nested test:
          `[\"and\" [\"=\" \"type\" \"ctr\"] [\"=\" \"key\" \"node123\"]]`
        Attributes are supplied using standard dictim, e.g. `{:style.fill \"red\"}`
+   merge? determines whether the new attributes are merged over the original or (if false)
+   overwrite any original attributes in the dictim.
    directives is a map of attrs to be added at the top level e.g. `{\"classes\"...}`
-   If there are directives in the original dict, the new directives will be merge over them."
-  ([dict template] (add-styles dict template nil))
-  ([dict template directives]
-   (assert (or (nil? directives) (map? directives)))
+   If there are directives in the original dict, the new directives will be merge over them
+   if merge? is true, otherwise they will be overwritten."
+  ([dict tmp] (apply-template dict tmp false))
+  ([dict {:keys [template directives]} merge?]
    (let [attrs-fn (if (fn? template)
                     template
-                    (tests/test-fn template))
+                    (if merge? (tests/test-fn-merge template) (tests/test-fn template)))
          edit-fn (fn [form]
                    (if (principal-elem? form)
-                     (let [attrs (attrs-fn form)]
+                     (let [new-attrs (attrs-fn form)
+                           attrs (if merge?
+                                   (deep-merge (tests/attrs form) new-attrs)
+                                    new-attrs)]
                        (if attrs
                          (tests/set-attrs! form attrs)
                          form))
                      form))
          old-dirs (reduce merge (filter map? dict))
          data-elements (into '() (remove map? dict))
-         new-dirs (combine-directives old-dirs directives)
+         new-dirs (cond
+                    (and merge? (seq? directives))
+                    (prep-directives old-dirs (reduce merge directives))
+
+                    (seq? directives)         directives
+
+                    merge?                    (prep-directives old-dirs directives)
+
+                    :else                     (prep-directives directives))
          walked (postwalk-dictim edit-fn data-elements)]
      (if new-dirs
        (if (list? walked)
@@ -89,7 +117,17 @@
        walked))))
 
 
-(defn remove-styles
+(defn apply-templates
+  "Merges multiple templates into the supplied dictim, with merge? true."
+  [dict & templates]
+  (reduce
+   (fn [acc cur]
+     (apply-template acc cur true))
+   dict
+   templates))
+
+
+(defn remove-attrs
   "removes all maps from the nested form. i.e. attrs and directives.
    If retain-vars? is true, :vars/\"vars\" attributes will be retained in the dictim,
    since vars can be part of the 'data side' of a piece of dictim."

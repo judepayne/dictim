@@ -14,6 +14,7 @@
             [cmd.serve :as serve]
             [cmd.file-watcher :as fw]
             [babashka.fs :as fs]
+            [dictim.graphspec :as g]
             [babashka.process :refer [shell]])
   (:refer-clojure :exclude [compile])
   (:gen-class))
@@ -25,7 +26,7 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :parse :k :j :b :watch :layout :theme :d :scale :apply-tmp :version :help]})))
+  (cli/format-opts (merge spec {:order [:compile :parse :k :j :b :watch :layout :theme :d :scale :apply-tmp :graph :version :help]})))
 
 
 (def compile-help
@@ -81,6 +82,13 @@
                    specified via the --output/ -o flag.")
 
 
+(def graph-help
+  "Converts a dictim graph spec to dictim.
+                   applies a dictim template specified via the
+                   --template/ -t option.
+                   -j and -b options are also available.")
+
+
 (def cli-spec
   {:spec
    {:compile {:desc compile-help
@@ -111,6 +119,8 @@
             :alias :s}
     :apply-tmp {:desc apply-template-help
                 :alias :a}
+    :graph {:desc graph-help
+            :alias :g}
     :version {:coerce :boolean
               :desc "Returns the version of dictm"
               :alias :v}
@@ -175,10 +185,7 @@
 
 (defn- apply-dictim-template [dict template]
   (try
-    (let [{template :template directives :directives} template]
-      (if template
-        (tmp/add-styles dict template directives)
-        (exception "Error: template file must have a 'template' key")))
+    (tmp/apply-template dict template)
     (catch Exception ex
       (exception "Error: template file not found"))))
 
@@ -317,7 +324,7 @@
     (:k opts)            (p/dictim :key-fn keyword)
     (not (:k opts))      p/dictim
 
-    (:r opts)            tmp/remove-styles))
+    (:r opts)            tmp/remove-attrs))
 
 
 (defn- parse [opts]
@@ -351,7 +358,7 @@
 
 
 (defn- apply-template [opts]
-  (apply-template-impl opts (handle-in (or (:apply-tmp opts) (:f opts)))))
+  (apply-template-impl opts (handle-in (or (:apply-tmp opts) (:a opts)))))
 
 
 (defn- apply-template-watch [opts]
@@ -369,6 +376,33 @@
     (fw/add-watch path f)
     (when tmp-path (fw/add-watch tmp-path f))
     @(promise)))
+
+
+
+(defn- keywordize [m]
+  (clojure.walk/postwalk
+   (fn [x]
+     (if (map? x)
+       (into {} (map (fn [[k v]] [(keyword k) v]) x))
+       x))
+   m))
+
+(defn- keywordize1 [m]
+  (into {} (map (fn [[k v]] [(keyword k) v]) m)))
+
+
+(defn- graph-impl [opts in]
+  (let [[_ grph] (read-data in)
+        dict (g/graph-spec->dictim grph)
+        template-file (or (:template opts) (:m opts))
+        template (when template-file (second (read-data (slurp template-file))))]
+    (if template
+      (parse-print opts (apply-dictim-template dict template))
+      (parse-print opts dict))))
+
+
+(defn- graph [opts]
+  (graph-impl opts (handle-in (or (:graph opts) (:g opts)))))
 
 
 (def ^:private version
@@ -406,6 +440,9 @@
 
         (or (:apply-tmp opts) (:a opts))
         (apply-template opts)
+
+        (or (:graph opts) (:g opts))
+        (graph opts)
 
         (or (:watch opts) (:w opts))
         (do (watch opts) @(promise))        

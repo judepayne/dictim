@@ -206,9 +206,11 @@
   [test]
   (let [[_ accessor reg-str] test
         r (re-pattern reg-str)
-        v-found (if-let [f (get accessors accessor)]
+        v-found (if-let [f (get accessors accessor)]  ;; dictim element
                   (f *elem*)
-                  (get *elem* accessor))] ;; assume a map
+                  (if (vector? accessor)
+                    (get-in *elem* accessor) ;; assume a nested map
+                    (get *elem* accessor)))] ;; assume a map
     (if (string? v-found)
       (re-matches r v-found)
       false)))
@@ -219,9 +221,11 @@
    *elem* may be either a dictim element or a map."
   [test]
   (let [[comparator accessor v] test
-        v-found (if-let [f (get accessors accessor)]
+        v-found (if-let [f (get accessors accessor)]  ;; dictim element
                   (f *elem*)
-                  (get *elem* accessor)) ;; assume a map
+                  (if (vector? accessor)
+                    (get-in *elem* accessor) ;; assume a nested map                    
+                    (get *elem* accessor))) ;; assume a map
         comp (get comparators comparator (constantly nil))]
     (cond
       (contains? #{"contains" "doesnt-contain"} comparator)
@@ -264,7 +268,7 @@
     (matches-test? tests)
     (matches-test tests)
 
-    (or (contains? #{:else "else"} tests))
+    (or (contains? #{:else "else" "_"} tests))
     true
 
     :else (throw (Exception. "Not a valid test."))))
@@ -290,8 +294,23 @@
     (if (test (first styles))   ;; use the private -test function
       (if (next styles)
         (second styles)
-        (throw (IllegalArgumentException. "styles requires an even number of forms")))
+        (throw (IllegalArgumentException. "test clauses must be an even number")))
       (styles* (next (next styles))))))
+
+
+(defn- reverse2 [coll]
+  (->> coll (partition 2) reverse (mapcat identity) vec))
+
+
+(defn- merge-results
+  ([styles] (merge-results nil styles))
+  ([result styles]
+   (when styles
+     (if (test (first styles))
+       (if (next styles)
+         (merge result (second styles) (merge-results (next (next styles))))
+         (throw (IllegalArgumentException. "test clauses must be an even number")))
+       (merge result (merge-results (next (next styles))))))))
 
 
 (defn test-fn
@@ -304,3 +323,15 @@
   (fn [element]
     (binding [*elem* element]
       (styles* tests))))
+
+
+(defn test-fn-merge
+  "When passed a sequence of <test> <value> pairs, returns a 1-arity function
+   that evaluates each test against the argument passed to the function and
+   returns the value associated by merging the values of all true test.
+   Either `:else` or `\"else\"` can be used in the second last position to
+   create a catch all clause in the function returned."
+  [tests]
+  (fn [element]
+    (binding [*elem* element]
+      (merge-results (reverse2 tests)))))

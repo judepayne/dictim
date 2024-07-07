@@ -109,9 +109,9 @@ ABC4 -> 1STR: rates trade data
                dict-json-pretty))
 
 
-(def d2
-   "direction: up\n1STR:   {\n  db: sql server\n  1.5TB:  {\n    shape: cylinder\n  }\n  middle_tier: java\n  spring boot:  {\n    style.border-radius: 8\n  }\n  queue: kafka  {\n    shape: queue\n  }\n  processor: C++ grid  {\n    style.multiple: true\n  }\n  gui: react\n  gui\n  db <-> middle_tier\n  middle_tier <-> gui\n  middle_tier <-> queue\n  queue <-> processor\n}\nABC1 -> 1STR: client ref data\nABC1 -> 1STR: instrument ref data\nABC2 -> 1STR: equities trade data\nABC3 -> 1STR: fx trades data\nABC4 -> 1STR: rates trade data\n1STR -> XYZ1: MIFID reg reports\n1STR -> XYZ2: Other reg reports\n")
+(def d2-3
+   "direction: up\n1STR: {\n  db: sql server\n  1.5TB: {shape: cylinder}\n  middle_tier: java\n  spring boot: {style.border-radius: 8}\n  queue: kafka {shape: queue}\n  processor: C++ grid {style.multiple: true}\n  gui: react\n  gui\n  db <-> middle_tier\n  middle_tier <-> gui\n  middle_tier <-> queue\n  queue <-> processor\n}\nABC1 -> 1STR: client ref data\nABC1 -> 1STR: instrument ref data\nABC2 -> 1STR: equities trade data\nABC3 -> 1STR: fx trades data\nABC4 -> 1STR: rates trade data\n1STR -> XYZ1: MIFID reg reports\n1STR -> XYZ2: Other reg reports\n")
 
 
 (assert (trim= (:out (shell {:out :string :in dict-json} dictim-cmd "-c"))
-               d2))
+               d2-3))

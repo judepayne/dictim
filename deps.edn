@@ -7,7 +7,8 @@
         hiccup/hiccup                   {:mvn/version "2.0.0-RC3"}
         org.clojure/core.async          {:mvn/version "1.6.681"}
         babashka/process                {:mvn/version "0.5.22"}
-        babashka/fs                     {:mvn/version "0.5.21"}}
+        babashka/fs                     {:mvn/version "0.5.21"}
+        io.github.judepayne/dictim.graph {:git/tag "0.1.5" :git/sha "67f4507"}}
  :aliases {:test {:extra-paths ["test"]
                   :extra-deps {io.github.cognitect-labs/test-runner 
                                {:git/tag "v0.5.1" :git/sha "dfb30dd"}}

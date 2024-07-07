@@ -3,7 +3,8 @@
     dictim.d2.compile
   (:require [dictim.format :as f]
             [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type convert-key list?]]
-            [dictim.validate :refer [all-valid?]])
+            [dictim.validate :refer [all-valid?]]
+            [clojure.string :as str])
   (:refer-clojure :exclude [list?]))
 
 
@@ -17,6 +18,9 @@
 
 
 (def ^:dynamic ^:private inner-list? false)
+
+
+(def opts (atom {:inline-attrs? true}))
 
 
 (defn- de-keyword
@@ -42,24 +46,53 @@
 (defmulti ^:private layout elem-type)
 
 
+(defn- remove-empty-maps [m]
+  (remove (fn [[k v]] (and (map? v) (empty? v))) m))
+
+
+(defn- count-max-r
+  "Returns the highest count at any level of nested map m"
+  [m]
+  (apply max (count m)
+         (map count-max-r (filter map? (vals m)))))
+
+
+(defn- inlineable-attr? [m]
+  (and (:inline-attrs? @opts)
+       (= 1 (count-max-r m))
+       (let [k (-> m ffirst format-key)]
+         (and (not= k "classes")
+              (not= k "vars")))))
+
+
+(defn- inline-attr [k v]
+  (str (cond
+         (map? v) (str (format-key k) "." (inline-attr (ffirst v) (-> v first second)))
+         (list? v) (str (format-key k) colon (binding [inner-list? true] (layout v)))
+         :else (str (format-key k) colon (de-keyword v)))))
+
+
 (defn- attrs
   "layout the map of attrs. m may be nested."
   ([m] (attrs m true))
   ([m brackets?]
-   (apply str
-          (when brackets? "{\n")
-          (apply str
-                 (->>
-                  (for [[k v] m]
-                    (cond
-                      (and (map? v) (empty? v)) nil
-                      (nil? v)   (str (format-key k) colon "null")
-                      (map? v)   (str (format-key k) colon (attrs v))
-                      (list? v)  (str (format-key k) colon (binding [inner-list? true] (layout v)))
-                      :else      (str (format-key k) colon (de-keyword v))))
-                  (remove nil?)
-                  (interpose sep)))
-          (if brackets? "\n}" "\n"))))
+   (let [m (remove-empty-maps m)
+         inline? (inlineable-attr? m)]
+     (apply str
+            (when brackets? (str "{" (when-not inline? "\n")))
+            (apply str
+                   (->>
+                    (for [[k v] m]
+                      (cond
+                        (and (map? v) (empty? v)) nil
+                        (nil? v)   (str (format-key k) colon "null")
+                        inline?    (inline-attr k v)
+                        (map? v)   (str (format-key k) colon (attrs v))
+                        (list? v)  (str (format-key k) colon (binding [inner-list? true] (layout v)))
+                        :else      (str (format-key k) colon (de-keyword v))))
+                    (remove nil?)
+                    (interpose sep)))
+            (if brackets? (str (when-not inline? "\n") "}") "\n")))))
 
 
 (defn- item->str [i]
@@ -140,14 +173,14 @@
    (binding [sep ""]
      (layout (last li)))
    (when inner-list? "]")
-   sep))
+   (when-not inner-list? sep)))
 
 
 (defmethod layout :ctr [[k & opts]]
   (str (name k) colon
        (when (kstr? (first opts)) (name (first opts)))
-       (when (nil? (first opts))  "null")
-       " {"
+       (when (nil? (first opts))  "null ")
+       (if (kstr? (first opts)) " {" "{") ;; eliminate double space when there's no label supplied
        sep
        (apply str
               (map
