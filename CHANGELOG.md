@@ -1,4 +1,10 @@
-        # 0.8.5
+	# 0.8.6
+	- changes to graphspec:
+	  - added container->data and container-template
+	  - add template
+	
+
+	# 0.8.5
         - added --graph/-g option to cmd line tool
 	- added graphspec and tests
 	  - graphspec allows you to express a diagram as a graph

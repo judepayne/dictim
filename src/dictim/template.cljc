@@ -58,7 +58,8 @@
 
 (defn apply-template
   "Walks the supplied dictim edn and decorates with attrs and top level directives.
-   A template is map with the key `:template` and optionally `:directives`
+   A template is map with the key `:template` and optionally `:directives`, `:merge?`, 
+   `:new-priority?` and `:all-matching-clauses`
    The value under the `:template` key can be either:
      - a function that takes an elem and returns the attrs to be added
        to the elem (or nil).
@@ -78,43 +79,46 @@
          Example nested test:
          `[\"and\" [\"=\" \"type\" \"ctr\"] [\"=\" \"key\" \"node123\"]]`
        Attributes are supplied using standard dictim, e.g. `{:style.fill \"red\"}`
-   merge? determines whether the new attributes are merged over the original or (if false)
-   overwrite any original attributes in the dictim.
+   `:merge?` If false, new attributes overwrite the original.
+    If true, then if `:new-priority?` is true, new attributes have priority over
+    old when merged, otherwise old attributes have priority in the merge. 
    directives is a map of attrs to be added at the top level e.g. `{\"classes\"...}`
    If there are directives in the original dict, the new directives will be merge over them
    if merge? is true, otherwise they will be overwritten."
-  ([dict tmp] (apply-template dict tmp false))
-  ([dict {:keys [template directives]} merge?]
-   (let [attrs-fn (if (fn? template)
-                    template
-                    (if merge? (tests/test-fn-merge template) (tests/test-fn template)))
-         edit-fn (fn [form]
-                   (if (principal-elem? form)
-                     (let [new-attrs (attrs-fn form)
-                           attrs (if merge?
-                                   (deep-merge (tests/attrs form) new-attrs)
-                                    new-attrs)]
-                       (if attrs
-                         (tests/set-attrs! form attrs)
-                         form))
-                     form))
-         old-dirs (reduce merge (filter map? dict))
-         data-elements (into '() (remove map? dict))
-         new-dirs (cond
-                    (and merge? (seq? directives))
-                    (prep-directives old-dirs (reduce merge directives))
+  [dict {:keys [template directives merge? new-priority? all-matching-clauses?]
+           :or {merge? false new-priority? true all-matching-clauses? false}}]
+  (let [attrs-fn (if (fn? template)
+                   template
+                   (if all-matching-clauses? (tests/test-fn-merge template) (tests/test-fn template)))
+        edit-fn (fn [form]
+                  (if (principal-elem? form)
+                    (let [new-attrs (attrs-fn form)
+                          attrs (if merge?
+                                  (if new-priority?
+                                    (deep-merge (tests/attrs form) new-attrs)
+                                    (deep-merge new-attrs (tests/attrs form)))
+                                  new-attrs)]
+                      (if attrs
+                        (tests/set-attrs! form attrs)
+                        form))
+                    form))
+        old-dirs (reduce merge (filter map? dict))
+        data-elements (into '() (remove map? dict))
+        new-dirs (cond
+                   (and merge? (seq? directives))
+                   (prep-directives old-dirs (reduce merge directives))
 
-                    (seq? directives)         directives
+                   (seq? directives)         directives
 
-                    merge?                    (prep-directives old-dirs directives)
+                   merge?                    (prep-directives old-dirs directives)
 
-                    :else                     (prep-directives directives))
-         walked (postwalk-dictim edit-fn data-elements)]
-     (if new-dirs
-       (if (list? walked)
-         (concat new-dirs walked)
-         (concat new-dirs (list walked)))
-       walked))))
+                   :else                     (prep-directives directives))
+        walked (postwalk-dictim edit-fn data-elements)]
+    (if new-dirs
+      (if (list? walked)
+        (concat new-dirs walked)
+        (concat new-dirs (list walked)))
+      walked)))
 
 
 (defn apply-templates

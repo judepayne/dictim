@@ -71,8 +71,8 @@
 
 (def decorated-edn3
   '({:random 1}
-    {:direction :right}
-    {:classes {"lemony" {:style {:fill "'#ebe96e'", :border-radius 5}}}}
+    {:direction :right,
+     :classes {"lemony" {:style {:fill "'#ebe96e'", :border-radius 5}}}}
     ["Process View"
      ["p113"
       ["app14149" "Solar Wind" {:style {:fill "'#f7f6f5'"}}]
@@ -88,15 +88,13 @@
 
 (deftest apply-template
   (testing "I can override styles and directives to a piece of dictim"
-    (is (= (t/apply-template edn {:template template :directives dirs} false)
+    (is (= (t/apply-template edn {:template template :directives dirs})
            decorated-edn)
-        (= (t/apply-template edn {:template template2} false)
+        (= (t/apply-template edn {:template template2})
            decorated-edn2)))
   (testing "I can merge styles and directives to a piece of dictim"
-    (is (= (t/apply-template edn {:template template :directives dirs2} true)
-             decorated-edn3)
-          #_(= (t/apply-template edn {:template template2} false)
-             decorated-edn2))))
+    (is (= (t/apply-template edn {:template template :directives dirs2 :all-matching-clauses? true})
+             decorated-edn3))))
 
 
 (deftest removing-styles
@@ -109,8 +107,7 @@
   (testing "directives are preserved"
     (is (= (t/apply-template
             '({:direction :right} [:ashape "A Shape"])
-            {:template '(["=" "label" "A Shape"] {:style.fill "blue"})}
-            true)
+            {:template '(["=" "label" "A Shape"] {:style.fill "blue"}) :merge? true})
            '({:direction :right} [:ashape "A Shape" {:style.fill "blue"}])))))
 
 

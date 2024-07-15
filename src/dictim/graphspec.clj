@@ -1,7 +1,8 @@
 (ns dictim.graphspec
   (:require [dictim.graph.core :as g]
             [dictim.tests :as t]
-            [dictim.utils :refer [error]]))
+            [dictim.utils :refer [error]]
+            [dictim.template :as tm]))
 
 
 ;; *****************************************
@@ -55,7 +56,8 @@
                             :container->parent "container->parent" :node-template "node-template"
                             :edge-template "edge-template" :container->attrs "container->attrs"
                             :container-template "container-template"
-                            :container->data "container->data"}
+                            :container->data "container->data" :directives "directives"
+                            :template "template"}
                           (keys spec))
             (conj errors "The diagram spec contains unrecognized keys.")
             errors)         
@@ -131,7 +133,7 @@
                            elem)))))))
 
 
-(defn spec-fn [tests]
+(defn- spec-fn [tests]
   (fn [elem]
     (let [m ((t/test-fn tests) elem)
           m' (into {}
@@ -166,6 +168,11 @@
      :container->data a map of the container (name) to a map of data representing it.
      :node->container a key applied to each node to determine which container it is in
      :container->parent a map with containers mapped to their parent containers.
+     :directives a map of dictim directives to be added to the dictim
+     :template a default dictim template to be applied to the dictim (i.e. after
+       node-template, edge-template & container-template have been applied *during*
+       the formation of the dictim). attributes set by those templates are not
+       overridden by the application of :template
 
    This function makes no assumptions about whether the of the diagram spec are strings
    or keywords (both work). Similarly keywords and strings both work in specifying the
@@ -175,9 +182,11 @@
 
    node-template, edge-template are each sequences of
    test to a map of attrs e.g. style.fill blue in the below example...
-   `:node-template` [[\"=\" \"dept\" \"Equities\"] {\"label\" [\"This dept is %s\" \"dept\"], \"style.fill\" \"blue\"}
+   ````
+   :node-template [[\"=\" \"dept\" \"Equities\"] {\"label\" [\"This dept is %s\" \"dept\"], \"style.fill\" \"blue\"}
                     \"else\" {\"label\" [\"%s\" \"dept\"]}]
-   The test and other instructions are the same as dictim.template`.
+   ````
+   The test and other instructions are the same as dictim.template.
    For any values in the returned map that require dyanmic values to be interpolated into
    the string from the element meeting the test, e..g. `label` in the example above, use a 
    vector with the string to be interpolated into in the first position followed by keys
@@ -222,6 +231,7 @@
                                      (comp (spec-fn ct) #(get* cd %)))
                                    (constantly nil)))
         directives (get* spec :directives)
+        template (get* spec :template)
         dictim-fn-params (cond->
                              {:node->key node->key
                               :node->attrs node-fn
@@ -232,4 +242,6 @@
                              node->container (assoc :node->cluster node->container)
                              container->parent (assoc :cluster->parent container->parent))
         dictim (g/graph->dictim nodes edges dictim-fn-params)]
-    (if directives (cons directives dictim) dictim)))
+    (if template
+      (tm/apply-template dictim {:template template :directives directives :merge? true :new-priority? false})
+      (if directives (cons directives dictim) dictim))))
