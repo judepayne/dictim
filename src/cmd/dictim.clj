@@ -26,7 +26,7 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :parse :k :j :b :watch :layout :theme :d :scale :apply-tmp :graph :version :help]})))
+  (cli/format-opts (merge spec {:order [:compile :parse :k :j :b :watch :layout :theme :d :scale :apply-tmp :template :graph :version :help]})))
 
 
 (def compile-help
@@ -350,7 +350,7 @@
 
 (defn- apply-template-impl [opts in]
   (let [dict (parse-impl (assoc opts :r true) in)
-        template-file (or (:template opts) (:m opts))
+        template-file (or (:template opts) (:t opts))
         template (when template-file (second (read-data (slurp template-file))))]
     (if template
       (-> (apply-dictim-template dict template) compile-fn println)
@@ -376,7 +376,6 @@
     (fw/add-watch path f)
     (when tmp-path (fw/add-watch tmp-path f))
     @(promise)))
-
 
 
 (defn- keywordize [m]

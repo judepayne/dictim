@@ -1,3 +1,6 @@
+	# 0.8.7
+	- Fixed bug in cmd line apply-template (not watch) usage. The -t option was not being picked up
+
 	# 0.8.6
 	- changes to graphspec:
 	  - added container->data and container-template

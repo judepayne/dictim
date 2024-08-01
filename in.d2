@@ -1,0 +1,20 @@
+1STR: {
+  db1: sql server\n1.5TB
+  db2: mongo db\n5TB
+  middle-tier: java\nspring boot
+  queue: kafka
+  engine: java\nreport generation
+  gui: react
+  db1 <-> middle-tier
+  middle-tier <-> gui
+  middle-tier <-> queue
+  queue <-> engine
+  engine -> db2
+}
+ABC1 -> 1STR.db1: client ref data\nbatch\nonce
+ABC1 -> 1STR.db1: instrument ref data\nbatch\nseveral
+ABC2 -> 1STR.middle-tier: equities trade data\nstream\ncontinuous
+ABC3 -> 1STR.middle-tier: fx trades data\nstream\ncontinuous
+ABC4 -> 1STR.middle-tier: rates trade data\nstream\ncontinuous
+1STR.engine -> XYZ1: MIFID reg reports\nbatch\nseveral
+1STR.engine -> XYZ2: Other reg reports\nbatch\nseveral
