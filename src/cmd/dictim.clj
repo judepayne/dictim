@@ -349,11 +349,15 @@
 
 
 (defn- apply-template-impl [opts in]
-  (let [dict (parse-impl (assoc opts :r true) in)
+  (let [dict (parse-impl #_(assoc opts :r true) opts in)
         template-file (or (:template opts) (:t opts))
         template (when template-file (second (read-data (slurp template-file))))]
     (if template
-      (-> (apply-dictim-template dict template) compile-fn println)
+      (-> (apply-dictim-template dict
+                                 (if (:r opts)
+                                   template
+                                   (assoc template :merge? true)))
+          compile-fn println)
       (-> dict compile-fn println))))
 
 
