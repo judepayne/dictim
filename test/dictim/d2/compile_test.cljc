@@ -928,3 +928,8 @@ steps: {
     (is (thrown? Exception (c/d2 {:classes.uno.fill "red"})))
     (is (thrown? Exception (c/d2 {:classes.uno.style.filled true})))
     (is (thrown? Exception (c/d2 {:classes.uno.target-arrowhead.filled true})))))
+
+
+(deftest invalid-data-types
+  (testing "Invalid data types"
+    (is (thrown? Exception (c/d2 [:example {:key 123}])))))
