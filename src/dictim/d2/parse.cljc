@@ -173,6 +173,7 @@
     <at-sep> = break | semi
     attr = std-attr | commented-attr
     <std-attr> = (<s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs))
+    <unvalidated-std-attr> = (<s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs))
     commented-attr = <s> <hash> std-attr
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr-key = ((attr-key-part <period>)* (attr-key-last <period>)* attr-key-last) | globs

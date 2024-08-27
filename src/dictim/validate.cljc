@@ -166,7 +166,9 @@
                                       (every? valid-d2-attr? v))
                                     (err "The value of 'classes' must be a map."))
 
-            (and (map? v) (comment? k)) true ;; we don't attempt to validate commented out attrs
+            (and (map? v)
+                 (comment? k))    (binding [*non-d2-pre?* false]
+                                    (every? #(valid-d2-attr? %) v))
             
             (and (map? v)
                  (atd2/key? k))    (let [elem (peek @elem-q)]
