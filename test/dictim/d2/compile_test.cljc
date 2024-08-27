@@ -933,7 +933,7 @@ steps: {
 ;; Commented out attrs
 
 (deftest commented-out-attrs
-  (testing "commented attrs are correctly compiled and validation is skipped"
+  (testing "commented attrs are correctly compiled and validation is performed"
     (is (= (apply c/d2 '({"shape" "sequence_diagram"}
                          ["scorer" {"shape" "person"}]
                          ["scorer.t" "->" "itemResponse.t" "getItem()"]

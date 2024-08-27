@@ -1,5 +1,6 @@
 	# Unreleased
-	Changed cmd line apply-template to not remove styles by default. Use the `-r` option to remove styles ahead of template application
+	- Allow commented out attrs in both d2 compiler and parser. In both, attrs are still validated. The dictim syntax for a commented out attr is {:comment {map-of-attrs-to-be-commented-out}}
+	- Changed cmd line apply-template to not remove styles by default. Use the `-r` option to remove styles ahead of template application
 
 	# 0.8.7
 	- Fixed bug in cmd line apply-template (not watch) usage. The -t option was not being picked up
