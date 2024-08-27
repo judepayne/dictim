@@ -602,3 +602,28 @@
   (testing "key-fn and label-fn work as expected"
     (is (= (p/dictim "larry: king" :key-fn keyword :label-fn keyword)
            '([:larry :king])))))
+
+
+(deftest commented-out-attrs
+  (testing "commented out attrs can be parsed"
+    (is (= (p/dictim "shape: sequence_diagram\nscorer: {shape: person}\nscorer.t -> itemResponse.t: getItem()\nscorer.t <- itemResponse.t: item {\n  style.stroke-dash: 5\n}\nscorer.t -> item.t1: getRubric()\nscorer.t <- item.t1: rubric {\n  #style.stroke-dash: 5\n  style.underline: true\n  #style.italic: false\n}\nscorer.t -> essayRubric.t: applyTo(essayResp)\nitemResponse -> essayRubric.t.c\nessayRubric.t.c -> concept.t: match(essayResponse)\nscorer <- essayRubric.t: score {\n  style.stroke-dash: 5\n}\nscorer.t -> itemOutcome.t1: new\nscorer.t -> item.t2: getNormalMinimum()\nscorer.t -> item.t3: getNormalMaximum()\nscorer.t -> itemOutcome.t2: setScore(score)\nscorer.t -> itemOutcome.t3: setFeedback(missingConcepts)\n")
+           '({"shape" "sequence_diagram"}
+             ["scorer" {"shape" "person"}]
+             ["scorer.t" "->" "itemResponse.t" "getItem()"]
+             ["scorer.t" "<-" "itemResponse.t" "item" {"style.stroke-dash" 5}]
+             ["scorer.t" "->" "item.t1" "getRubric()"]
+             ["scorer.t"
+              "<-"
+              "item.t1"
+              "rubric"
+              {:comment {"style.italic" false, "style.stroke-dash" 5},
+               "style.underline" true}]
+             ["scorer.t" "->" "essayRubric.t" "applyTo(essayResp)"]
+             ["itemResponse" "->" "essayRubric.t.c"]
+             ["essayRubric.t.c" "->" "concept.t" "match(essayResponse)"]
+             ["scorer" "<-" "essayRubric.t" "score" {"style.stroke-dash" 5}]
+             ["scorer.t" "->" "itemOutcome.t1" "new"]
+             ["scorer.t" "->" "item.t2" "getNormalMinimum()"]
+             ["scorer.t" "->" "item.t3" "getNormalMaximum()"]
+             ["scorer.t" "->" "itemOutcome.t2" "setScore(score)"]
+             ["scorer.t" "->" "itemOutcome.t3" "setFeedback(missingConcepts)"])))))

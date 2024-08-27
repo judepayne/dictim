@@ -5,12 +5,14 @@
             [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type convert-key list?]]
             [dictim.validate :refer [all-valid?]]
             [clojure.string :as str])
-  (:refer-clojure :exclude [list?]))
+  (:refer-clojure :exclude [list? hash]))
 
 
 (def ^:private colon ": ")
 
 (def ^:private spc " ")
+
+(def ^:private hash "#")
 
 
 ;; sep the separator between elements
@@ -74,8 +76,9 @@
 
 (defn- attrs
   "layout the map of attrs. m may be nested."
-  ([m] (attrs m true))
-  ([m brackets?]
+  ([m] (attrs m true false))
+  ([m brackets?] (attrs m brackets? false))
+  ([m brackets? commented?]
    (let [m (remove-empty-maps m)
          inline? (inlineable-attr? m)]
      (apply str
@@ -86,10 +89,12 @@
                       (cond
                         (and (map? v) (empty? v)) nil
                         (nil? v)   (str (format-key k) colon "null")
-                        inline?    (inline-attr k v)
+                        inline?    (str (when commented? hash) (inline-attr k v))
+                        (and (map? v) (or (= :comment k) (= "comment" k))) (attrs v brackets? true)
                         (map? v)   (str (format-key k) colon (attrs v))
-                        (list? v)  (str (format-key k) colon (binding [inner-list? true] (layout v)))
-                        :else      (str (format-key k) colon (de-keyword v))))
+                        (list? v)  (str (when commented? hash)
+                                        (format-key k) colon (binding [inner-list? true] (layout v)))
+                        :else      (str (when commented? hash) (format-key k) colon (de-keyword v))))
                     (remove nil?)
                     (interpose sep)))
             (if brackets? (str (when-not inline? "\n") "}") "\n")))))

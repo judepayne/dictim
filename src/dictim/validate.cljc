@@ -40,6 +40,10 @@
   (= "classes" (convert-key k)))
 
 
+(defn- comment? [k]
+  (= "comment" (convert-key k)))
+
+
 (defn- err [msg]
   (throw (error msg)))
 
@@ -162,12 +166,14 @@
                                       (every? valid-d2-attr? v))
                                     (err "The value of 'classes' must be a map."))
 
+            (and (map? v) (comment? k)) true ;; we don't attempt to validate commented out attrs
+            
             (and (map? v)
-             (atd2/key? k))    (let [elem (peek @elem-q)]
-                                    (when (atd2/in-context? k ctx elem)
-                                      (and (atd2/validate-attrs elem k (keys v))
-                                           (binding [*non-d2-pre?* false]
-                                             (every? #(valid-d2-attr? % (conj ctx k)) v)))))
+                 (atd2/key? k))    (let [elem (peek @elem-q)]
+                                     (when (atd2/in-context? k ctx elem)
+                                       (and (atd2/validate-attrs elem k (keys v))
+                                            (binding [*non-d2-pre?* false]
+                                              (every? #(valid-d2-attr? % (conj ctx k)) v)))))
             
             (atd2/key? k)      (let [elem (peek @elem-q)]
                                     (when (atd2/in-context? k ctx elem)

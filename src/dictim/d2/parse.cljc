@@ -171,8 +171,9 @@
 
     (* attrs *)
     <at-sep> = break | semi
-    attr = std-attr
+    attr = std-attr | commented-attr
     <std-attr> = (<s> attr-key <s> <colon> <s> (attr-val | attr-label? attrs))
+    commented-attr = <s> <hash> std-attr
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr-key = ((attr-key-part <period>)* (attr-key-last <period>)* attr-key-last) | globs
     attr-key-part = &glob " (insta-reg attr-key-bans :banned-words ["vars-lit"]) "
@@ -253,6 +254,22 @@
      x#))
 
 
+(defn- annotate
+  "Takes a key and a sequence of single-entry maps and returns a map of
+   {match-key sub-map-of-entries-that-match, other entries}"
+  [match-key ms]
+  (let [[dos donts] (reduce (fn [[matches doesnt-match] m]
+                              (if (= (key (first m)) match-key)
+                                [(conj matches (val (first m))) doesnt-match]
+                                [matches (conj doesnt-match m)]))
+                            [nil nil]
+                            ms)]
+    (merge (if dos
+             {match-key (into {} dos)}
+             nil)
+           (into {} donts))))
+
+
 (defn dictim
   "Converts a d2 string to its dictim representation.
    Each dictim element returned's type is captured in the :tag key
@@ -326,7 +343,7 @@
            :classes-lit identity
            :label (fn [& parts] (if (and (= 1 (count parts))
                                          (nil? (first parts)))
-                                  nil  ;; the null label
+                                  nil ;; the null label
                                   (label-fn (str/join parts))))
            :ts-open identity
            :ts-close identity
@@ -348,14 +365,16 @@
            :el (constantly :el)
            :break (fn [& els] [:empty-lines (dec (count els))])
            :attr-label identity
+           :commented-attr (fn [k v] [k v])
            :attr (fn
+                   ([[k v]] {:comment {k v}}) ;; single arity added for commented out attrs
                    ([k v] (with-tag {k v} :attrs))
                    ([k lbl m] ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
            :glob identity
            :globs (fn [& gs] (str/join gs))
            :amp identity
-           :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
+           :attrs (fn [& attrs] (with-tag (annotate :comment attrs) :attrs))
            :ctr
            (fn [& parts]
              (let [parts (process-empty-lines parts)
@@ -368,7 +387,7 @@
                        attrs (apply merge ms)]
                    (with-tag (if attrs (conj (into [] kl) attrs) (into [] kl)) tag))
                  (with-tag (vec parts) tag))))
-            :elements (fn [& elems] (process-empty-lines elems))}
+           :elements (fn [& elems] (process-empty-lines elems))}
 
           p-tree))
        p-trees))))

@@ -928,3 +928,30 @@ steps: {
     (is (thrown? Exception (c/d2 {:classes.uno.fill "red"})))
     (is (thrown? Exception (c/d2 {:classes.uno.style.filled true})))
     (is (thrown? Exception (c/d2 {:classes.uno.target-arrowhead.filled true})))))
+
+
+;; Commented out attrs
+
+(deftest commented-out-attrs
+  (testing "commented attrs are correctly compiled and validation is skipped"
+    (is (= (apply c/d2 '({"shape" "sequence_diagram"}
+                         ["scorer" {"shape" "person"}]
+                         ["scorer.t" "->" "itemResponse.t" "getItem()"]
+                         ["scorer.t" "<-" "itemResponse.t" "item" {"style.stroke-dash" 5}]
+                         ["scorer.t" "->" "item.t1" "getRubric()"]
+                         ["scorer.t"
+                          "<-"
+                          "item.t1"
+                          "rubric"
+                          {:comment {"style.italic" false, "style.stroke-dash" 5},
+                           "style.underline" true}]
+                         ["scorer.t" "->" "essayRubric.t" "applyTo(essayResp)"]
+                         ["itemResponse" "->" "essayRubric.t.c"]
+                         ["essayRubric.t.c" "->" "concept.t" "match(essayResponse)"]
+                         ["scorer" "<-" "essayRubric.t" "score" {"style.stroke-dash" 5}]
+                         ["scorer.t" "->" "itemOutcome.t1" "new"]
+                         ["scorer.t" "->" "item.t2" "getNormalMinimum()"]
+                         ["scorer.t" "->" "item.t3" "getNormalMaximum()"]
+                         ["scorer.t" "->" "itemOutcome.t2" "setScore(score)"]
+                         ["scorer.t" "->" "itemOutcome.t3" "setFeedback(missingConcepts)"]))
+           "shape: sequence_diagram\nscorer: {shape: person}\nscorer.t -> itemResponse.t: getItem()\nscorer.t <- itemResponse.t: item {style.stroke-dash: 5}\nscorer.t -> item.t1: getRubric()\nscorer.t <- item.t1: rubric {\n  {\n    #style.italic: false\n    #style.stroke-dash: 5\n  }\n  style.underline: true\n}\nscorer.t -> essayRubric.t: applyTo(essayResp)\nitemResponse -> essayRubric.t.c\nessayRubric.t.c -> concept.t: match(essayResponse)\nscorer <- essayRubric.t: score {style.stroke-dash: 5}\nscorer.t -> itemOutcome.t1: new\nscorer.t -> item.t2: getNormalMinimum()\nscorer.t -> item.t3: getNormalMaximum()\nscorer.t -> itemOutcome.t2: setScore(score)\nscorer.t -> itemOutcome.t3: setFeedback(missingConcepts)"))))

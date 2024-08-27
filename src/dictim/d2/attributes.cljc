@@ -61,7 +61,10 @@
 
 
 (def d2-attributes-map
-  {"*" {:context star-ctx :validate-fn (constantly true)}
+  {;; not a d2 attr. Added to support commented out attrs
+   "comment" {:context top-level-ctx :validate-fn (fn [x] (map? x))}
+   
+   "*" {:context star-ctx :validate-fn (constantly true)}
    "**" {:context star-ctx :validate-fn (constantly true)}
    "shape" {:context top-level-ctx :validate-fn (fn [v] (contains? shapes (dekey v)))}
    "label" {:context top-level-ctx :validate-fn (fn [v] (kstr? v))}
