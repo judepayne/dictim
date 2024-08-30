@@ -7,6 +7,10 @@
             [dictim.d2.attributes :as at]
             [dictim.utils :refer [error try-parse-primitive]]))
 
+;; Define a function to normalize line endings
+(defn normalize-line-endings [s]
+  (str/replace s #"\r\n" "\n"))
+
 ;; d2 parser v2
 
 ;; This rewrite of the parser focuses on good future extensibility. To support that;
@@ -286,7 +290,8 @@
               label-fn str/trim
               flatten-lists? false
               retain-empty-lines? false}}]
-  (let [p-trees (parse-d2 d2)
+  (let [normalized-d2 (normalize-line-endings d2) ;; Normalize line endings
+        p-trees (parse-d2 normalized-d2)
         key-fn (comp key-fn str/trim)
         with-tag (fn [obj tag] (with-meta obj {:tag tag}))
         process-empty-lines (fn [parts]
@@ -303,6 +308,7 @@
 
                                    :else                              false))
                                parts))]
+
     (if (insta/failure? p-trees)
       (throw (error (str "Could not parse: " (:text p-trees))))
       (mapcat
