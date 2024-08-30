@@ -41,7 +41,7 @@
    "hyphen" {:reg "\\-" :hide? true :lit "-"}
    "l-arrow" {:reg "<" :hide? true}
    "r-arrow" {:reg ">" :hide? true}
-   "line-return" {:reg "\\n" :not-lit? true}
+   "line-return" {:reg "\\r\\n" :not-lit? true}
    "pipe" {:reg "|" :hide? false}
    "dollar" {:reg "$" :not-lit? true}
    "sq-bracketo" {:reg "\\[" :not-lit? true :lit "["}
@@ -189,7 +189,7 @@
     label = lbl | block | typescript
     <lbl> = (<s> null <s>) | normal-label | substitution
     <normal-label> = !null " (insta-reg label-bans) "
-    <substitution> =  <s> #'^(?!^\\s*$)([^;${\n]*\\$\\{[^}]+\\})+[^{}\\n;|]*'
+    <substitution> =  <s> #'^(?!^\\s*$)([^;${\r\n]*\\$\\{[^}]+\\})+[^{}\\r\\n;|]*'
     block = <s> pipe #'[^|]+' pipe <s>
     typescript = <s> ts-open #'[\\s\\S]+?(?=\\|\\|\\||`\\|)' ts-close <s>
 
@@ -198,7 +198,7 @@
     conn-key = (conn-key-part <period>)* conn-key-part
     conn-key-part = !d2-keyword " (insta-reg conn-key-bans :banned-words dirs) " (* greedy regex *)
     dir = <contd?> <s> direction
-    contd = #'--\\\\\n'
+    contd = #'--\\\\\n' | #'--\\\\\r\\n'
     <direction> = '--' | '->' | '<-' | '<->'
 
     (* conn-refs - a special type of connection *)
