@@ -8,7 +8,7 @@
             [dictim.utils :refer [error try-parse-primitive]]))
 
 ;; Define a function to normalize line endings
-(defn normalize-line-endings [s]
+(defn- normalize-line-endings [s]
   (str/replace s #"\r\n" "\n"))
 
 ;; d2 parser v2
