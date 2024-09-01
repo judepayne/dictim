@@ -13,10 +13,6 @@
 (def num-parses #'p/num-parses)
 
 
-(defn- normalize-line-endings [s]
-  (clojure.string/replace s #"\r\n" "\n"))
-
-
 (deftest shapes
   (testing "Shapes"
     (let [d2 (slurp "test/dictim/d2/samples/shapes.d2")
@@ -251,7 +247,7 @@
 
 (deftest textandcode
   (testing "Text and Code"
-    (let [d2 (normalize-line-endings (slurp "test/dictim/d2/samples/textandcode.d2"))
+    (let [d2 (slurp "test/dictim/d2/samples/textandcode.d2")
           dict (p/dictim d2)]
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict :d2)))
