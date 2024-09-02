@@ -154,6 +154,8 @@
 
 
 (defn- handle-in [arg]
+  (println "arg>> " arg)
+  (println "*in*>> " *in*)
   (cond
     (fs/exists? arg)  (slurp arg)
 
