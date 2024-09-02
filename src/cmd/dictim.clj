@@ -155,9 +155,11 @@
 
 (defn- handle-in [arg]
   (cond
-     (true? arg)      (slurp *in*)
+    (fs/exists? arg)  (slurp arg)
 
-    :else arg))
+    (string? arg)     arg
+
+    :else (slurp *in*)))
 
 
 (defn- read-data [data]
