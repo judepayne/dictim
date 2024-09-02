@@ -35,7 +35,7 @@ build_script:
 - cmd: >-
     call script/compile.bat
 
-    clj -X:test
+    clojure -X:test
 
     bb win-cmd-test
 
