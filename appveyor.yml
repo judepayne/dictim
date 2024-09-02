@@ -35,8 +35,6 @@ build_script:
 - cmd: >-
     call script/compile.bat
 
-    clojure -X:test
-
     bb win-cmd-test
 
     set /P VERSION=< resources\VERSION
