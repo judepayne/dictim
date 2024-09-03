@@ -154,14 +154,10 @@
 
 
 (defn- handle-in [arg]
-  (println "arg>> " arg)
-  (println "*in*>> " *in*)
   (cond
-    (fs/exists? arg)  (slurp arg)
-
-    (string? arg)     arg
-
-    :else (slurp *in*)))
+     (true? arg)      (slurp *in*)
+     
+     :else arg))
 
 
 (defn- read-data [data]
