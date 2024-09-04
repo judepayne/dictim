@@ -155,9 +155,9 @@
 
 (defn- handle-in [arg]
   (cond
-     (true? arg)      (slurp *in*)
+    (true? arg)      (slurp *in*)
      
-     :else arg))
+    :else arg))
 
 
 (defn- read-data [data]
