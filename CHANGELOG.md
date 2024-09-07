@@ -1,4 +1,4 @@
-	# Unreleased
+	# 0.8.8
 	- Fixed #14. See `lists` in wiki
 	- Changed how comments are represented. See wiki
 	- add wiki section on command line Windows string handling
