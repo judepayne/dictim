@@ -23,7 +23,7 @@
    ["conv1"
     "Office conversation 1"
     {"shape" "sequence_diagram"}
-    [:comment "This is a comment"]
+    "#This is a comment"
     [:list ["bob"] ["alice"]]
     ["alice" "Alice" {"shape" "person", "style" {"fill" "orange"}}]
     ["bob.\"In the eyes of my (dog), I'm a man.\""]
@@ -101,7 +101,7 @@
      {:label "Office conversation 1",
       :attrs {"shape" "sequence_diagram"}},
      :parent "convs"}
-    {:type :cmt, :key "This is a comment", :meta nil, :parent "conv1"}
+    {:type :cmt, :key "#This is a comment", :meta nil, :parent "conv1"}
     {:type :list, :key ("bob" "alice"), :meta nil, :parent "conv1"}
     {:type :shape,
      :key "bob",

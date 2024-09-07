@@ -2,7 +2,8 @@
       :doc "Namespace for compiling dictim to d2"}
     dictim.d2.compile
   (:require [dictim.format :as f]
-            [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type convert-key list?]]
+            [dictim.utils :as utils :refer [kstr? direction? take-til-last elem-type convert-key list?
+                                            commented-attr? cmt?]]
             [dictim.validate :refer [all-valid?]]
             [clojure.string :as str])
   (:refer-clojure :exclude [list? hash]))
@@ -76,25 +77,23 @@
 
 (defn- attrs
   "layout the map of attrs. m may be nested."
-  ([m] (attrs m true false))
-  ([m brackets?] (attrs m brackets? false))
-  ([m brackets? commented?]
+  ([m] (attrs m true))
+  ([m brackets?]
    (let [m (remove-empty-maps m)
          inline? (inlineable-attr? m)]
-     (apply str
+      (apply str
             (when brackets? (str "{" (when-not inline? "\n")))
             (apply str
                    (->>
                     (for [[k v] m]
                       (cond
+                        (commented-attr? [k v]) (str k colon v)
                         (and (map? v) (empty? v)) nil
                         (nil? v)   (str (format-key k) colon "null")
-                        inline?    (str (when commented? hash) (inline-attr k v))
-                        (and (map? v) (or (= :comment k) (= "comment" k))) (attrs v brackets? true)
+                        inline?    (inline-attr k v)
                         (map? v)   (str (format-key k) colon (attrs v))
-                        (list? v)  (str (when commented? hash)
-                                        (format-key k) colon (binding [inner-list? true] (layout v)))
-                        :else      (str (when commented? hash) (format-key k) colon (de-keyword v))))
+                        (list? v)  (str (format-key k) colon (binding [inner-list? true] (layout v)))
+                        :else      (str (format-key k) colon (de-keyword v))))
                     (remove nil?)
                     (interpose sep)))
             (if brackets? (str (when-not inline? "\n") "}") "\n")))))
@@ -167,7 +166,7 @@
 
 
 (defmethod layout :cmt [el]
-  (str "# " (second el) sep))
+  (str el sep))
 
 
 (defmethod layout :list [li]
@@ -192,7 +191,8 @@
                (fn [i]
                  (cond
                    (map? i)      (attrs i false)
-                   (vector? i)   (layout i)))
+                   (vector? i)   (layout i)
+                   (cmt? i)      (layout i)))
                opts))
        (str "}" sep)))
 

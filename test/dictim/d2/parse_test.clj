@@ -3,7 +3,8 @@
             [dictim.d2.parse :as p]
             [dictim.validate :as v]
             [instaparse.core :as insta]
-            [dictim.d2.compile :as c]))
+            [dictim.d2.compile :as c]
+            [dictim.utils :refer [prn-repl]]))
 
 ;; parsing
 
@@ -24,8 +25,8 @@
 	       ["im_a_shape"]
 	       ["im a shape"]
 	       ["i'm a shape"]
-	       [:comment "notice that one-hyphen is not a connection"]
-	       [:comment "whereas, `a--shape` would be a connection"]
+	       "# notice that one-hyphen is not a connection"
+	       "# whereas, `a--shape` would be a connection"
 	       ["a-shape"]
 	       [:list ["SQLite"] ["Cassandra"]]
 	       ["pg" "PostgreSQL"]
@@ -41,11 +42,11 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["server"]
-	       [:comment "Declares a shape inside of another shape"]
+	       "# Declares a shape inside of another shape"
 	       ["server.process"]
-	       [:comment "Can declare the container and child in same line"]
+	       "# Can declare the container and child in same line"
 	       ["im a parent.im a child"]
-	       [:comment "Since connections can also declare keys, this works too"]
+	       "# Since connections can also declare keys, this works too"
 	       ["apartment.Bedroom.Bathroom"
 	        "->"
 	        "office.Spare Room.Bathroom"
@@ -82,9 +83,9 @@
                ["Read Replica 1" "--" "Read Replica 2" "Kept in sync"]
                ["be" "Backend"]
                ["fe" "Frontend"]
-               [:comment "This would create new shapes"]
+               "# This would create new shapes"
                ["Backend" "->" "Frontend"]
-               [:comment "This would define a connection over existing labels"]
+               "# This would define a connection over existing labels"
                ["be" "->" "fe"]
                ["Write Replica Canada" "<->" "Write Replica Australia"]
                ["Read Replica" "<-" "Master"]
@@ -217,11 +218,10 @@
                 "alice"
                 "The ability to play bridge or\\ngolf as if they were games."]
                {"shape" "sequence_diagram"}
-               [:comment
-                "Remember that semicolons allow multiple objects to be defined in one line"]
-               [:comment "Actors will appear from left-to-right as a, b, c, d..."]
+               "# Remember that semicolons allow multiple objects to be defined in one line"
+               "# Actors will appear from left-to-right as a, b, c, d..."
                [:list ["a"] ["b"] ["c"] ["d"]]
-               [:comment "... even if the connections are in a different order"]
+               "# ... even if the connections are in a different order"
                ["c" "->" "d"]
                ["d" "->" "a"]
                ["b" "->" "d"]))))))
@@ -294,14 +294,13 @@
                 ["method(a uint64)" "(x, y int)"]]
                ["D2 Parser"
                 {"shape" "class"}
-                [:comment "Default visibility is + so no need to specify."]
+                "# Default visibility is + so no need to specify."
                 ["+reader" "io.RuneReader"]
                 ["readerPos" "d2ast.Position"]
-                [:comment "Private field."]
+                "# Private field."
                 ["-lookahead" "\"[]rune\""]
-                [:comment "Protected field."]
-                [:comment
-                 "We have to escape the # to prevent the line from being parsed as a comment."]
+                "# Protected field."
+                "# We have to escape the # to prevent the line from being parsed as a comment."
                 ["\\#lookaheadPos" "d2ast.Position"]
                 ["+peek()" "(r rune, eof bool)"]
                 ["rewind()"]
@@ -616,8 +615,7 @@
               "<-"
               "item.t1"
               "rubric"
-              {:comment {"style.italic" false, "style.stroke-dash" 5},
-               "style.underline" true}]
+              {"#style.italic" "false", "#style.stroke-dash" "5", "style.underline" true}]
              ["scorer.t" "->" "essayRubric.t" "applyTo(essayResp)"]
              ["itemResponse" "->" "essayRubric.t.c"]
              ["essayRubric.t.c" "->" "concept.t" "match(essayResponse)"]
@@ -627,3 +625,17 @@
              ["scorer.t" "->" "item.t3" "getNormalMaximum()"]
              ["scorer.t" "->" "itemOutcome.t2" "setScore(score)"]
              ["scorer.t" "->" "itemOutcome.t3" "setFeedback(missingConcepts)"])))))
+
+
+(deftest on-one-line
+  (testing "attrs all on one line can be parsed"
+    (is (= (p/dictim "a: the shape A {style.fill: red; style.border-radius: 10}")
+           '(["a" "the shape A" {"style.fill" "red", "style.border-radius" 10}]))))
+  (testing "a ctr all on one line can be parsed"
+    (is (= (p/dictim "a: the shape A {style.fill: red; style.border-radius: 10; b_shape; # a comment}")
+           '(["a"
+              "the shape A"
+              {"style.fill" "red"}
+              {"style.border-radius" 10}
+              ["b_shape"]
+              "# a comment"])))))

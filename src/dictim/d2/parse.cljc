@@ -5,7 +5,7 @@
             #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
             [dictim.d2.attributes :as at]
-            [dictim.utils :refer [error try-parse-primitive]]))
+            [dictim.utils :refer [error try-parse-primitive cmt?]]))
 
 ;; Define a function to normalize line endings
 (defn- normalize-line-endings [s]
@@ -144,14 +144,14 @@
    "(* high level structure *)
     <D2> = elements
     elements = break* (element break)* element? | break* | element
-    <contained> = (element break)* element? | break* | element
+    <contained> = (element (break|<semi>))* element? | (break|<semi>)* | element
     <element> = list | elem
 
     <elem> = classes | vars | ctr | attr | comment | conn | conn-ref
 
     (* lists and comments *)
-    list = (elem <semi>+)+ elem <semi>*
-    comment = <s> <hash> lbl
+    list = (ctr <semi>+)+ ctr <semi>*
+    comment = <s> hash lbl
 
     (* containers - including shapes *)
     ctr = (<s> ctr-key colon-label? (<curlyo> <break?> contained <s> <curlyc>)?) | composite-ctr
@@ -258,22 +258,6 @@
      x#))
 
 
-(defn- annotate
-  "Takes a key and a sequence of single-entry maps and returns a map of
-   {match-key sub-map-of-entries-that-match, other entries}"
-  [match-key ms]
-  (let [[dos donts] (reduce (fn [[matches doesnt-match] m]
-                              (if (= (key (first m)) match-key)
-                                [(conj matches (val (first m))) doesnt-match]
-                                [matches (conj doesnt-match m)]))
-                            [nil nil]
-                            ms)]
-    (merge (if dos
-             {match-key (into {} dos)}
-             nil)
-           (into {} donts))))
-
-
 (defn dictim
   "Converts a d2 string to its dictim representation.
    Each dictim element returned's type is captured in the :tag key
@@ -356,7 +340,7 @@
            :typescript (fn [& parts] (str/join parts))
            :pipe identity
            :block (fn [& parts] (str/join parts))
-           :comment (fn [c] (with-tag [:comment (str/triml c)] :comment))
+           :comment (fn [& parts] (apply str parts))
            :list (fn [& elems]
                    (let [elems'
                          (if (and flatten-lists?
@@ -373,20 +357,21 @@
            :attr-label identity
            :commented-attr (fn [k v] [k v])
            :attr (fn
-                   ([[k v]] {:comment {k v}}) ;; single arity added for commented out attrs
+                   ([[k v]] ;; single arity added for commented out attrs
+                    (with-tag {(str "#" k) (str v)} :attrs)) 
                    ([k v] (with-tag {k v} :attrs))
                    ([k lbl m] ;; in-attr-label
                     (with-tag {k (assoc m (key-fn "label") (str/trim lbl))} :attrs)))
            :glob identity
            :globs (fn [& gs] (str/join gs))
            :amp identity
-           :attrs (fn [& attrs] (with-tag (annotate :comment attrs) :attrs))
+           :attrs (fn [& attrs] (with-tag (into {} attrs) :attrs))
            :ctr
            (fn [& parts]
              (let [parts (process-empty-lines parts)
                    tag (cond
                          (str/includes? (first parts) ".")    :ctr
-                         (every? (complement vector?) parts)  :shape
+                         (every? (complement #(or (vector? %) (cmt? %))) parts)  :shape
                          :else :ctr)]
                (if (= :shape tag)
                  (let [[kl ms] (split-with (complement map?) parts)

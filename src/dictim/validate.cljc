@@ -4,8 +4,9 @@
   (:require [clojure.string :as str]
             [dictim.d2.attributes :as atd2]
             [dictim.utils :as utils
-             :refer [kstr? direction? take-til-last elem-type error list?
-                     unquoted-period-or-ampersand single-quoted no-asterisk convert-key]])
+             :refer [kstr? direction? take-til-last elem-type error list? commented-attr?
+                     unquoted-period-or-ampersand single-quoted no-asterisk convert-key ctr?
+                     shape? quikshape?]])
   (:refer-clojure :exclude [list?])
   #?(:cljs (:require-macros [dictim.validate :refer [check]])))
 
@@ -38,10 +39,6 @@
 
 (defn- classes? [k]
   (= "classes" (convert-key k)))
-
-
-(defn- comment? [k]
-  (= "comment" (convert-key k)))
 
 
 (defn- err [msg]
@@ -100,7 +97,8 @@
 
 ;; the defmethods are defined by the 'check' macro in dictim.macros
 (check :list li
-       (and (or (every? valid? (rest li))
+  (and (or (and (every? #(or (ctr? %) (shape? %) (quikshape? %)) (rest li))
+                (every? valid? (rest li)))
                 (every? kstr? (rest li)))
              (every? (complement list?) (rest li))))
 
@@ -157,6 +155,8 @@
    (let [[k v] (restruc-attr [k v])]
      (and (kstr? k)
           (cond
+            (commented-attr? [k v]) true ;; commented out attrs are not validated
+            
             (list? v)             (valid? v)
 
             (vars? k)             true ;; no further validation necessary
@@ -165,21 +165,17 @@
                                     (binding [*non-d2-pre?* true]
                                       (every? valid-d2-attr? v))
                                     (err "The value of 'classes' must be a map."))
-
-            (and (map? v)
-                 (comment? k))    (binding [*non-d2-pre?* false]
-                                    (every? #(valid-d2-attr? %) v))
             
             (and (map? v)
                  (atd2/key? k))    (let [elem (peek @elem-q)]
-                                     (when (atd2/in-context? k ctx elem)
-                                       (and (atd2/validate-attrs elem k (keys v))
-                                            (binding [*non-d2-pre?* false]
-                                              (every? #(valid-d2-attr? % (conj ctx k)) v)))))
+                 (when (atd2/in-context? k ctx elem)
+                   (and (atd2/validate-attrs elem k (keys v))
+                        (binding [*non-d2-pre?* false]
+                          (every? #(valid-d2-attr? % (conj ctx k)) v)))))
             
             (atd2/key? k)      (let [elem (peek @elem-q)]
-                                    (when (atd2/in-context? k ctx elem)
-                                      (atd2/validate-attr elem k v)))
+                                 (when (atd2/in-context? k ctx elem)
+                                   (atd2/validate-attr elem k v)))
 
             (and *non-d2-pre?*
                  (map? v))        (every? valid-d2-attr? v)
@@ -262,10 +258,7 @@
              (valid? attr))))
 
 
-(check :cmt cmt
-       (and (= 2 (count cmt))
-            (or (= :comment (first cmt)) (= "comment" (first cmt)))
-            (string? (second cmt))))
+(check :cmt cmt true) ;; no need to validate as utils/elem-type recognition is the validation
 
 
 (check :ctr elem

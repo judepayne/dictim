@@ -3,7 +3,7 @@
       :doc "Namespace for flattening and (re)building dictim."}
     dictim.flat
   (:require [dictim.utils :refer [kstr? direction? take-til-last elem-type error
-                                  ctr? list?]])
+                                  ctr? list? cmt?]])
   (:refer-clojure :exclude [list?]))
 
 ;; This namespace provide functions for taking (nested) dictim elements and flattening
@@ -66,7 +66,7 @@
   ([e] (elem-key e (elem-type e)))
   ([e elem-type]
    (case elem-type
-     :cmt (second e)
+     :cmt e
      :attrs e
      :shape (if (vector? e) (first e) e)  ;; allow for 'quick shape'
      :ctr (first e)
@@ -102,7 +102,7 @@
 (defn- children
   [e]
   (case (elem-type e)
-    :ctr     (filter vector? e)
+    :ctr     (filter #(or (vector? %) (cmt? %)) e)
     :list    (rest e)))        ;; allow for 'quick shape'
 
 
@@ -141,7 +141,7 @@
   [m]
   (case (:type m)
     :shape    (rnil [(:key m) (-> m :meta :label) (-> m :meta :attrs)])
-    :cmt      [:comment (:key m)]
+    :cmt      (:key m)
     :attrs    (:key m)
     :conn     (rnil (conj (:key m) (-> m :meta :label) (-> m :meta :attrs)))
     :ctr      (rnil [(:key m) (-> m :meta :label) (-> m :meta :attrs)])

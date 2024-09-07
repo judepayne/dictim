@@ -56,7 +56,7 @@
     ["conv1"
      "Office conversation 1"
      {"shape" "sequence_diagram"}
-     [:comment "This is a comment"]
+     "# This is a comment"
      [:list "bob" "alice"]
      ["alice" "Alice" {"shape" "person", "style" {"fill" "orange"}}]
      ["bob.\"In the eyes of my (dog), I'm a man.\""]
@@ -83,57 +83,7 @@
 
 
 (def ex-sequence-d2
-"various: demonstrate various things {
-  block: Block Text - e.g. Markdown {
-    a: |md ## A header |
-    b: |md ### a smaller header | {shape: cloud}
-    c: |md *some italic text* |
-    a -- b -> c
-  }
-  class: Class diagram {
-    shape: class
-    \\#reader: io.RuneReader
-    method(a unint64): (x, y, int)
-    -lookahead: '[]rune'
-  }
-  convs: Office Conversations {
-    conv1: Office conversation 1 {
-      shape: sequence_diagram
-      # This is a comment
-      bob; alice
-      alice: Alice {
-        shape: person
-        style: {fill: orange}
-      }
-      bob.\"In the eyes of my (dog), I'm a man.\"
-      awkward small talk: {
-        alice -> bob: um, hi
-        bob -> alice: oh, hello
-        icebreaker attempt: {
-          alice -> bob: what did you have for lunch?
-        }
-        fail: {
-          style.fill: green
-          bob -> alice: that's personal
-        }
-      }
-    }
-    conv2: Office conversation 2 {
-      shape: sequence_diagram
-      simon; trev
-      simon: Simon {shape: person}
-      trev: Trevor
-      failed conversation: {
-        simon -> trev: seen the football
-        trev -> simon: no, I was at my gran's
-        Carry on anyway: {
-          simon -> trev: mate, you missed a classic
-        }
-      }
-    }
-    conv1 -> conv2: spot the difference?
-  }
-}")
+  "various: demonstrate various things {\n  block: Block Text - e.g. Markdown {\n    a: |md ## A header |\n    b: |md ### a smaller header | {shape: cloud}\n    c: |md *some italic text* |\n    a -- b -> c\n  }\n  class: Class diagram {\n    shape: class\n    \\#reader: io.RuneReader\n    method(a unint64): (x, y, int)\n    -lookahead: '[]rune'\n  }\n  convs: Office Conversations {\n    conv1: Office conversation 1 {\n      shape: sequence_diagram\n      # This is a comment\n      bob; alice\n      alice: Alice {\n        shape: person\n        style: {fill: orange}\n      }\n      bob.\"In the eyes of my (dog), I'm a man.\"\n      awkward small talk: {\n        alice -> bob: um, hi\n        bob -> alice: oh, hello\n        icebreaker attempt: {\n          alice -> bob: what did you have for lunch?\n        }\n        fail: {\n          style.fill: green\n          bob -> alice: that's personal\n        }\n      }\n    }\n    conv2: Office conversation 2 {\n      shape: sequence_diagram\n      simon; trev\n      simon: Simon {shape: person}\n      trev: Trevor\n      failed conversation: {\n        simon -> trev: seen the football\n        trev -> simon: no, I was at my gran's\n        Carry on anyway: {\n          simon -> trev: mate, you missed a classic\n        }\n      }\n    }\n    conv1 -> conv2: spot the difference?\n  }\n}")
 
 
 (deftest complex-compilation
@@ -530,12 +480,6 @@ steps: {
   (testing "imports can be compiled"
     (is (= (c/d2 ["a" "@x.d2"])
            "a: @x.d2"))))
-
-
-(deftest comment-str
-  (testing "The 'comment' marker can be a string"
-    (is (= (c/d2 ["comment" "This is a comment"])
-           "# This is a comment"))))
 
 
 (deftest empty-lines-str
@@ -943,7 +887,8 @@ steps: {
                           "<-"
                           "item.t1"
                           "rubric"
-                          {:comment {"style.italic" false, "style.stroke-dash" 5},
+                          {"#style.italic" false,
+                           "#style.stroke-dash" 5,
                            "style.underline" true}]
                          ["scorer.t" "->" "essayRubric.t" "applyTo(essayResp)"]
                          ["itemResponse" "->" "essayRubric.t.c"]
@@ -954,4 +899,4 @@ steps: {
                          ["scorer.t" "->" "item.t3" "getNormalMaximum()"]
                          ["scorer.t" "->" "itemOutcome.t2" "setScore(score)"]
                          ["scorer.t" "->" "itemOutcome.t3" "setFeedback(missingConcepts)"]))
-           "shape: sequence_diagram\nscorer: {shape: person}\nscorer.t -> itemResponse.t: getItem()\nscorer.t <- itemResponse.t: item {style.stroke-dash: 5}\nscorer.t -> item.t1: getRubric()\nscorer.t <- item.t1: rubric {\n  {\n    #style.italic: false\n    #style.stroke-dash: 5\n  }\n  style.underline: true\n}\nscorer.t -> essayRubric.t: applyTo(essayResp)\nitemResponse -> essayRubric.t.c\nessayRubric.t.c -> concept.t: match(essayResponse)\nscorer <- essayRubric.t: score {style.stroke-dash: 5}\nscorer.t -> itemOutcome.t1: new\nscorer.t -> item.t2: getNormalMinimum()\nscorer.t -> item.t3: getNormalMaximum()\nscorer.t -> itemOutcome.t2: setScore(score)\nscorer.t -> itemOutcome.t3: setFeedback(missingConcepts)"))))
+           "shape: sequence_diagram\nscorer: {shape: person}\nscorer.t -> itemResponse.t: getItem()\nscorer.t <- itemResponse.t: item {style.stroke-dash: 5}\nscorer.t -> item.t1: getRubric()\nscorer.t <- item.t1: rubric {\n  #style.italic: false\n  #style.stroke-dash: 5\n  style.underline: true\n}\nscorer.t -> essayRubric.t: applyTo(essayResp)\nitemResponse -> essayRubric.t.c\nessayRubric.t.c -> concept.t: match(essayResponse)\nscorer <- essayRubric.t: score {style.stroke-dash: 5}\nscorer.t -> itemOutcome.t1: new\nscorer.t -> item.t2: getNormalMinimum()\nscorer.t -> item.t3: getNormalMaximum()\nscorer.t -> itemOutcome.t2: setScore(score)\nscorer.t -> itemOutcome.t3: setFeedback(missingConcepts)"))))

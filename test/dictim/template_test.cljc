@@ -9,7 +9,7 @@
      ["p113"
       ["app14149" "Solar Wind"]
       ["app14027" "Leventine Sky"]
-      [:comment "Christine's domain"]]
+      "#Christine's domain"]
      ["p114"
       ["app14181" "eBed"]
       ["app14029" "Storm"]]
@@ -42,7 +42,7 @@
      ["p113"
       ["app14149" "Solar Wind" {:style {:fill "'#f7f6f5'"}}]
       ["app14027" "Leventine Sky" {:class "lemony"}]
-      [:comment "Christine's domain"]]
+      "#Christine's domain"]
      ["p114"
       ["app14181" "eBed" {:class "lemony"}]
       ["app14029" "Storm" {:style {:fill "'#f7f6f5'"}}]]
@@ -54,7 +54,7 @@
      ["p113"
       ["app14149" "Solar Wind" {:class "lemony"}]
       ["app14027" "Leventine Sky"]
-      [:comment "Christine's domain"]]
+      "#Christine's domain"]
      ["p114" ["app14181" "eBed"] ["app14029" "Storm" {:class "lemony"}]]
      ["p113" "->" "p114" "various flows"]]))
 
@@ -79,7 +79,7 @@
       ["app14027"
        "Leventine Sky"
        {:style {:fill "'#f7f6f5'"}, :class "lemony"}]
-      [:comment "Christine's domain"]]
+      "#Christine's domain"]
      ["p114"
       ["app14181" "eBed" {:style {:fill "'#f7f6f5'"}, :class "lemony"}]
       ["app14029" "Storm" {:style {:fill "'#f7f6f5'"}}]]

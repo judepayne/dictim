@@ -59,7 +59,7 @@
 
 
 ;; element types
-
+;; the switch board of dictim
 (defn elem-type
   "Returns the type of dictim element e."
   [e]
@@ -70,10 +70,9 @@
          (or (= :empty-lines (first e))
              (= "empty-lines" (first e))))      :empty-lines
     (map? e)                                    :attrs
+    (and (string? e)
+         (str/starts-with? e "#"))              :cmt
     (kstr? e)                                   :quikshape
-    (and (vector? e)
-         (or (= :comment (first e))
-             (= "comment" (first e))))          :cmt
     (and (vector? e)
          (or (= :list (first e))
              (= "list" (first e))))             :list
@@ -120,6 +119,11 @@
 (defn list?
   "Returns true if the element is a list"
   [e] (= :list (elem-type e)))
+
+
+(defn quikshape?
+  "Returns true if the element is a quikshape"
+  [e] (= :quikshape (elem-type e)))
 
 
 (defn elements?
@@ -245,3 +249,9 @@
     (number? k) (str k)
     (keyword? k) (name k)
     :else k))
+
+
+(defn commented-attr?
+  "Returns true if the key of the attr is commented out."
+  [[k v]]
+  (and (string? k) (str/starts-with? k "#")))
