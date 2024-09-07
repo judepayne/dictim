@@ -1,5 +1,7 @@
 	# Unreleased
-	- Allow commented out attrs in both d2 compiler and parser. In both, attrs are still validated. The dictim syntax for a commented out attr is {:comment {map-of-attrs-to-be-commented-out}}
+	- Fixed #14. See `lists` in wiki
+	- Changed how comments are represented. See wiki
+	- add wiki section on command line Windows string handling
 	- Changed cmd line apply-template to not remove styles by default. Use the `-r` option to remove styles ahead of template application
 
 	# 0.8.7
