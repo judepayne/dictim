@@ -165,13 +165,13 @@
     [:json dict]
     (if-let [dict (from-edn data)]
       [:edn dict]
-      (exception "Error: data format does not appear to be either edn or json"))))
+      (exception "data format does not appear to be either edn or json"))))
 
 
 (defn- compile-fn [dict]
   (cond
     (empty? dict)
-    (exception "Error: no dictim to compile")
+    (exception "no dictim to compile")
 
     (and (sequential? dict) (every? coll? dict))
     (apply c/d2 dict)
@@ -180,14 +180,14 @@
     (c/d2 dict)
 
     :else
-    (exception "Error: Could not read input as valid dictim syntax")))
+    (exception "Could not read input as valid dictim syntax")))
 
 
 (defn- apply-dictim-template [dict template]
   (try
     (tmp/apply-template dict template)
     (catch Exception ex
-      (exception "Error: template file not found"))))
+      (exception "template file not found"))))
 
 
 (defn- compile-impl [opts in]
@@ -269,7 +269,7 @@
         {:keys [out err]} (apply shell shell-args)]
     (or
      out
-     (str "Error: d2 engine error: "(format-error d2 err)))))
+     (str "d2 engine error: "(format-error d2 err)))))
 
 
 (defn transform
@@ -307,9 +307,9 @@
       (and (fs/exists? file) (installed? path-to-d2))
       (serve/start (partial transform debug? d2-opts) file)
 
-      (fs/exists? file) (exception "Error: d2 does not appear to be installed on your path.")
+      (fs/exists? file) (exception "d2 does not appear to be installed on your path.")
       
-      :else (exception "Error: File does not exist"))))
+      :else (exception "File does not exist"))))
 
 
 (defn- parse-print [opts dict]

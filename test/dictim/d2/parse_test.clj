@@ -639,3 +639,35 @@
               {"style.border-radius" 10}
               ["b_shape"]
               "# a comment"])))))
+
+
+;; added for issue #16
+(deftest escaped-chars-in-labels
+  (testing "banned chars can be escaped in labels (issue #16)"
+    (is (= (p/dictim "a: the shape \\{")
+           '(["a" "the shape \\{"])))
+    (is (= (p/dictim "a: the shape \\|")
+           '(["a" "the shape \\|"])))
+    (is (= (p/dictim "a: the shape \\;")
+           '(["a" "the shape \\;"])))
+    (is (= (p/dictim "a: the shape \\n")
+           '(["a" "the shape \\n"])))
+    (is (= (p/dictim "a: the shape \\r")
+           '(["a" "the shape \\r"]))))
+  (testing "banned chars not escaped are not allowed (issue #16)"
+    (is (thrown? Exception (p/dictim "a: the shape {")))))
+
+;; added for issue #16
+(deftest banned-chars-in-quoted-labels
+  (testing "banned chars are allowd in single and double quoted labels"
+    (is (= (p/dictim "a: 'the shape {'")
+           '(["a" "'the shape {'"])))
+    (is (= (p/dictim "a: \"the shape {\"")
+           '(["a" "\"the shape {\""]))))
+  (testing "except \r line endings which are not allowed in single and double quoted labels"
+    (is (thrown? Exception (p/dictim "a: 'the shape \r'"))))
+  (testing "\\n line endings must be escaped or will be interpreted as a new line"
+    (is (= (p/dictim "a: 'the shape{|} \\n'")
+           '(["a" "'the shape{|} \\n'"])))
+    (is (= (p/dictim "a: 'the shape{|} \n'")
+           '(["a" "'the shape" ["|"]] ["'"])))))

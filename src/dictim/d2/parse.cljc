@@ -91,6 +91,12 @@
 (def ^:private label-bans
   ["semi" "pipe" "curlyo" "curlyc" "line-return"])
 
+;; See issue #16. labels can contain escaped characters or be in quotes.
+(def label-regex "#'(?:\\'[^\r\n\\']*\\'|\"[^\r\n\"]*\"|\\\\[{};|]|[^{};|\\r\\n\"])+'")
+
+(def ^:private label-bans
+  ["semi" "pipe" "curlyo" "curlyc" "line-return"])
+
 (def ^:private inner-list-item-bans ["semi" "sq-bracketo" "sq-bracketc" "line-return"])
 
 (def ^:private dirs ["dir-left" "dir-right" "dir-both" "dir-neither"])
@@ -192,8 +198,8 @@
     <colon-label> = (<colon> <s> | <colon> <s> label)
     label = lbl | block | typescript
     <lbl> = (<s> null <s>) | normal-label | substitution
-    <normal-label> = !null " (insta-reg label-bans) "
-    <substitution> =  <s> #'^(?!^\\s*$)([^;${\r\n]*\\$\\{[^}]+\\})+[^{}\\r\\n;|]*'
+    <normal-label> = !null " label-regex ;(insta-reg label-bans) ;; issue #16
+    " <substitution> =  <s> #'^(?!^\\s*$)([^;${\r\n]*\\$\\{[^}]+\\})+[^{}\\r\\n;|]*'
     block = <s> pipe #'[^|]+' pipe <s>
     typescript = <s> ts-open #'[\\s\\S]+?(?=\\|\\|\\||`\\|)' ts-close <s>
 
