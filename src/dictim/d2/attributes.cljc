@@ -21,8 +21,24 @@
   #{"ORANGE" "MEDIUMPURPLE" "DARKGRAY" "BURLYWOOD" "PURPLE" "SNOW" "PINK" "DARKORCHID" "ROSYBROWN" "GRAY" "KHAKI" "DARKGOLDENROD" "SPRINGGREEN" "TOMATO" "PALETURQUOISE" "DIMGRAY" "BLUEVIOLET" "LIGHTGOLDENRODYELLOW" "STEELBLUE" "ORANGERED" "POWDERBLUE" "LINEN" "LIGHTSTEELBLUE" "LIGHTSLATEGRAY" "SEAGREEN" "GAINSBORO" "DARKGREEN" "WHEAT" "INDIANRED" "CRIMSON" "FLORALWHITE" "HOTPINK" "VIOLET" "BISQUE" "LIGHTSALMON" "BLANCHEDALMOND" "GOLDENROD" "AZURE" "MIDNIGHTBLUE" "MEDIUMTURQUOISE" "LIGHTPINK" "CHOCOLATE" "AQUAMARINE" "SILVER" "GHOSTWHITE" "NAVY" "TURQUOISE" "LEMONCHIFFON" "DEEPSKYBLUE" "LAVENDER" "PERU" "DARKRED" "MAGENTA" "DARKMAGENTA" "DARKBLUE" "LIGHTCORAL" "CORNFLOWERBLUE" "DARKTURQUOISE" "DARKSLATEGRAY" "PALEGOLDENROD" "REBECCAPURPLE" "LIME" "MEDIUMSPRINGGREEN" "SIENNA" "DARKVIOLET" "FORESTGREEN" "LAVENDERBLUSH" "GREEN" "BROWN" "LIGHTSEAGREEN" "SKYBLUE" "LIGHTGRAY" "LIGHTCYAN" "BLUE" "OLIVEDRAB" "MEDIUMORCHID" "LIGHTSKYBLUE" "MISTYROSE" "INDIGO" "PALEVIOLETRED" "MINTCREAM" "DARKSLATEBLUE" "WHITESMOKE" "CADETBLUE" "LIGHTBLUE" "HONEYDEW" "MEDIUMSEAGREEN" "YELLOWGREEN" "IVORY" "MAROON" "SLATEGRAY" "DODGERBLUE" "SADDLEBROWN" "MEDIUMAQUAMARINE" "THISTLE" "DARKCYAN" "CORAL" "ORCHID" "CORNSILK" "OLDLACE" "AQUA" "LAWNGREEN" "NAVAJOWHITE" "WHITE" "OLIVE" "ANTIQUEWHITE" "MEDIUMSLATEBLUE" "LIGHTYELLOW" "SANDYBROWN" "ALICEBLUE" "BEIGE" "DEEPPINK" "LIGHTGREEN" "DARKSEAGREEN" "PEACHPUFF" "TAN" "PAPAYAWHIP" "LIMEGREEN" "MEDIUMVIOLETRED" "PALEGREEN" "TEAL" "GREENYELLOW" "SALMON" "GOLD" "MEDIUMBLUE" "DARKORANGE" "SEASHELL" "PLUM" "DARKOLIVEGREEN" "DARKKHAKI" "YELLOW" "BLACK" "MOCCASIN" "ROYALBLUE" "RED" "CYAN" "CHARTREUSE" "DARKSALMON" "SLATEBLUE" "FUCHSIA"})
 
 
+(def ^:private transparent #{"TRANSPARENT"})
+
+
+(def ^:private re-hex-string "#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})")
+(def ^:private re-hex (re-pattern (str "^('|\")" re-hex-string "('|\")$")))
+
+
 (defn- hex-color? [s] ;;must be quoted
-  (re-matches #"^('|\")#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})('|\")$" s))
+  (re-matches re-hex s))
+
+
+(def ^:private re-linear-gradient-string
+  (str "^('|\")linear-gradient\\(" re-hex-string ", *" re-hex-string"\\)('|\")$"))
+(def ^:private re-linear-gradient (re-pattern re-linear-gradient-string))
+
+
+(defn- linear-gradient? [s] ;;hex colors must be quoted
+  (re-matches re-linear-gradient s))
 
 
 (defn- d2-class-ref? [s]
@@ -32,7 +48,9 @@
 (defn- valid-color? [s]
   (boolean
    (or (hex-color? s)
+       (linear-gradient? s)
        (contains? css-color-names (str/upper-case s))
+       (contains? transparent (str/upper-case s))
        (d2-class-ref? s))))
 
 

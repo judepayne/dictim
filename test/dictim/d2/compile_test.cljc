@@ -900,3 +900,16 @@ steps: {
                          ["scorer.t" "->" "itemOutcome.t2" "setScore(score)"]
                          ["scorer.t" "->" "itemOutcome.t3" "setFeedback(missingConcepts)"]))
            "shape: sequence_diagram\nscorer: {shape: person}\nscorer.t -> itemResponse.t: getItem()\nscorer.t <- itemResponse.t: item {style.stroke-dash: 5}\nscorer.t -> item.t1: getRubric()\nscorer.t <- item.t1: rubric {\n  #style.italic: false\n  #style.stroke-dash: 5\n  style.underline: true\n}\nscorer.t -> essayRubric.t: applyTo(essayResp)\nitemResponse -> essayRubric.t.c\nessayRubric.t.c -> concept.t: match(essayResponse)\nscorer <- essayRubric.t: score {style.stroke-dash: 5}\nscorer.t -> itemOutcome.t1: new\nscorer.t -> item.t2: getNormalMinimum()\nscorer.t -> item.t3: getNormalMaximum()\nscorer.t -> itemOutcome.t2: setScore(score)\nscorer.t -> itemOutcome.t3: setFeedback(missingConcepts)"))))
+
+
+(deftest transparent
+  (testing "Transparent is allowed as a color name"
+    (is (= (apply c/d2 '(["Ashape" {"style.fill" "transparent"}]))
+           "Ashape: {style.fill: transparent}"))))
+
+
+(deftest linear-gradient
+  (testing "linear-gradients are allowed in style.fills"
+    (is (= (apply c/d2
+                  '(["Ashape" {"style.fill" "'linear-gradient(#112233, #112233)'"}]))
+           "Ashape: {style.fill: 'linear-gradient(#112233, #112233)'}"))))
