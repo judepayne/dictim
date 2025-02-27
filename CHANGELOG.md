@@ -1,3 +1,7 @@
+	# 0.9.0
+	- allow 'transparent' in style.fill
+	- allow linear-gradient in style.fill. must be quoted, e.g. 'linear-gradient(#112233, #aabbcc)'
+
 	# 0.8.9
 	- Fixed #16. Allow banned characters in label when escaped or in quotes
 

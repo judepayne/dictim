@@ -37,7 +37,7 @@
 (def ^:private re-linear-gradient (re-pattern re-linear-gradient-string))
 
 
-(defn- linear-gradient? [s] ;;hex colors must be quoted
+(defn- linear-gradient? [s] ;;whole string must be quoted
   (re-matches re-linear-gradient s))
 
 
