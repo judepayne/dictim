@@ -25,6 +25,7 @@
 
 
 (def ^:private re-hex-string "#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})")
+
 (def ^:private re-hex (re-pattern (str "^('|\")" re-hex-string "('|\")$")))
 
 
@@ -32,8 +33,10 @@
   (re-matches re-hex s))
 
 
-(def ^:private re-linear-gradient-string
+#_(def ^:private re-linear-gradient-string
   (str "^('|\")linear-gradient\\(" re-hex-string ", *" re-hex-string"\\)('|\")$"))
+(def ^:private re-linear-gradient-string (str "^('|\")linear-gradient\\(.*\\)('|\")$"))
+
 (def ^:private re-linear-gradient (re-pattern re-linear-gradient-string))
 
 

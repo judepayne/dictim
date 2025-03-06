@@ -1,3 +1,6 @@
+	# 0.9.0.1
+	- patch release to allow all variants of linear-gradient
+
 	# 0.9.0
 	- allow 'transparent' in style.fill
 	- allow linear-gradient in style.fill. must be quoted, e.g. 'linear-gradient(#112233, #aabbcc)'
