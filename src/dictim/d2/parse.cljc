@@ -214,7 +214,7 @@
     (* conn-refs - a special type of connection *)
     conn-ref = <s> conn-ref-key conn-ref-val
     conn-ref-key = <'('> <s> crk <s> dir <s> crk <s> <')'> <'['> array-val <']'>
-    conn-ref-val = (conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> null)
+    conn-ref-val = (<colon> <s> attrs)|(conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> null)
     crk = " (insta-reg conn-ref-key-bans :banned-words dirs) "
     conn-ref-attr-keys = (<period> d2-keyword)+
     array-val = #'\\d' | globs

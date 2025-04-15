@@ -510,7 +510,14 @@
                ["barbie"]
                ["lady 1" "->" "barbie" "hi barbie"]
                ["lady 2" "->" "barbie" "hi barbie"]
-               ["lady*" "->" "barbie" ["*"] {"style.stroke" "pink"}]))))))
+               ["lady*" "->" "barbie" ["*"] {"style.stroke" "pink"}])))))
+  (testing "connection references attrs can be variously expressed"
+    (let [d2 "(lady* -> barbie)[*]: {style.stroke: pink}"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["lady*" "->" "barbie" ["*"] {"style.stroke" "pink"}]))))))
 
 
 (deftest nulls
