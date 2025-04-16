@@ -124,7 +124,7 @@
    "multiple" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
    "3d" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
    "animated" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
-   "link" {:validate-fn (fn [v] (string? v))}
+   "link" {:context top-level-ctx :validate-fn (fn [v] (string? v))}
    "font-size" {:context style-ctx :style? true :validate-fn (partial int-between? 8 100)}
    "tooltip" {:validate-fn (fn [v] (string? v))}
    "italic" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}

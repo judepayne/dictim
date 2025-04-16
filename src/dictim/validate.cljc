@@ -5,8 +5,8 @@
             [dictim.d2.attributes :as atd2]
             [dictim.utils :as utils
              :refer [kstr? direction? take-til-last elem-type error list? commented-attr?
-                     unquoted-period-or-ampersand single-quoted no-asterisk convert-key ctr?
-                     shape? quikshape?]])
+                     unquoted-period-or-ampersand-or-bang single-quoted no-asterisk
+                     convert-key ctr? shape? quikshape?]])
   (:refer-clojure :exclude [list?])
   #?(:cljs (:require-macros [dictim.validate :refer [check]])))
 
@@ -104,7 +104,7 @@
 
 
 (defn- key-parts [s]
-  (-> s convert-key (str/split unquoted-period-or-ampersand)
+  (-> s convert-key (str/split unquoted-period-or-ampersand-or-bang)
       (->> (remove #(= "" %)))))
 
 

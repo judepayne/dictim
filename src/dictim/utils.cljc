@@ -226,9 +226,9 @@
 
 
 ;; unquoted period or ampersand
-(def unquoted-period-or-ampersand
+(def unquoted-period-or-ampersand-or-bang
   "regex for an unquoted period or an ampersand"
-  #"([&]|\.(?=([^']*'[^']*')*[^']*$))")
+  #"([!&]|\.(?=([^']*'[^']*')*[^']*$))")
 
 
 ;; matches when starts and ends with '

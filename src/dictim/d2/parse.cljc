@@ -59,6 +59,7 @@
    "dir-neither" {:reg "--" :not-lit? true}
    "vars-lit" {:reg "vars" :hide? false}
    "classes-lit" {:reg "classes" :hide? false}
+   "inv-amp" {:reg "!&" :hide? true}
    "ts-open" {:reg ["|||" "|`"] :hide? false}
    "ts-close" {:reg ["|||" "`|"] :hide? false}
    "null" {:reg "null" :hide? false}})
@@ -83,7 +84,7 @@
   (concat base-bans
           ["bracketo" "bracketc"]))  ;;faciliatate differentiation from conn-refs
 
-(def ^:private attr-val-bans ["glob" "curlyo" "curlyc" "semi" "line-return"])
+(def ^:private attr-val-bans [#_"glob" "curlyo" "curlyc" "semi" "line-return"])
 
 (def ^:private conn-ref-key-bans
   (concat conn-key-bans ["bracketo" "bracketc"]))
@@ -187,7 +188,7 @@
     attrs = <curlyo> <at-sep*> (attr <at-sep+>)* attr <at-sep*> <s> <curlyc>
     attr-key = ((attr-key-part <period>)* (attr-key-last <period>)* attr-key-last) | globs
     attr-key-part = &glob " (insta-reg attr-key-bans :banned-words ["vars-lit"]) "
-    attr-key-last = d2-keyword | amp d2-keyword
+    attr-key-last = d2-keyword | (amp | inv-amp) d2-keyword
     attr-label = label (* i.e. lbl, block or typescript *)
     <item> = " (insta-reg inner-list-item-bans) "
     inner-list = <'['> (item <semi> <s>)* item <']'>
@@ -233,6 +234,8 @@
     " literals-insert "
     "))
 
+
+;; (dictim "*: {&link: *; style.fill: red}") doesn't parse. change second * to 1 and it does
 
 (defparser ^{:doc "A parser for d2" :private true} parse-d2 (grammar))
 ;; for testing local pod-babshka-instaparse development
