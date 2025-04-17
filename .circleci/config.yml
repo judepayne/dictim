@@ -45,6 +45,9 @@ jobs:
       APP_PLATFORM: macos # used in release script
       APP_ARCH: aarch64 # used in release script
     steps:
+      - add_ssh_keys:
+          fingerprints:
+	    - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"
       - checkout
       - run:
           name: Get rid of erroneous git config
@@ -99,6 +102,9 @@ jobs:
       DICTIM_STATIC: "true"
       DICTIM_MUSL: "true"
     steps:
+      - add_ssh_keys:
+          fingerprints:
+	    - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"    
       - checkout
       - run:
           name: Get rid of erroneous git config
@@ -162,6 +168,9 @@ jobs:
       APP_ARCH: aarch64 # used in release script
       DICTIM_STATIC: "true"
     steps:
+      - add_ssh_keys:
+          fingerprints:
+	    - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"    
       - checkout
       - run:
           name: Get rid of erroneous git config
@@ -219,6 +228,9 @@ jobs:
 
     working_directory: ~/project
     steps:
+      - add_ssh_keys:
+          fingerprints:
+	    - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"    
       - checkout
       - restore_cache:
          keys:

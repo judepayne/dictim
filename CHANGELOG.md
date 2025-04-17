@@ -1,3 +1,6 @@
+	# 0.9.0.2
+	- compatibility with d2 v0.6.9
+	
 	# 0.9.0.1
 	- patch release to allow all variants of linear-gradient
 
