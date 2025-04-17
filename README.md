@@ -38,6 +38,7 @@ d2 version compatibility: 0.6.9
 * [Wiki](https://github.com/judepayne/dictim/wiki)
 
 
+
 ## Basic usage
 
 Let's round trip from dictim to d2, and back!
