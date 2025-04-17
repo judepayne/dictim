@@ -357,7 +357,13 @@ cache lb.class: load balancer"))))
            "'ha*lo': The Halo")))
   (testing "unquoted globs are allowed in connection keys"
     (is (= (c/d2 ["*" "->" "y"])
-           "* -> y"))))
+           "* -> y")))
+  (testing "d2 v0.6.6 glob inverse filters"
+    (is (= (c/d2 {"*" {"!&shape" "circle", "style.fill" "red"}})
+           "*: {\n  !&shape: circle\n  style.fill: red\n}")))
+  (testing "globs in glob fitler values"
+    (is (= (c/d2 {"*" {"&link" "*", "style.fill" "red"}})
+           "*: {\n  &link: *\n  style.fill: red\n}"))))
 
 
 (deftest connection-ref-attrs

@@ -393,7 +393,14 @@
              '(["zone-A"
                 ["machine A"]
                 ["machine B" ["submachine A"] ["submachine B"]]]
-               ["zone-A.**" "->" "load balancer"]))))))
+               ["zone-A.**" "->" "load balancer"])))))
+  (testing "glob inverse filters d2 v.0.6.6"
+    (let [d2 "*: {!&shape: circle; style.fill: red}"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"*" {"!&shape" "circle", "style.fill" "red"}}))))))
 
 
 (deftest vars
