@@ -73,6 +73,22 @@ user> (dictim "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
 
 ```
 
+Using some more features from d2:
+
+````clojure
+user=>(use `dictim.d2.compile)
+nil
+user=>(d2 ["c1" "Container"
+            ["s1" "Shape 1" {"shape" "circle"}]
+            ["s3" "Companion"]]
+          ["s2" "Shape 2"]
+          ["c1.s1"  "->" "s2" "reln" {"style.stroke-dash" 3, "style.stroke" "deepskyblue"}])
+"c1: Container {\n  s1: Shape 1 {shape: circle}\n  s3: Companion\n}\ns2: Shape 2\nc1.s1 -> s2: reln {\n  style.stroke-dash: 3\n  style.stroke: deepskyblue\n}"	  
+````
+
+<img src="img/ex3.svg" width="250">
+
+
 dictim can easily be specified as json rather than clojure edn.
 
 
