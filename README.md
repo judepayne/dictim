@@ -63,7 +63,7 @@ When sent to the d2 CLI executable:
 
 ### From d2 to dictim
 
-let's turn the above d2 string back into dictim.
+converting the d2 string back into dictim.
 
 ```clojure
 user=> (use 'dictim.d2.parse)
@@ -73,12 +73,31 @@ user> (dictim "s1: Shape 1\ns2: Shape 2\ns1 -> s2: reln" :key-fn keyword)
 
 ```
 
+dictim can easily be specified as json rather than clojure edn.
+
+
 For details on dictim syntax, the compile, parse and other operations, please see the [wiki](https://github.com/judepayne/dictim/wiki).
 
 
 ## Command line tool
 
-This project contains a command line tool version (a babashka script) that you can install and use to play with dictim on the command line. You can easily create a toolchain that goes directly from dictim edn to a diagram. See the [wiki](https://github.com/judepayne/dictim/wiki/Command-Line) for details.
+dictim comes as a native build for mac, windows and linux, and as a babashka script. e.g.
+
+````bash
+dictim -c -w sample.edn -o out.d2
+````
+
+will watch the edn format dictim file `sample.edn` and compile it to d2 in `out.d2` whenever there's a change.
+
+
+````bash
+dictim -prj -w out.d2 -o out.json
+````
+
+will watch the d2 file `out.d2` and convert to json formet dictim whenever there's a change.
+
+
+See the [wiki](https://github.com/judepayne/dictim/wiki/Command-Line) for details.
 
 
 ## Related Projects
@@ -92,6 +111,6 @@ This project is the base project for a number of other projects:
 
 ## License
 
-Copyright © 2024 Jude Payne
+Copyright © 2025 Jude Payne
 
 Distributed under the [MIT License](http://opensource.org/licenses/MIT)
