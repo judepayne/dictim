@@ -86,7 +86,7 @@ user=>(d2 ["c1" "Container"
 "c1: Container {\n  s1: Shape 1 {shape: circle}\n  s3: Companion\n}\ns2: Shape 2\nc1.s1 -> s2: reln {\n  style.stroke-dash: 3\n  style.stroke: deepskyblue\n}"	  
 ````
 
-<img src="img/ex3.svg" width="250">
+<img src="img/ex3.svg" width="400">
 
 
 dictim can easily be specified as json rather than clojure edn.
