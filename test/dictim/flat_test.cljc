@@ -200,7 +200,7 @@
 
 (deftest flattening
   (testing "dictim -> flat dictim"
-    (is (= (f/flat ex) ex-flat))))
+    (is (= (apply f/flatten ex) ex-flat))))
 
 
 (deftest building

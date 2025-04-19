@@ -4,7 +4,7 @@
     dictim.flat
   (:require [dictim.utils :refer [kstr? direction? take-til-last elem-type error
                                   ctr? list? cmt?]])
-  (:refer-clojure :exclude [list?]))
+  (:refer-clojure :exclude [list? flatten]))
 
 ;; This namespace provide functions for taking (nested) dictim elements and flattening
 ;; them into a sequence of 'flat-dictim' maps of standard form:
@@ -45,7 +45,14 @@
       (fs f s))))
 
 
-(defn- quick-shape-meta  ;; allow for 'quick shape'
+(defn- conn-ref-meta
+  [c]
+  (let [r (drop 3 c)]
+    (merge {:index (first r)}
+           (fs (first (rest r)) (second (rest r))))))
+
+
+(defn- quick-shape-meta ;; allow for 'quick shape'
   [sh]
   nil)
 
@@ -71,6 +78,7 @@
      :shape (if (vector? e) (first e) e)  ;; allow for 'quick shape'
      :ctr (first e)
      :conn (conn-key e)
+     :conn-ref (conn-key e)
      :list (map elem-key (rest e))
      :empty-lines (second e))))
 
@@ -84,6 +92,7 @@
      :cmt nil
      :attrs nil
      :conn (conn-meta e)
+     :conn-ref (conn-ref-meta e)
      :list nil
      :empty-lines nil)))
 
@@ -119,9 +128,9 @@
      (walk nil root)))
 
 
-(defn flat
+(defn flatten
   "Flattens dictim elements into flat-dictim format."
-  [elems]
+  [& elems]
   (mapcat (fn [root]
             (tree-seq'
              describe-elem
@@ -144,6 +153,7 @@
     :cmt      (:key m)
     :attrs    (:key m)
     :conn     (rnil (conj (:key m) (-> m :meta :label) (-> m :meta :attrs)))
+    :conn-ref (rnil (conj (:key m) (-> m :meta :index) (-> m :meta :label) (-> m :meta :attrs)))
     :ctr      (rnil [(:key m) (-> m :meta :label) (-> m :meta :attrs)])
     :list     [:list]
     :empty-lines [:empty-lines (:key m)]))
