@@ -91,7 +91,7 @@ user=>(d2 ["c1" "Container"
 
 dictim can easily be specified as json rather than clojure edn.
 
-dictim-flat is not non-nested syntax variant of dictim which offers an alternative that may be eaiser to produce programmatically.
+dictim-flat is not non-nested syntax variant of dictim which offers an alternative that may be eaiser to produce programmatically for some use cases.
 
 
 For details on dictim syntax, the compile, parse and other operations, please see the [wiki](https://github.com/judepayne/dictim/wiki).
