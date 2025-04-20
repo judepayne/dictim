@@ -4,6 +4,7 @@
             [dictim.d2.parse :as p]
             [dictim.json :as json]
             [dictim.template :as tmp]
+            [dictim.flat :as flat]
             [hiccup.core :refer [html]]
             [babashka.cli :as cli]
             [clojure.string :as str]
@@ -26,7 +27,7 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :parse :k :j :b :watch :layout :theme :d :scale :apply-tmp :template :graph :version :help]})))
+  (cli/format-opts (merge spec {:order [:compile :parse :k :j :m :watch :layout :theme :d :scale :apply-tmp :template :graph :flatten :build :version :help]})))
 
 
 (def compile-help
@@ -86,7 +87,17 @@
   "Converts a dictim graph spec to dictim.
                    applies a dictim template specified via the
                    --template/ -t option.
-                   -j and -b options are also available.")
+                   -j and -m options are also available.")
+
+
+(def flatten-help
+  "Flattens supplied dictim to dictim.flat syntax.
+                   can be used with the -j and -m options.")
+
+
+(def build-help
+  "Builds supplied dictim.flat syntax into dictim syntax.
+                   can be used with the -j and -m options.")
 
 
 (def cli-spec
@@ -101,7 +112,7 @@
         :desc "Convert keys to keywords when parsing d2 to dictim syntax edn"}
     :j {:coerce :boolean
         :desc "Converts the output of parse to dictim syntax json"}
-    :b {:coerce :boolean
+    :m {:coerce :boolean
         :desc "Additional to  -j: prettifies the json output of parse"}
     :r {:coerce :boolean
         :desc "Removes styles (attributes) from parsed d2, including any vars"}
@@ -126,7 +137,11 @@
               :alias :v}
     :help {:coerce :boolean
            :desc "Displays this help"
-           :alias :h}}
+           :alias :h}
+    :flatten {:desc flatten-help
+              :alias :f}
+    :build {:desc build-help
+            :alias :b}}
    :error-fn
    (fn [{:keys [spec type cause msg option]}]
      (when (= :org.babashka/cli type)
@@ -314,7 +329,7 @@
 
 (defn- parse-print [opts dict]
   (cond-> dict
-    (:j opts)            (-> (json/to-json {:pretty (:b opts)}) println)
+    (:j opts)            (-> (json/to-json {:pretty (:m opts)}) println)
 
     (not (:j opts))      pp/pprint))
 
@@ -412,6 +427,31 @@
   (str/trim (slurp (io/file "resources" "VERSION"))))
 
 
+(defn- dictim-flat-print [opts dict]
+  (cond-> dict
+    (:j opts)            (-> (json/to-json {:pretty (:m opts)}) println)
+
+    (not (:j opts))      pp/pprint))
+
+
+(defn- flatten*-impl [opts in]
+  (let [[_ dict] (read-data in)]
+    (dictim-flat-print opts (apply flat/flatten dict))))
+
+
+(defn- flatten* [opts]
+  (flatten*-impl opts (handle-in (or (:flatten opts) (:f opts)))))
+
+
+(defn- build-impl [opts in]
+  (let [[_ flatdict] (read-data in)]
+    (dictim-flat-print opts (-> flatdict flat/build))))
+
+
+(defn- build [opts]
+  (build-impl opts (handle-in (or (:build opts) (:b opts)))))
+
+
 (defn -main
   [& args]
   (let [opts (cli/parse-opts args cli-spec)]
@@ -448,7 +488,13 @@
         (graph opts)
 
         (or (:watch opts) (:w opts))
-        (do (watch opts) @(promise))        
+        (do (watch opts) @(promise))
+
+        (or (:flatten opts) (:f opts))
+        (flatten* opts)
+
+        (or (:build opts) (:b opts))
+        (build opts)
 
         :else
         (println (str "Error: Unknown option\n" (show-help cli-spec))))

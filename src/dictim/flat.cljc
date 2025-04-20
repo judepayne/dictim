@@ -3,16 +3,31 @@
       :doc "Namespace for flattening and (re)building dictim."}
     dictim.flat
   (:require [dictim.utils :refer [kstr? direction? take-til-last elem-type error
-                                  ctr? list? cmt?]])
+                                  ctr? list? cmt?]]
+            [clojure.walk :as walk])
   (:refer-clojure :exclude [list? flatten]))
 
 ;; This namespace provide functions for taking (nested) dictim elements and flattening
 ;; them into a sequence of 'flat-dictim' maps of standard form:
 ;; {:key <...>
-;;  :type  <:ctr/:list/:shape/:cmt/:attrs/:conn>
+;;  :type  <:ctr/"ctr"/:list/"list"/:shape/"shape"/:cmt/"cmt"/:attrs/"attrs"/:conn/"conn"/:conn-ref/"conn-ref"/:empty-lines/"empty-lines">
 ;;  :meta <..>
 ;;  :parent <..> }
 ;; as well as building a seuqnece of flat-dictim back up into dictim
+
+
+(def ^:private keys-to-keywordize
+  #{"key" "type" "meta" "parent"})
+
+
+(defn- keywordize
+  "keywordize the keys required by dictim.flat and the value of the :type key"
+  [m]
+  (let [f (fn [[k v]]
+            (let [k (if (contains? keys-to-keywordize k) (keyword k) k)
+                  v (if (= :type k) (keyword v) v)]
+              [k v]))]
+    (walk/postwalk (fn [x] (if (map? x) (into {} (map f x)) x)) m)))
 
 
 ;; destructuring elements
@@ -32,8 +47,10 @@
 
 (defn- fs
   [f s]
-  (if s {:label f :attrs s}
-      (if (map? f) {:attrs f} {:label f})))
+  (cond
+    (and (nil? f) (nil? s))  nil
+    s {:label f :attrs s}
+    :else  (if (map? f) {:attrs f} {:label f})))
 
 
 (defn- conn-meta
@@ -99,13 +116,22 @@
 
 ;; flattening
 
+(defn- filter-nil [m]
+  (reduce-kv
+   (fn [m k v]
+     (if (nil? v) m (assoc m k v)))
+   {}
+   m))
+
+
 (defn- describe-elem
   [e parent]
   (let [t (elem-type e)]
-    {:type t
-     :key (elem-key e t)
-     :meta (elem-meta e t)
-     :parent (:key parent)}))
+    (-> {:type t
+         :key (elem-key e t)
+         :meta (elem-meta e t)
+         :parent (:key parent)}
+        filter-nil)))
 
 
 (defn- children
@@ -162,7 +188,8 @@
 (defn build
   "Builds a sequence of flat-dictim elements into dictim."
   [flat-elems]
-  (let [children (group-by :parent flat-elems)
+  (let [flat-elems (map keywordize flat-elems)
+        children (group-by :parent flat-elems)
         nodes (fn nodes [parent-id]
                 (map
                  (fn [elem]
