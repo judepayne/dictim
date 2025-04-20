@@ -6,7 +6,7 @@ Windows builds[![Appveyor](https://ci.appveyor.com/api/projects/status/lsq4ewo3q
 
 [![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 
-dictim syntax is an edn/ json syntax for expressing a graph diagram. dictim is a library for compiling it to either [d2's](https://github.com/terrastruct/d2) or [Graphviz's](https://graphviz.org) text languages, and parsing any piece of d2 (back) into dictim syntax.
+dictim syntax is a nested edn/ json syntax for expressing a diagram. dictim is a library for compiling it to either [d2's](https://github.com/terrastruct/d2) or [Graphviz's](https://graphviz.org) text languages, and parsing any piece of d2 (back) into dictim syntax.
 
 dictim supprts both Clojure and Babashka and comes as a library, a command line tool and a microservice (see dictim.server below). Clojurescript support is experimental.
 
@@ -91,7 +91,7 @@ user=>(d2 ["c1" "Container"
 
 dictim can easily be specified as json rather than clojure edn.
 
-dictim-flat is not non-nested syntax variant of dictim which offers an alternative that may be eaiser to produce programmatically for some use cases.
+Whilst dictim syntax is nested, this library also offers dictim-flat syntax, a secondary unnested syntax variant. dictim-flat may be easier to produce and manipulate programmatically depending on your use case. dictim syntax and dictim-flat can be converted to each other in the `dictim.flat` namespace with the `flatten` and `build` functions.
 
 
 For details on dictim syntax, the compile, parse and other operations, please see the [wiki](https://github.com/judepayne/dictim/wiki).
