@@ -1,4 +1,4 @@
-	# 0.9.0.2
+	# 0.9.0.3
 	- compatibility with d2 v0.6.9
 	- dictim.flat is now a first class structure
 	- new dictim.walk namespace with keywordize, stringify keys functions
