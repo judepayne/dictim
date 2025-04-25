@@ -1,5 +1,8 @@
 	# 0.9.0.2
 	- compatibility with d2 v0.6.9
+	- dictim.flat is now a first class structure
+	- new dictim.walk namespace with keywordize, stringify keys functions
+	- added dictim.flat fns and dictim.walk fns to command line tool
 	
 	# 0.9.0.1
 	- patch release to allow all variants of linear-gradient

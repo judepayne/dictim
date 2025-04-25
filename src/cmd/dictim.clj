@@ -5,6 +5,8 @@
             [dictim.json :as json]
             [dictim.template :as tmp]
             [dictim.flat :as flat]
+            [dictim.walk :as walk]
+            [dictim.validate :as v]
             [hiccup.core :refer [html]]
             [babashka.cli :as cli]
             [clojure.string :as str]
@@ -27,102 +29,104 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :parse :k :j :m :watch :layout :theme :d :scale :apply-tmp :template :graph :flatten :build :version :help]})))
+  (cli/format-opts (merge spec {:order [:compile :parse :keywordize :j :m :stringify :watch :layout :theme :d :scale :apply-tmp :template :graph :flatten :build :validate :version :help]})))
 
 
 (def compile-help
   "Compiles supplied dictim to d2
-                   The value supplied to --compile may be either
-                     - a edn/ json dictim syntax string (in single quotes)
-                     - ommitted in which case *std-in* is read
+                     The value supplied to --compile may be either
+                       - a edn/ json dictim syntax string (in single quotes)
+                       - ommitted in which case *std-in* is read
 
-                   An edn/ json template file may be specified via
-                   --template/ -t which causes the template to be applied
-                   during compilation.
+                     An edn/ json template file may be specified via
+                     --template/ -t which causes the template to be applied
+                     during compilation.
 
-                   compile may be used with watch (--watch/ -w) in which
-                   case, the watched file will be recompiled whenever it
-                   changes. If a --template/-t file is also specified then
-                   that file will also be watched. When used with watch, an
-                   output file must be specified via the --output/ -o flag.")
+                     compile may be used with watch (--watch/ -w) in which
+                     case, the watched file will be recompiled whenever it
+                     changes. If a --template/-t file is also specified then
+                     that file will also be watched. When used with watch, an
+                     output file must be specified via the --output/ -o flag.")
 
 
 (def parse-help
   "Parses supplied d2 into dictim
-                   The value supplied to --parse may be either
-                     - a d2 string (in single quotes)
-                     - ommitted in which case *std-in* is read
+                     The value supplied to --parse may be either
+                       - a d2 string (in single quotes)
+                       - ommitted in which case *std-in* is read
 
-                   parse may be used with watch (--watch/ -w) in which
-                   case, the watched file will be recompiled whenever it
-                   changes. When used with watch, an output file must be
-                   specified via the --output/ -o flag.
+                     parse may be used with watch (--watch/ -w) in which
+                     case, the watched file will be recompiled whenever it
+                     changes. When used with watch, an output file must be
+                     specified via the --output/ -o flag.
 
-                   --parse has various other supplemental flags:")
+                      --parse has various other supplemental flags: -k, -j & -m\n\n")
 
 
 (def watch-help
   "When used on its own, Watches an edn/ json dictim syntax file
-                   and serves the resultant diagram in the default browser.
-                   watch requires d2 to be installed and available on your
-                   path. watch has sub option settings:
-                   (d2) layout, (d2) theme, scale and debug:")
+                     and serves the resultant diagram in the default browser.
+                     watch requires d2 to be installed and available on your
+                     path. watch has sub option settings:
+                     (d2) layout, (d2) theme, scale and debug:")
 
 
 (def apply-template-help
   "Applies a dictim template to d2.
-                   Parses suppled d2 into dictim (taking the usual optional
-                   supplemental flags for parse), merges in a dictim template
-                   specified via the --template/ -t otpion, and compiles the
-                   result back into d2.
+                     Parses suppled d2 into dictim (taking the usual optional
+                     supplemental flags for parse), merges in a dictim template
+                     specified via the --template/ -t otpion, and compiles the
+                     result back into d2.
 
-                   apply-tmp may be used with watch (--watch/ -w) in which
-                   case, the watched file will be round-tripped whenever it
-                   changes. The specified template file will also be
-                   watched. When used with watch, an output file must be
-                   specified via the --output/ -o flag.")
+                     apply-tmp may be used with watch (--watch/ -w) in which
+                     case, the watched file will be round-tripped whenever it
+                     changes. The specified template file will also be
+                     watched. When used with watch, an output file must be
+                     specified via the --output/ -o flag.")
 
 
 (def graph-help
   "Converts a dictim graph spec to dictim.
-                   applies a dictim template specified via the
-                   --template/ -t option.
-                   -j and -m options are also available.")
+                     applies a dictim template specified via the
+                     --template/ -t option.
+                     -j and -m options are also available.")
 
 
 (def flatten-help
   "Flattens supplied dictim to dictim.flat syntax.
-                   can be used with the -j and -m options.")
+                     can be used with the -j and -m options.")
 
 
 (def build-help
   "Builds supplied dictim.flat syntax into dictim syntax.
-                   can be used with the -j and -m options.")
+                     can be used with the -j and -m options.")
 
 
 (def cli-spec
   {:spec
    {:compile {:desc compile-help
               :alias :c}
-    :template {:desc "Path to an edn/ json template file"
+    :template {:desc "Path to an edn/ json template file."
                :alias :t}
     :parse {:desc parse-help
             :alias :p}
-    :k {:coerce :boolean
-        :desc "Convert keys to keywords when parsing d2 to dictim syntax edn"}
+    :keywordize {:alias :k
+                 :desc "Converts edn format dictim keys to keywords."}
     :j {:coerce :boolean
-        :desc "Converts the output of parse to dictim syntax json"}
+        :desc "Converts the output of parse to dictim syntax json."}
     :m {:coerce :boolean
-        :desc "Additional to  -j: prettifies the json output of parse"}
+        :desc "Additional to  -j: prettifies the json output of parse."}
+    :stringify {:alias :st
+                :desc "Converts edn format dictim keys to strings."}
     :r {:coerce :boolean
-        :desc "Removes styles (attributes) from parsed d2, including any vars"}
+        :desc "Removes styles (attributes) from parsed d2, including any vars."}
     :watch {:desc watch-help
             :alias :w}
     :output {:desc ""
              :alias :o}
-    :layout {:desc "d2 layout engine name; dagre/ elk/ tala"
+    :layout {:desc "d2 layout engine name; dagre/ elk/ tala."
              :alias :l}
-    :theme {:desc "d2 theme id. See https://d2lang.com/tour/themes"
+    :theme {:desc "d2 theme id. See https://d2lang.com/tour/themes."
             :alias :th}
     :d {:coerce :boolean
         :desc "debug for Watch: Shows interim d2 in the browser."}
@@ -133,15 +137,17 @@
     :graph {:desc graph-help
             :alias :g}
     :version {:coerce :boolean
-              :desc "Returns the version of dictm"
+              :desc "Returns the version of dictm."
               :alias :v}
     :help {:coerce :boolean
-           :desc "Displays this help"
+           :desc "Displays this help."
            :alias :h}
     :flatten {:desc flatten-help
               :alias :f}
     :build {:desc build-help
-            :alias :b}}
+            :alias :b}
+    :validate {:desc "determines if supplied edn format dictim is valid."
+               :alias :val}}
    :error-fn
    (fn [{:keys [spec type cause msg option]}]
      (when (= :org.babashka/cli type)
@@ -336,8 +342,8 @@
 
 (defn- parse-impl [opts in]
   (cond-> in
-    (:k opts)            (p/dictim :key-fn keyword)
-    (not (:k opts))      p/dictim
+    (:keywordize opts)            (p/dictim :key-fn keyword)
+    (not (:keywordize opts))      p/dictim
 
     (:r opts)            tmp/remove-attrs))
 
@@ -397,18 +403,6 @@
     @(promise)))
 
 
-(defn- keywordize [m]
-  (clojure.walk/postwalk
-   (fn [x]
-     (if (map? x)
-       (into {} (map (fn [[k v]] [(keyword k) v]) x))
-       x))
-   m))
-
-(defn- keywordize1 [m]
-  (into {} (map (fn [[k v]] [(keyword k) v]) m)))
-
-
 (defn- graph-impl [opts in]
   (let [[_ grph] (read-data in)
         dict (g/graph-spec->dictim grph)
@@ -443,13 +437,54 @@
   (flatten*-impl opts (handle-in (or (:flatten opts) (:f opts)))))
 
 
+(defn- dictim-build-print [opts dict]
+  (if (:j opts)
+    (-> (json/to-json {:pretty (:m opts)}) println)
+
+    (cond
+      (:k opts)   (pp/pprint (apply walk/keywordize-keys dict))
+      (:s opts)   (pp/pprint (apply walk/stringify-keys dict))
+      :else       (pp/pprint dict))))
+
+
 (defn- build-impl [opts in]
   (let [[_ flatdict] (read-data in)]
-    (dictim-flat-print opts (-> flatdict flat/build))))
+    (dictim-build-print opts (-> flatdict flat/build))))
 
 
 (defn- build [opts]
   (build-impl opts (handle-in (or (:build opts) (:b opts)))))
+
+
+(defn- keywordize-impl [opts in]
+  (let [[_ dict] (read-data in)]
+    (if (v/all-valid? dict :d2)
+      (pp/pprint (apply walk/keywordize-keys dict))
+      (exception "supplied dictim is not valid."))))
+
+
+(defn- keywordize [opts]
+  (keywordize-impl opts (handle-in (or (:keywordize opts) (:k opts)))))
+
+
+(defn- stringify-impl [opts in]
+  (let [[_ dict] (read-data in)]
+    (if (v/all-valid? dict :d2)
+      (pp/pprint (apply walk/stringify-keys dict))
+      (exception "supplied dictim is not valid."))))
+
+
+(defn- stringify [opts]
+  (stringify-impl opts (handle-in (or (:stringify opts) (:st opts)))))
+
+
+(defn- validate-impl [opts in]
+  (let [[_ dict] (read-data in)]
+    (println (v/all-valid? dict :d2))))
+
+
+(defn- validate [opts]
+  (validate-impl opts (handle-in (or (:validate opts) (:val opts)))))
 
 
 (defn -main
@@ -457,6 +492,10 @@
   (let [opts (cli/parse-opts args cli-spec)]
     (try
       (cond
+        (and (or (:keywordize opts) (:k opts))
+             (or (:stringify opts) (:s opts)))
+        (exception "-k/--keywordize and -s/--stringify are mutually exclusive.")
+        
         (or (:help opts) (:h opts))
         (println (show-help cli-spec))
 
@@ -495,6 +534,15 @@
 
         (or (:build opts) (:b opts))
         (build opts)
+
+        (or (:keywordize opts) (:k opts))
+        (keywordize opts)
+
+        (or (:stringify opts) (:st opts))
+        (stringify opts)
+
+        (or (:validate opts) (:val opts))
+        (validate opts)
 
         :else
         (println (str "Error: Unknown option\n" (show-help cli-spec))))

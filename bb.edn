@@ -31,5 +31,6 @@
                                        "src/dictim/format.cljc"
                                        "src/dictim/tests.cljc"
                                        "src/dictim/template.cljc"
-                                       "src/dictim/graphspec.clj"]}}
+                                       "src/dictim/graphspec.clj"
+                                       "src/dictim/walk.cljc"]}}
   uber (clojure "-T:build uber")}}

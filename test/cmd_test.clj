@@ -22,6 +22,7 @@
    env))
 
 
+
 ;; diagnostic function
 #_(defn compare-strings [s1 s2]
     (let [z (partition 2 (interleave (seq s1) (seq s2)))
@@ -105,7 +106,7 @@ ABC4 -> 1STR: rates trade data
                dict-json))
 
 
-(assert (trim= (:out (shell {:out :string :in d2-2} dictim-cmd "-j" "-b" "-p"))
+(assert (trim= (:out (shell {:out :string :in d2-2} dictim-cmd "-j" "-m" "-p"))
                dict-json-pretty))
 
 
@@ -115,3 +116,21 @@ ABC4 -> 1STR: rates trade data
 
 (assert (trim= (:out (shell {:out :string :in dict-json} dictim-cmd "-c"))
                d2-3))
+
+
+(def dict2 "([\"John\" \"Manager\"] [\"Pauli\" \"Developer\"] [\"John\" \"->\" \"Pauli\" \"I wish I still had your job\"])")
+
+
+(def dict2-flat
+"({:type :shape, :key \"John\", :meta {:label \"Manager\"}}\n {:type :shape, :key \"Pauli\", :meta {:label \"Developer\"}}\n {:type :conn,\n  :key [\"John\" \"->\" \"Pauli\"],\n  :meta {:label \"I wish I still had your job\"}})\n")
+
+
+(def dict2-built "([\"John\" \"Manager\"]\n [\"Pauli\" \"Developer\"]\n [\"John\" \"->\" \"Pauli\" \"I wish I still had your job\"])\n")
+
+
+(assert (trim= (:out (shell {:out :string :in dict2} dictim-cmd "-f"))
+               dict2-flat))
+
+
+(assert (trim= (:out (shell {:out :string :in dict2-flat} dictim-cmd "-b"))
+               dict2-built))

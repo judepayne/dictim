@@ -22,8 +22,9 @@
 
 (defmethod key :shape [elem] (first elem))
 (defmethod key :ctr [elem] (first elem))
-(defmethod key :conn [_] nil)
-(defmethod key :conn-ref [_] nil)
+(defmethod key :conn [elem] (let [[kp r] (take-til-last direction? elem)]
+                              (conj (into [] kp) (first r))))
+(defmethod key :conn-ref [elem] (into [] (take 3 elem)))
 (defmethod key :elements [_] nil)
 (defmethod key :else [_] nil)
 
