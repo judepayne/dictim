@@ -396,7 +396,9 @@ cache lb.class: load balancer"))))
                          [:server2 "${server-name}-2"]
                          [:server1 "<->" :server2]))
 "direction: right
-vars: {server-name: Cat}
+vars: {
+  server-name: Cat
+}
 server1: ${server-name}-1
 server2: ${server-name}-2
 server1 <-> server2"))
@@ -919,3 +921,17 @@ steps: {
     (is (= (apply c/d2
                   '(["Ashape" {"style.fill" "'linear-gradient(#112233, #112233)'"}]))
            "Ashape: {style.fill: 'linear-gradient(#112233, #112233)'}"))))
+
+;; d2 version 0.7.0
+(deftest d2-legend
+    (testing "d2-legend compiles correctly within vars"
+      (is (= (c/d2 {"vars"
+                    {"d2-legend"
+                     [:list
+                      ["a" {"label" "Microservice"}]
+                      ["b" "Database" {"shape" "cylinder", "style.stroke-dash" 2}]
+                      ["a" "<->" "b" "Good relationship"
+                       {"style.stroke" "red", "style.stroke-dash" 2, "style.stroke-width" 1}]
+                      ["a" "->" "b" "Bad relationship"]
+                      ["a" "->" "b" "Tenuous" {"target-arrowhead.shape" "circle"}]]}})
+  "vars: {\n  d2-legend:  {\n    a: {\n      label: Microservice\n    }\n    b: Database {\n      shape: cylinder\n      style.stroke-dash: 2\n    }\n    a <-> b: Good relationship {\n      style.stroke: red\n      style.stroke-dash: 2\n      style.stroke-width: 1\n    }\n    a -> b: Bad relationship\n    a -> b: Tenuous {\n      target-arrowhead.shape: circle\n    }\n  }\n}"))))

@@ -685,3 +685,40 @@
            '(["a" "'the shape{|} \\n'"])))
     (is (= (p/dictim "a: 'the shape{|} \n'")
            '(["a" "'the shape" ["|"]] ["'"])))))
+
+;; d2 version 0.7.0
+(deftest d2-legend-parse
+  (testing "d2-legend parses correctly within vars"
+    (let [d2 "vars: {
+    d2-legend: {
+      a: {
+        label: Microservice
+      }
+      b: Database {
+        shape: cylinder
+        style.stroke-dash: 2
+      }
+      a <-> b: Good relationship {
+        style.stroke: red
+        style.stroke-dash: 2
+        style.stroke-width: 1
+      }
+      a -> b: Bad relationship
+      a -> b: Tenuous {
+        target-arrowhead.shape: circle
+      }
+    }
+  }"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"vars"
+                {"d2-legend"
+                 [:list
+                  ["a" {"label" "Microservice"}]
+                  ["b" "Database" {"shape" "cylinder", "style.stroke-dash" 2}]
+                  ["a" "<->" "b" "Good relationship"
+                   {"style.stroke" "red", "style.stroke-dash" 2, "style.stroke-width" 1}]
+                  ["a" "->" "b" "Bad relationship"]
+                  ["a" "->" "b" "Tenuous" {"target-arrowhead.shape" "circle"}]]}}))))))

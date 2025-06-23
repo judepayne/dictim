@@ -172,7 +172,11 @@
     vars = <s> vars-lit <s> <colon> <s> vars-content
     <vars-content> = <curlyo> <break?> the-vars <s> <break>? <s> <curlyc>
     the-vars = (var <break>)* var
-    var = <s> ctr-key <colon> <s> (var-val | vars-content)
+    (* var = <s> ctr-key <colon> <s> (var-val | vars-content) *)
+    var = d2-legend | (<s> ctr-key <colon> <s> (var-val | vars-content))
+    (* d2-legend = <s> 'd2-legend' <s> <colon> <s> <curlyo> <break?> contained <s> <break?> <s> <curlyc> *)
+    d2-legend = <s> 'd2-legend' <s> <colon> <s> <curlyo> <break?> legend-contained <s> <break?> <s> <curlyc>
+    <legend-contained> = (element <break>)* element
     var-val = "(insta-reg attr-val-bans) " | inner-list
 
     (* classes *)
@@ -332,10 +336,18 @@
            :array-val (fn [ar-val] (try-parse-primitive ar-val))
            :vars-lit (constantly "vars")
            :the-vars (fn [& vars] (into {} (concat vars)))
-           :var (fn [k v] [k v])
+           :var (fn
+                  ([k v] [k v])
+                  ([[k v]] [k v])) ;; the d2-legend case
            ;; & _ below to catch :breaks
            :vars (fn [k v & _] (with-tag {(key-fn k) v} :vars))
            :var-val (fn [v] (try-parse-primitive v))
+           :d2-legend (fn [_ & contents]
+                        (let [filtered-contents (remove #(and (vector? %)
+                                                              (= :empty-lines (first %))
+                                                              (= 0 (second %)))
+                                                        contents)]
+                          ["d2-legend" (into [:list] filtered-contents)]))
            :class (fn [k v] (with-tag {k v} :class))
            :classes (fn [k & kvs]
                       (with-tag {k (apply merge kvs)} :classes))
