@@ -69,6 +69,14 @@
     (and (vector? e)
          (or (= :empty-lines (first e))
              (= "empty-lines" (first e))))      :empty-lines
+    (and (map? e) (= 1 (count e))
+         (or (= "vars" (key (first e)))
+             (= :vars (key (first e))))
+         (map? (val (first e))))                :vars
+    (and (map? e) (= 1 (count e))
+         (or (= "classes" (key (first e)))
+             (= :classes (key (first e))))
+         (map? (val (first e))))                :classes
     (map? e)                                    :attrs
     (and (string? e)
          (str/starts-with? e "#"))              :cmt

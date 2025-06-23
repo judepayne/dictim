@@ -402,6 +402,14 @@ vars: {
 server1: ${server-name}-1
 server2: ${server-name}-2
 server1 <-> server2"))
+  (testing "vars with nested maps"
+    (is (= (c/d2 {:vars {:my-color {:fill "red" :stroke "blue"}}})
+           "vars: {
+  my-color: {
+    fill: red
+    stroke: blue
+  }
+}")))
     (testing "and cannot be used as shape keys."
         (is (thrown? Exception
                      (apply c/d2 '({:direction :right}
@@ -934,4 +942,4 @@ steps: {
                        {"style.stroke" "red", "style.stroke-dash" 2, "style.stroke-width" 1}]
                       ["a" "->" "b" "Bad relationship"]
                       ["a" "->" "b" "Tenuous" {"target-arrowhead.shape" "circle"}]]}})
-  "vars: {\n  d2-legend:  {\n    a: {\n      label: Microservice\n    }\n    b: Database {\n      shape: cylinder\n      style.stroke-dash: 2\n    }\n    a <-> b: Good relationship {\n      style.stroke: red\n      style.stroke-dash: 2\n      style.stroke-width: 1\n    }\n    a -> b: Bad relationship\n    a -> b: Tenuous {\n      target-arrowhead.shape: circle\n    }\n  }\n}"))))
+  "vars: {\n  d2-legend:  {\n    a: {label: Microservice}\n    b: Database {\n      shape: cylinder\n      style.stroke-dash: 2\n    }\n    a <-> b: Good relationship {\n      style.stroke: red\n      style.stroke-dash: 2\n      style.stroke-width: 1\n    }\n    a -> b: Bad relationship\n    a -> b: Tenuous {target-arrowhead.shape: circle}\n  }\n}"))))

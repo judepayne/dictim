@@ -296,6 +296,39 @@
        false)
 
 
+;; added for d2 0.7.0 compatibility. See d2/compile.cljc
+(check :vars vars-map
+  (and (map? vars-map)
+       (= 1 (count vars-map))          ; Should have exactly one entry
+       (let [[k v] (first vars-map)]
+         (and (vars? k)           ; Key should be "vars"
+              (map? v)            ; Value should be a map of variables
+              ;; Validate the vars content - allow any key-value pairs
+              ;; Special case: d2-legend can contain a list
+              (every? (fn [[var-key var-val]]
+                        (and (kstr? var-key)
+                             (or (kstr? var-val)
+                                 (map? var-val)
+                                 (and (list? var-val)
+                                      (= "d2-legend" (convert-key var-key))))))
+                      v)))))
+
+(check :classes classes-map
+  (and (map? classes-map)
+       (= 1 (count classes-map))  ; Should have exactly one entry
+       (let [[k v] (first classes-map)]
+         (and (classes? k)  ; Key should be "classes"
+              (map? v)      ; Value should be a map of class definitions
+              ;; Each class should have a map of attributes
+              (every? (fn [[class-name class-attrs]]
+                        (and (kstr? class-name)
+                             (map? class-attrs)
+                             ;; Validate class attributes using existing attr validation
+                             (binding [*non-d2-pre?* true]
+                               (every? valid-d2-attr? class-attrs))))
+                      v)))))
+
+
 (defn all-valid?
   "Validates a collection of dictim elements.
    Throws an error at the first non valid element. Returns nil

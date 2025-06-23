@@ -59,16 +59,12 @@
   (apply max (count m)
          (map count-max-r (filter map? (vals m)))))
 
-(def ^:dynamic ^:private in-vars-or-classes? false)
+;;(def ^:dynamic ^:private in-vars-or-classes? false)
 
 
 (defn- inlineable-attr? [m]
   (and (:inline-attrs? @opts)
-       (not in-vars-or-classes?)
-       (= 1 (count-max-r m))
-       (let [k (-> m ffirst format-key)]
-         (and (not= k "classes")
-              (not= k "vars")))))
+       (= 1 (count-max-r m))))
 
 
 (defn- inline-attr [k v]
@@ -78,7 +74,7 @@
          :else (str (format-key k) colon (de-keyword v)))))
 
 
-(defn- attrs
+#_(defn- attrs
   "layout the map of attrs. m may be nested."
   ([m] (attrs m true))
   ([m brackets?]
@@ -117,6 +113,71 @@
                     (remove nil?)
                     (interpose sep)))
             (if brackets? (str (when-not inline? "\n") "}") "\n")))))
+
+(defn- attrs
+  "layout the map of attrs. m may be nested."
+  ([m] (attrs m true))
+  ([m brackets?]
+   (let [m (remove-empty-maps m)
+         inline? (inlineable-attr? m)]
+     (apply str
+            (when brackets? (str "{" (when-not inline? "\n")))
+            (apply str
+                   (->>
+                    (for [[k v] m]
+                      (cond
+                        (commented-attr? [k v]) (str k colon v)
+
+                        (and (map? v) (empty? v)) nil
+
+                        (nil? v)   (str (format-key k) colon "null")
+
+                        inline?    (inline-attr k v)
+
+                        (map? v)   (str (format-key k) colon (attrs v))
+
+                        (list? v)  (str (format-key k) colon (binding [inner-list? true] (layout v)))
+
+                        :else      (str (format-key k) colon (de-keyword v))))
+                    (remove nil?)
+                    (interpose sep)))
+            (if brackets? (str (when-not inline? "\n") "}") "\n")))))
+
+
+;; for d2 0.7.0 compatibility, made the decision to breaks out vars and classes
+;; as they're own elem-type's to keep the code more maintable.
+(defmethod layout :vars [vars-map]
+    (let [vars-content (-> vars-map vals first)
+          formatted-vars (for [[k v] vars-content]
+                           (cond
+                             ;; Special case for d2-legend
+                             (and (list? v) (= "d2-legend" (format-key k)))
+                             (str (format-key k) colon " {\n"
+                                  (binding [sep "\n"]
+                                    (let [elements (rest v)]
+                                      (str (apply str (map layout (butlast elements)))
+                                           (binding [sep ""] (layout (last elements))))))
+                                  "\n}")
+
+                             ;; Regular vars - nested maps
+                             (map? v)
+                             (str (format-key k) colon (attrs v))
+
+                             ;; Simple values
+                             :else
+                             (str (format-key k) colon (de-keyword v))))]
+      (str "vars: {\n"
+           (str/join "\n" formatted-vars)
+           "\n}" sep)))
+
+
+(defmethod layout :classes [classes-map]
+  (let [classes-content (-> classes-map vals first)
+        formatted-classes (for [[class-name class-attrs] classes-content]
+                            (str (format-key class-name) colon " " (attrs class-attrs)))]
+    (str "classes: {\n"
+         (str/join "\n  " formatted-classes)
+         "\n}")))
 
 
 (defn- item->str [i]

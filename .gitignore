@@ -5,3 +5,8 @@ release_notes.md
 .nrepl*
 .cpcache
 *~
+target/
+sample*
+bin/
+tmp*
+todo*
