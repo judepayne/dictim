@@ -357,6 +357,19 @@
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
              '(["a" ["b" ["c"]]] {"**.style.border-radius" 7})))))
+  (testing "quoted keys with globs"
+    (let [d2 "'*': Quoted Star Shape
+              '**': Quoted Double Star
+              '*hello': Star at start
+              'hello*': Star at end"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["*" "Quoted Star Shape"]
+               ["**" "Quoted Double Star"] 
+               ["*hello" "Star at start"]
+               ["hello*" "Star at end"])))))
   (testing "can parse & (filters what globs can target)"
     (let [d2 "bravo team.shape: person
               charlie team.shape: person
@@ -524,7 +537,28 @@
       (is (= 1 (num-parses d2)))
       (is (= true (v/all-valid? dict :d2)))
       (is (= dict
-             '(["lady*" "->" "barbie" ["*"] {"style.stroke" "pink"}]))))))
+             '(["lady*" "->" "barbie" ["*"] {"style.stroke" "pink"}])))))
+  (testing "connection references can be suspended"
+    (let [d2 "(a -> b)[0]: suspend"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["a" "->" "b" [0] :suspend])))))
+  (testing "connection references can be unsuspended"
+    (let [d2 "(users -> database)[1]: unsuspend"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["users" "->" "database" [1] :unsuspend])))))
+  (testing "connection references can be nulled"
+    (let [d2 "(service.* -> cache)[*]: null"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["service.*" "->" "cache" ["*"] nil]))))))
 
 
 (deftest nulls
@@ -722,3 +756,36 @@
                    {"style.stroke" "red", "style.stroke-dash" 2, "style.stroke-width" 1}]
                   ["a" "->" "b" "Bad relationship"]
                   ["a" "->" "b" "Tenuous" {"target-arrowhead.shape" "circle"}]]}}))))))
+
+
+(deftest c4-person
+  (testing "c4-person shape parses correctly"
+    (let [d2 "user: John Doe {shape: c4-person}"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["user" "John Doe" {"shape" "c4-person"}]))))))
+
+
+(deftest imports-0.7.0
+  (testing "imports and spread imports"
+    (let [d2 (slurp "test/dictim/d2/samples/spread_imports.d2")
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '(["...@x.d2"] ["container" ["A"] ["a" "@y.d2"] ["...@z.d2"]]))))))
+
+
+(deftest level-0.7.0
+  (testing "level filters"
+    (let [d2 "*: {
+                &level: 1
+                style.multiple: true
+              }"
+          dict (p/dictim d2)]
+      (is (= 1 (num-parses d2)))
+      (is (= true (v/all-valid? dict :d2)))
+      (is (= dict
+             '({"*" {"&level" 1, "style.multiple" true}}))))))

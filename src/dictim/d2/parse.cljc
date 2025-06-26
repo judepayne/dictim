@@ -62,7 +62,10 @@
    "inv-amp" {:reg "!&" :hide? true}
    "ts-open" {:reg ["|||" "|`"] :hide? false}
    "ts-close" {:reg ["|||" "`|"] :hide? false}
-   "null" {:reg "null" :hide? false}})
+   "null" {:reg "null" :hide? false}
+   "suspend" {:reg "suspend" :hide? false}
+   "unsuspend" {:reg "unsuspend" :hide? false}
+   "spread-import-prefix" {:reg "...@" :hide? false}})
 
 
 (def ^:private literals (merge char-literals word-literals))
@@ -87,7 +90,7 @@
 (def ^:private attr-val-bans [#_"glob" "curlyo" "curlyc" "semi" "line-return"])
 
 (def ^:private conn-ref-key-bans
-  (concat conn-key-bans ["bracketo" "bracketc"]))
+  (concat (remove #{"period"} conn-key-bans) ["bracketo" "bracketc"]))
 
 (def ^:private label-bans
   ["semi" "pipe" "curlyo" "curlyc" "line-return"])
@@ -154,18 +157,22 @@
     <contained> = (element (break|<semi>))* element? | (break|<semi>)* | element
     <element> = list | elem
 
-    <elem> = classes | vars | ctr | attr | comment | conn | conn-ref
+    <elem> = classes | vars | ctr | attr | comment | conn | conn-ref | spread-import
 
     (* lists and comments *)
     list = (ctr <semi>+)+ ctr <semi>*
     comment = <s> hash lbl
+
+    spread-import = <s> spread-import-prefix #'[a-zA-Z0-9_.-]+'
 
     (* containers - including shapes *)
     ctr = (<s> ctr-key colon-label? (<curlyo> <break?> contained <s> <curlyc>)?) | composite-ctr
     <composite-ctr> = <s> ctr-key <period> composite-ctr-attr
     composite-ctr-attr = std-attr      
     ctr-key = !classes-lit !hash !vars-lit (ctr-key-part <period>)* ctr-key-part
-    ctr-key-part =  !d2-keyword " (insta-reg ctr-key-bans :banned-words dirs) "
+    ctr-key-part = quoted-key | unquoted-key
+    quoted-key = #\"'[^']*'(?=:)\"
+    unquoted-key = !d2-keyword !#\"'.*'\" " (insta-reg ctr-key-bans :banned-words dirs) "
 
     (* vars, classes and attrs *)
     (* vars *)
@@ -219,7 +226,7 @@
     (* conn-refs - a special type of connection *)
     conn-ref = <s> conn-ref-key conn-ref-val
     conn-ref-key = <'('> <s> crk <s> dir <s> crk <s> <')'> <'['> array-val <']'>
-    conn-ref-val = (<colon> <s> attrs)|(conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> null)
+    conn-ref-val = (<colon> <s> attrs)|(conn-ref-attr-keys <s> <colon> <s> (attr-val | attrs) | <s> <colon> <s> (null | suspend | unsuspend))
     crk = " (insta-reg conn-ref-key-bans :banned-words dirs) "
     conn-ref-attr-keys = (<period> d2-keyword)+
     array-val = #'\\d' | globs
@@ -313,6 +320,8 @@
          (insta/transform
 
           {:ctr-key-part identity
+           :quoted-key (fn quoted-key [s] (subs s 1 (dec (count s))))
+           :unquoted-key identity
            :ctr-key (fn [& parts] (key-fn (apply str (interpose "." parts))))
            :composite-ctr-attr (fn [at-k at-v] {at-k at-v})
            :attr-key-part (fn [& chars] (str/trim (str/join chars)))
@@ -328,10 +337,19 @@
            :conn-ref-key (fn [crk1 dir crk2 ar-val]
                            [(key-fn crk1) dir (key-fn crk2) [ar-val]])
            :conn-ref-val (fn
-                           ([null] null)
+                           ([x]
+                            (cond
+                              (map? x)         x
+                              (= x nil)        nil
+                              (= x :suspend)   :suspend
+                              (= x :unsuspend) :unsuspend))
                            ([p1 p2] {p1 p2}))
            :conn-ref-attr-keys (fn [& ks] (str/join (interpose "." ks)))
            :null (constantly nil)
+           :suspend (constantly :suspend)
+           :unsuspend (constantly :unsuspend)
+           :spread-import-prefix identity
+           :spread-import (fn [& parts] [(str/join parts)])
            :crk (fn [k] (key-fn (str/trim k)))
            :array-val (fn [ar-val] (try-parse-primitive ar-val))
            :vars-lit (constantly "vars")

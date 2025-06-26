@@ -74,46 +74,6 @@
          :else (str (format-key k) colon (de-keyword v)))))
 
 
-#_(defn- attrs
-  "layout the map of attrs. m may be nested."
-  ([m] (attrs m true))
-  ([m brackets?]
-   (let [m (remove-empty-maps m)
-         inline? (inlineable-attr? m)]
-     (apply str
-            (when brackets? (str "{" (when-not inline? "\n")))
-            (apply str
-                   (->>
-                    (for [[k v] m]
-                      (cond
-                        (commented-attr? [k v]) (str k colon v)
-                        
-                        (and (map? v) (empty? v)) nil
-                        
-                        (nil? v)   (str (format-key k) colon "null")
-                        
-                        inline?    (inline-attr k v)
-                        
-                        (map? v)   (str (format-key k) colon
-                                        (if (contains? #{"vars" "classes"} (format-key k))
-                                          (binding [in-vars-or-classes? true] (attrs v))
-                                          (attrs v)))
-                        
-                        (and (list? v) (= "d2-legend" (format-key k))) ;; handle d2-legend
-                        (str (format-key k) colon " {\n"
-                             (binding [sep "\n"]
-                               (let [elements (rest v)]
-                                 (str (apply str (map layout (butlast elements)))
-                                      (binding [sep ""] (layout (last elements))))))
-                             "\n}")
-                         
-                         (list? v)  (str (format-key k) colon (binding [inner-list? true] (layout v)))
-                         
-                         :else      (str (format-key k) colon (de-keyword v))))
-                    (remove nil?)
-                    (interpose sep)))
-            (if brackets? (str (when-not inline? "\n") "}") "\n")))))
-
 (defn- attrs
   "layout the map of attrs. m may be nested."
   ([m] (attrs m true))

@@ -349,9 +349,9 @@ cache lb.class: load balancer"))))
   }
 }
 **.style.border-radius: 7")))
-  (testing "unquoted globs not allowed in shape keys"
-    (is (thrown? Exception
-                 (c/d2 ["ha*lo" "The Halo"]))))
+  (testing "unquoted globs are allowed in shape keys"
+    (is (= (c/d2 ["ha*lo" "The Halo"])
+           "ha*lo: The Halo")))
   (testing "quoted globs are allowed in shape keys"
     (is (= (c/d2 ["'ha*lo'" "The Halo"])
            "'ha*lo': The Halo")))
@@ -943,3 +943,11 @@ steps: {
                       ["a" "->" "b" "Bad relationship"]
                       ["a" "->" "b" "Tenuous" {"target-arrowhead.shape" "circle"}]]}})
   "vars: {\n  d2-legend:  {\n    a: {label: Microservice}\n    b: Database {\n      shape: cylinder\n      style.stroke-dash: 2\n    }\n    a <-> b: Good relationship {\n      style.stroke: red\n      style.stroke-dash: 2\n      style.stroke-width: 1\n    }\n    a -> b: Bad relationship\n    a -> b: Tenuous {target-arrowhead.shape: circle}\n  }\n}"))))
+
+
+(deftest c4-person
+  (testing "c4-person shape compiles correctly"
+    (is (= (c/d2 ["user" "John Doe" {:shape "c4-person"}])
+           "user: John Doe {shape: c4-person}"))))
+
+

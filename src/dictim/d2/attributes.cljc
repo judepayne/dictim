@@ -14,7 +14,7 @@
 ;; keep all d2 reserved keywords in one place to make updating easier
 
 
-(def ^:private shapes #{"rectangle" "square" "page" "parallelogram" "document" "cylinder" "queue" "package" "step" "callout" "stored_data" "person" "diamond" "oval" "circle" "hexagon" "cloud" "sql_table" "class" "sequence_diagram" "text"})
+(def ^:private shapes #{"rectangle" "square" "page" "parallelogram" "document" "cylinder" "queue" "package" "step" "callout" "stored_data" "person" "diamond" "oval" "circle" "hexagon" "cloud" "sql_table" "class" "sequence_diagram" "text" "c4-person"})
 
 
 (def ^:private css-color-names
@@ -146,7 +146,8 @@
                      :validate-fn
                      (fn [v]
                        (let [v (dekey v)]
-                         (contains? #{"uppercase" "lowercase" "title" "none"} v)))}})
+                         (contains? #{"uppercase" "lowercase" "title" "none"} v)))}
+   "&level" {:context top-level-ctx :validate-fn (fn [v] (integer? (tpp v)))}})
 
 
 ;; ********* Public api *************

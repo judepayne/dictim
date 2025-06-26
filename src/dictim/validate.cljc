@@ -151,8 +151,8 @@
    keywords are only allowed at the beginning when the first is 'classes' or 'vars'
    (or the internal dynamic var *non-pre-d2?* is bound to true)."
   ([[k v]] (valid-d2-attr? [k v] []))
-  ([[k v] ctx]
-   (let [[k v] (restruc-attr [k v])]
+  ([[k' v] ctx]
+   (let [[k v] (restruc-attr [k' v])]
      (and (kstr? k)
           (cond
             (commented-attr? [k v]) true ;; commented out attrs are not validated
@@ -177,6 +177,11 @@
                                  (when (atd2/in-context? k ctx elem)
                                    (atd2/validate-attr elem k v)))
 
+            ;; handle attrs like '&level' that resturc cleans up v0.7.0
+            (atd2/key? k')      (let [elem (peek @elem-q)]
+                                  (when (atd2/in-context? k' ctx elem)
+                                    (atd2/validate-attr elem k' v)))
+            
             (and *non-d2-pre?*
                  (map? v))        (every? valid-d2-attr? v)
 
@@ -203,13 +208,6 @@
         (map? m)
         (every? valid-attr? m)))
 
-
-;; globs are allowed in key names but only when the whole name/ first part is quoted.
-(defn- globs-quoted? [k]
-  (let [k (first-key-part k)]
-    (or (re-matches single-quoted k)
-        (re-matches no-asterisk k))))
-
 ;; for cases when the key embeds attr keys e.g. :myShape.style.fill "red"
 (defn- valid-inline-d2-attr?
   [elem]
@@ -229,7 +227,7 @@
 
 (check :shape elem
        (let [[k & opts] elem]
-         (and (and (kstr? k) (globs-quoted? k) (not (vars? k)))
+         (and (and (kstr? k) (not (vars? k)))
               (valid-inline-attr? elem)
               (case (count opts)
                 0 true
@@ -264,7 +262,7 @@
 (check :ctr elem
        (let [[k & opts] elem]
         (and
-         (and (kstr? k) (globs-quoted? k) (not (vars? k)))
+         (and (kstr? k) (not (vars? k)))
          (valid-inline-attr? elem)
          (or (and (or (nil? (first opts)) (kstr? (first opts))) ;; label & attrs
                   (valid? (second opts))
