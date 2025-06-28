@@ -951,3 +951,123 @@ steps: {
            "user: John Doe {shape: c4-person}"))))
 
 
+;; Tests for scoped glob attributes: &src and &dst
+
+(deftest scoped-glob-src
+  (testing "valid &src attributes - applies to all incoming connections"
+    ;; Basic &src with style
+    (is (= (c/d2 ["node" {"&src.style.stroke" "red"}])
+           "node: {&src.style.stroke: red}"))
+    
+    ;; &src with multiple style properties
+    (is (= (c/d2 ["server" {"&src.style.stroke" "blue"
+                            "&src.style.stroke-width" 3}])
+           "server: {\n  &src.style.stroke: blue\n  &src.style.stroke-width: 3\n}"))
+    
+    ;; &src with other attributes
+    (is (= (c/d2 ["api" {"&src.label" "incoming"}])
+           "api: {&src.label: incoming}"))
+    
+    ;; Complex example with &src in nested context
+    (is (= (c/d2 ["container" 
+                  ["server" {"&src.style.fill" "green"}]
+                  ["db" "Database"]])
+           "container: {\n  server: {&src.style.fill: green}\n  db: Database\n}")))
+
+  (testing "invalid &src usage - missing prefix"
+    ;; src without & prefix should fail
+    (is (thrown? Exception (c/d2 ["node" {"src.style.stroke" "red"}])))
+    
+    ;; src as standalone attribute should fail  
+    (is (thrown? Exception (c/d2 ["node" {"src" "value"}]))))
+
+  (testing "invalid &src contexts"
+    ;; Invalid attribute under &src
+    (is (thrown? Exception (c/d2 ["node" {"&src.invalid-attr" "value"}])))))
+
+
+(deftest scoped-glob-dst
+  (testing "valid &dst attributes - applies to all outgoing connections"
+    ;; Basic &dst with style
+    (is (= (c/d2 ["node" {"&dst.style.stroke" "red"}])
+           "node: {&dst.style.stroke: red}"))
+    
+    ;; &dst with multiple style properties
+    (is (= (c/d2 ["client" {"&dst.style.stroke" "orange"
+                            "&dst.style.stroke-dash" 2}])
+           "client: {\n  &dst.style.stroke: orange\n  &dst.style.stroke-dash: 2\n}"))
+    
+    ;; &dst with label
+    (is (= (c/d2 ["source" {"&dst.label" "outgoing"}])
+           "source: {&dst.label: outgoing}"))
+    
+    ;; Complex nested example
+    (is (= (c/d2 ["system"
+                  ["frontend" {"&dst.style.stroke" "purple"}]
+                  ["backend" "API Server"]])
+           "system: {\n  frontend: {&dst.style.stroke: purple}\n  backend: API Server\n}")))
+
+  (testing "invalid &dst usage - missing prefix"
+    ;; dst without & prefix should fail
+    (is (thrown? Exception (c/d2 ["node" {"dst.style.stroke" "red"}])))
+    
+    ;; dst as standalone attribute should fail
+    (is (thrown? Exception (c/d2 ["node" {"dst" "value"}]))))
+
+  (testing "invalid &dst contexts"
+    ;; Invalid attribute under &dst
+    (is (thrown? Exception (c/d2 ["node" {"&dst.invalid-attr" "value"}])))))
+
+
+(deftest scoped-glob-negation
+  (testing "valid !&src and !&dst attributes - negated scoped globs"
+    ;; !&src excludes incoming connections
+    (is (= (c/d2 ["node" {"!&src.style.stroke" "red"}])
+           "node: {!&src.style.stroke: red}"))
+    
+    ;; !&dst excludes outgoing connections  
+    (is (= (c/d2 ["node" {"!&dst.style.stroke" "blue"}])
+           "node: {!&dst.style.stroke: blue}"))
+    
+    ;; Combined example
+    (is (= (c/d2 ["server" {"!&src.style.fill" "green"
+                            "!&dst.style.fill" "yellow"}])
+           "server: {\n  !&src.style.fill: green\n  !&dst.style.fill: yellow\n}")))
+
+  (testing "invalid negated scoped globs"
+    ;; Invalid negation prefix
+    (is (thrown? Exception (c/d2 ["node" {"!src.style.stroke" "red"}])))
+    (is (thrown? Exception (c/d2 ["node" {"!dst.style.stroke" "red"}])))))
+
+
+(deftest scoped-glob-comprehensive
+  (testing "comprehensive example with both &src and &dst"
+    (is (= (c/d2 ["network"
+                  ["router" {"&src.style.stroke" "red"
+                             "&dst.style.stroke" "blue"
+                             "label" "Main Router"}]
+                  ["switch" {"!&src.style.fill" "gray"}]])
+           "network: {\n  router: {\n    &src.style.stroke: red\n    &dst.style.stroke: blue\n    label: Main Router\n  }\n  switch: {!&src.style.fill: gray}\n}"))
+    
+    ;; Test with actual connections and scoped styling
+    (is (= (c/d2 ["a" {"&dst.style.stroke" "green"}]
+                 ["b" "Node B"]
+                 ["c" "Node C"] 
+                 ["a" "->" "b"]
+                 ["a" "->" "c"])
+           "a: {&dst.style.stroke: green}\nb: Node B\nc: Node C\na -> b\na -> c")))
+
+  (testing "error handling for malformed scoped globs"
+    ;; Missing dot after &src
+    (is (thrown? Exception (c/d2 ["node" {"&srcstyle" "red"}])))
+    
+    ;; Missing dot after &dst  
+    (is (thrown? Exception (c/d2 ["node" {"&dststyle" "red"}])))
+    
+    ;; Invalid attribute under &src (non-existent attribute)
+    (is (thrown? Exception (c/d2 ["node" {"&src.nonexistent" "red"}])))
+    
+    ;; Invalid attribute structure - invalid style attribute
+    (is (thrown? Exception (c/d2 ["node" {"&src.style.nonexistent" "red"}])))))
+
+

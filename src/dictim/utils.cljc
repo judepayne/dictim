@@ -233,11 +233,16 @@
   #"\.(?=([^']*'[^']*')*[^']*$)")
 
 
-;; unquoted period or ampersand
+;; unquoted period or ampersand or bang
 (def unquoted-period-or-ampersand-or-bang
   "regex for an unquoted period or an ampersand"
   #"([!&]|\.(?=([^']*'[^']*')*[^']*$))")
 
+
+;; unquote period or bang
+(def unquoted-period-or-bang
+  "regex for an unquoted period or bang (exclamation mark)"
+  #"([!]|\.(?=([^']*'[^']*')*[^']*$))")
 
 ;; matches when starts and ends with '
 (def single-quoted

@@ -1,7 +1,7 @@
 (ns
     ^{:author "judepayne"
       :doc "Namespace for handling d2 reserved keywords."}
-    dictim.d2.attributes
+    dictim.d2.attributes2
   (:require [dictim.utils
              :refer [try-parse-primitive kstr? error]
              :rename {try-parse-primitive tpp}]
@@ -178,11 +178,8 @@
   "Protocol for working with D2 keys that may have prefixes"
   (d2-prefix [this] "Returns the prefix string, or nil if no prefix")
   (d2-value [this] "Returns the unprefixed key part") 
-  (d2-prefixed? [this] "Returns true if the key has a prefix")
-  (d2-valid-prefix? [this] "Returns true if the prefix is valid for this key")
-  (d2-must-be-prefixed? [this] "Returns true if this key must have a prefix"))
+  (d2-prefixed? [this] "Returns true if the key has a prefix"))
 
-;; Original split-prefix function - keep for internal use
 (defn- split-prefix
   "Separates leading '!&' or '&' prefix from a string.
      Returns [prefix remainder] if prefix exists, otherwise returns the string unchanged."
@@ -207,15 +204,31 @@
   (d2-prefix [this] (:prefix this))
   (d2-value [this] (:value this))
   (d2-prefixed? [this] (some? (:prefix this)))
-  (d2-valid-prefix? [this] 
-    (when (d2-prefixed? this)
-      (if-let [permitted-prefixes (:prefixes (get d2-attributes-db (d2-value this)))]
-        (contains? permitted-prefixes (d2-prefix this))
-        false)))
-  (d2-must-be-prefixed? [this]
-    (:must-be-prefixed? (get d2-attributes-db (d2-value this)))))
+  
+  String
+  (d2-prefix [this] (d2-prefix (->d2-key this)))
+  (d2-value [this] (d2-value (->d2-key this)))
+  (d2-prefixed? [this] (d2-prefixed? (->d2-key this))))
 
 ;; utility functions for handling prefixed keys - now using D2Key internally
+
+(defn- valid-prefix-for-key?
+  "Returns true if the prefix is allowed for the key."
+  ([prefix unprefixed-key]
+   (if-let [permitted-prefixes (:prefixes (get d2-attributes-db unprefixed-key))]
+     (contains? permitted-prefixes prefix)
+     false))
+  ([d2key]
+   (when (d2-prefixed? d2key)
+     (valid-prefix-for-key? (d2-prefix d2key) (d2-value d2key)))))
+
+(defn- must-be-prefixed?
+  "The key can only be present with one of its prefixed."
+  [k]
+  (:must-be-prefixed? (get d2-attributes-db k)))
+
+;; ********* Public api *************
+
 
 ;; ********* Context *************
 ;; context is whether an attribute occurs in the right position, e.g.
@@ -226,10 +239,7 @@
   (let [[c1 & crest] context
         [r1 & rrest] ref-context]
     (cond
-      (set? r1)  (let [c1-d2key (when c1 (->d2-key c1))
-                        c1-unprefixed (if (and c1-d2key (d2-prefixed? c1-d2key)) 
-                                        (d2-value c1-d2key) 
-                                        c1)]
+      (set? r1)  (let [c1-unprefixed (if (and c1 (d2-prefixed? c1)) (d2-value c1) c1)]
                    (if (contains? r1 c1-unprefixed)
                      (matches-context? crest rrest)
                      false))
@@ -279,34 +289,33 @@
   [k]
   (let [d2key (->d2-key k)]
     (if (d2-prefixed? d2key)
-      (when (d2-valid-prefix? d2key)
+      (when (valid-prefix-for-key? d2key)
         (-> (get d2-attributes-db (d2-value d2key)) :context))
       (-> (get d2-attributes-db (d2-value d2key)) :context))))
 
-;; Public API
 
 (defn in-context?
-  "Checks whether the provided context of the d2-keyword k is in the right context.
+    "Checks whether the provided context of the d2-keyword k is in the right context.
      Throws an error if not."
-  [k ctx elem]
-  (let [d2key (->d2-key k)
-        ref-ctx (ref-ctx k)]
-    (cond
-      ;; For prefixed keys, validate using the unprefixed context
-      (d2-prefixed? d2key)
-      (if (matches-context? ctx ref-ctx)
-        true
-        (context-error k ctx ref-ctx elem))
+    [k ctx elem]
+    (let [d2key (->d2-key k)
+          ref-ctx (ref-ctx k)]
+      (cond
+        ;; For prefixed keys, validate using the unprefixed context
+        (d2-prefixed? d2key)
+        (if (matches-context? ctx ref-ctx)
+          true
+          (context-error k ctx ref-ctx elem))
 
-      ;; For non-prefixed keys that must be prefixed, error
-      (d2-must-be-prefixed? d2key)
-      (err (str k " must be properly prefixed."))
+        ;; For non-prefixed keys that must be prefixed, error
+        (must-be-prefixed? (d2-value d2key))
+        (err (str k " must be properly prefixed."))
 
-      ;; For normal non-prefixed keys, validate context
-      :else
-      (if (matches-context? ctx ref-ctx)
-        true
-        (context-error k ctx ref-ctx elem)))))
+        ;; For normal non-prefixed keys, validate context
+        :else
+        (if (matches-context? ctx ref-ctx)
+          true
+          (context-error k ctx ref-ctx elem)))))
 
 
 ;; ********* Validation *************

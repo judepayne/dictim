@@ -6,7 +6,7 @@
             [dictim.utils :as utils
              :refer [kstr? direction? take-til-last elem-type error list? commented-attr?
                      unquoted-period-or-ampersand-or-bang single-quoted no-asterisk
-                     convert-key ctr? shape? quikshape?]])
+                     convert-key ctr? shape? quikshape? unquoted-period-or-bang]])
   (:refer-clojure :exclude [list?])
   #?(:cljs (:require-macros [dictim.validate :refer [check]])))
 
@@ -104,7 +104,7 @@
 
 
 (defn- key-parts [s]
-  (-> s convert-key (str/split unquoted-period-or-ampersand-or-bang)
+  (-> s convert-key (str/split unquoted-period-or-bang)
       (->> (remove #(= "" %)))))
 
 
@@ -151,8 +151,8 @@
    keywords are only allowed at the beginning when the first is 'classes' or 'vars'
    (or the internal dynamic var *non-pre-d2?* is bound to true)."
   ([[k v]] (valid-d2-attr? [k v] []))
-  ([[k' v] ctx]
-   (let [[k v] (restruc-attr [k' v])]
+  ([[k v] ctx]
+   (let [[k v] (restruc-attr [k v])]
      (and (kstr? k)
           (cond
             (commented-attr? [k v]) true ;; commented out attrs are not validated
@@ -177,10 +177,6 @@
                                  (when (atd2/in-context? k ctx elem)
                                    (atd2/validate-attr elem k v)))
 
-            ;; handle attrs like '&level' that resturc cleans up v0.7.0
-            (atd2/key? k')      (let [elem (peek @elem-q)]
-                                  (when (atd2/in-context? k' ctx elem)
-                                    (atd2/validate-attr elem k' v)))
             
             (and *non-d2-pre?*
                  (map? v))        (every? valid-d2-attr? v)
