@@ -7,6 +7,11 @@ release_notes.md
 *~
 target/
 sample*
+!test/dictim/d2/samples/
 bin/
 tmp*
 todo*
+CLAUDE.md
+*old.cljc
+brew.md
+.claude/
