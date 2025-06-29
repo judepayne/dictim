@@ -50,7 +50,12 @@
 ;; println for clean, human readable output. println adds \n in mac/linux
 ;; but \r\n in windows.
 (defn trim= [s1 s2]
-  (= (str/trimr s1) (str/trimr s2)))
+  (if (re-find #"(?i)windows" (System/getProperty "os.name"))
+    ;; Windows: normalize CRLF to LF before comparison
+    (= (-> s1 str/trimr (str/replace #"\r\n" "\n"))
+       (-> s2 str/trimr (str/replace #"\r\n" "\n")))
+    ;; Unix systems: simple trim comparison
+    (= (str/trimr s1) (str/trimr s2))))
 
 
 (require '[babashka.process :refer [shell]])
