@@ -340,7 +340,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            ./bb.exe bin-cmd-test
+            ./bb.exe bin-cmd-test --cmd win
       - run:
           name: Release
           command: |
