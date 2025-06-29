@@ -48,10 +48,9 @@
 
 ;; we need to compare right trimmed output since the cmd line tool uses
 ;; println for clean, human readable output. println adds \n in mac/linux
-;; but \r\n in windows. We also normalize line endings to handle \r\n vs \n.
+;; but \r\n in windows.
 (defn trim= [s1 s2]
-  (= (-> s1 str/trimr (str/replace "\r\n" "\n"))
-     (-> s2 str/trimr (str/replace "\r\n" "\n"))))
+  (= (str/trimr s1) (str/trimr s2)))
 
 
 (require '[babashka.process :refer [shell]])
