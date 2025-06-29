@@ -24,7 +24,7 @@
 
 
 ;; diagnostic function
-(defn compare-strings [s1 s2]
+#_(defn compare-strings [s1 s2]
     (let [z (partition 2 (interleave (seq s1) (seq s2)))
           cmp (reduce
                (fn [acc [c1 c2]]
@@ -128,20 +128,8 @@ ABC4 -> 1STR: rates trade data
 (def dict2-built "([\"John\" \"Manager\"]\n [\"Pauli\" \"Developer\"]\n [\"John\" \"->\" \"Pauli\" \"I wish I still had your job\"])\n")
 
 
-;; Debug the Windows output issue
-(let [actual-output (:out (shell {:out :string :in dict2} dictim-cmd "-f"))
-      expected-output dict2-flat]
-  (println "=== DEBUGGING WINDOWS OUTPUT ===")
-  (println "Actual output length:" (count actual-output))
-  (println "Expected output length:" (count expected-output))
-  (println "Actual output (first 100 chars):" (pr-str (subs actual-output 0 (min 100 (count actual-output)))))
-  (println "Expected output (first 100 chars):" (pr-str (subs expected-output 0 (min 100 (count expected-output)))))
-  (println "Actual trimmed:" (pr-str (str/trimr actual-output)))
-  (println "Expected trimmed:" (pr-str (str/trimr expected-output)))
-  (when (not= (str/trimr actual-output) (str/trimr expected-output))
-    (println "=== CHARACTER COMPARISON ===")
-    (compare-strings (str/trimr actual-output) (str/trimr expected-output)))
-  (assert (trim= actual-output expected-output)))
+(assert (trim= (:out (shell {:out :string :in dict2} dictim-cmd "-f"))
+               dict2-flat))
 
 
 (assert (trim= (:out (shell {:out :string :in dict2-flat} dictim-cmd "-b"))
