@@ -1,4 +1,3 @@
-Create .circleci/script/compile-windows.bat:
 @echo off
 
 if "%GRAALVM_HOME%"=="" (
