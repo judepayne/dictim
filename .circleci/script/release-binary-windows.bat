@@ -14,6 +14,6 @@ cd tmp-release
 jar -cMf dictim-%VERSION%-windows-amd64.zip dictim.exe
 cd ..
 
-bb release-artifact --file tmp-release\dictim-%VERSION%-windows-amd64.zip
+bb.exe release-artifact --file tmp-release\dictim-%VERSION%-windows-amd64.zip
 
 rmdir /s /q tmp-release
