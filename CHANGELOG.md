@@ -3,6 +3,7 @@
 	- `suspend/unsuspend`
 	- `src`, `dst` & `level` filters
 	- `:shape 'c4-person'` and other c4 features as per d2 0.7.0
+	- improve attribute validation error messages
 
 
     # 0.9.0.3
