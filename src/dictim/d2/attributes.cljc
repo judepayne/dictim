@@ -86,7 +86,8 @@
    "**" {:context star-ctx :validate-fn (constantly true)}
    "shape" {:context top-level-ctx
             :prefixes #{"&" "!&"}
-            :validate-fn (fn [v] (contains? shapes (dekey v)))}
+            :validate-fn (fn [v] (contains? shapes (dekey v)))
+            :help "Expected: rectangle, square, circle, diamond, etc."}
    "label" {:context top-level-ctx :validate-fn (fn [v] (kstr? v))}
    "source-arrowhead" {:validate-fn (constantly true)}
    "target-arrowhead" {:validate-fn (constantly true)}
@@ -109,20 +110,28 @@
    "direction" {:context top-level-ctx :validate-fn (fn [v] (let [v (dekey v)]
                                                               (contains?
                                                                #{"up" "down" "left" "right"}
-                                                               v)))}
+                                                               v)))
+                :help "Expected: up, down, left, or right"}
    "opacity" {:context style-ctx :style? true
               :validate-fn (fn [v] (let [v (tpp v)]
                                      (and (or (float? v) (integer? v))
                                           (>= v 0)
-                                          (<= v 1))))}
-   "fill" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
+                                          (<= v 1))))
+              :help "Expected: number between 0-1"}
+   "fill" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))
+           :help "Expected: hex color (#fff), CSS color name, or gradient"}
    "filled" {:context [#{"source-arrowhead" "target-arrowhead"} "style"]
              :validate-fn (fn [v] (boolean? (tpp v)))}
-   "stroke" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
-   "stroke-width" {:context style-ctx :style? true :validate-fn (partial int-between? 0 15)}
-   "stroke-dash" {:context style-ctx :style? true :validate-fn (partial int-between? 1 10)}
-   "border-radius" {:context style-ctx :style? true :validate-fn (partial int-between? 0 20)}
-   "font-color" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))}
+   "stroke" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))
+             :help "Expected: hex color (#fff), CSS color name, or gradient"}
+   "stroke-width" {:context style-ctx :style? true :validate-fn (partial int-between? 0 15)
+                   :help "Expected: integer between 0-15"}
+   "stroke-dash" {:context style-ctx :style? true :validate-fn (partial int-between? 1 10)
+                  :help "Expected: integer between 1-10"}
+   "border-radius" {:context style-ctx :style? true :validate-fn (partial int-between? 0 20)
+                     :help "Expected: integer between 0-20"}
+   "font-color" {:context style-ctx :style? true :validate-fn (fn [v] (or (nil? v) (valid-color? v)))
+                 :help "Expected: hex color (#fff), CSS color name, or gradient"}
    "shadow" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
    "multiple" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
    "3d" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
@@ -130,7 +139,8 @@
    "link" {:context top-level-ctx
            :prefixes #{"&" "!&"}
            :validate-fn (fn [v] (string? v))}
-   "font-size" {:context style-ctx :style? true :validate-fn (partial int-between? 8 100)}
+   "font-size" {:context style-ctx :style? true :validate-fn (partial int-between? 8 100)
+                :help "Expected: integer between 8-100"}
    "tooltip" {:validate-fn (fn [v] (string? v))}
    "italic" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
    "bold" {:context style-ctx :style? true :validate-fn (fn [v] (boolean? (tpp v)))}
@@ -312,7 +322,21 @@
 ;; ********* Validation *************
 
 (defn- validation-error [k v elem]
-  (err (str "attr: '" k " " v "' failed validation, in " elem)))
+  (let [d2key (->d2-key k)
+        attr-name (d2-value d2key)
+        attr-info (get d2-attributes-db attr-name)
+        help-text (or (:help attr-info) "Expected: valid value")]
+    (if attr-info
+      ;; Known attribute, invalid value
+      (err (str attr-name " validation failed: '" v "' is invalid. " 
+                help-text ". In: " elem))
+      ;; Unknown attribute  
+      (if (str/includes? k ".")
+        (let [parts (str/split k #"\." 2)
+              prefix (first parts)
+              suffix (second parts)]
+          (err (str "'" suffix "' is not a valid sub-attr of " prefix ", in: " elem)))
+        (err (str "Unknown attribute: '" k "' in " elem))))))
 
 
 (defn- validation-fn [k]
@@ -321,18 +345,30 @@
 
 
 (defn validate-attr [elem k v]
-  (let [f (validation-fn k)]
+  (if-let [f (validation-fn k)]
     (try
       (if (f v)
         true
         (validation-error k v elem))
-      (catch Exception _ (validation-error k v elem)))))
+      (catch Exception _ (validation-error k v elem)))
+    ;; No validation function = unknown attribute
+    (validation-error k v elem)))
 
 
 (defn validate-attrs [elem k vs]
-  (every?
-   (fn [v] (validate-attr elem k v))
-   vs))
+  (if (= "style" k)
+    ;; For style, validate that each key is a valid style attribute
+    (every?
+     (fn [style-key]
+       (let [style-key-str (if (keyword? style-key) (name style-key) (str style-key))]
+         (if (contains? style-attrs style-key-str)
+           true
+           (validation-error (str k "." style-key-str) nil elem))))
+     vs)
+    ;; For other attributes, use the original logic
+    (every?
+     (fn [v] (validate-attr elem k v))
+     vs)))
 
 
 ;; ********* Attrs *************

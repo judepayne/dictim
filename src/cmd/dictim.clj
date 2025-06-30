@@ -186,7 +186,7 @@
     [:json dict]
     (if-let [dict (from-edn data)]
       [:edn dict]
-      (exception "data format does not appear to be either edn or json"))))
+      (exception "invalid edn/ json!"))))
 
 
 (defn- compile-fn [dict]
