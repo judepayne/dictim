@@ -26,10 +26,11 @@ Latest release:
 As a git dep:
 
 ```clojure
-io.github.judepayne/dictim {:git/tag "0.9.0.3" :git/sha "606dffd"}
+io.github.judepayne/dictim {:git/tag "0.9.0.3" :git/sha "3420f4d"}
 ```
 
-d2 version compatibility: 0.6.9
+d2 version compatibility: 0.7.0
+
 
 
 ## Docs & API
