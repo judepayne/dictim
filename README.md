@@ -1,8 +1,7 @@
 # dictim
 
 
-Mac+Linux builds[![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
-Windows builds[![Appveyor](https://ci.appveyor.com/api/projects/status/lsq4ewo3qcsw6wk5?svg=true)](https://ci.appveyor.com/project/judepayne/dictim)
+Mac+Linux+Windows builds[![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
 
 [![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 

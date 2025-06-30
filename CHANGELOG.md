@@ -1,4 +1,11 @@
-	# 0.9.0.3
+    # 0.9.0.4
+	- compatibility with d2 v0.7.0
+	- `suspend/unsuspend`
+	- `src`, `dst` & `level` filters
+	- `:shape 'c4-person'` and other c4 features as per d2 0.7.0
+
+
+    # 0.9.0.3
 	- compatibility with d2 v0.6.9
 	- dictim.flat is now a first class structure
 	- new dictim.walk namespace with keywordize, stringify keys functions
