@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+VERSION=$(cat resources/VERSION)
+REPO_URL="https://github.com/judepayne/dictim"
+HOMEBREW_REPO="git@github.com:judepayne/homebrew-tap.git"
+
+echo "Updating Homebrew formula for version $VERSION"
+
+# Clone homebrew tap repository
+git clone $HOMEBREW_REPO /tmp/homebrew-tap
+cd /tmp/homebrew-tap
+
+# Configure git
+git config user.name "CircleCI"
+git config user.email "jude@judep.org"
+
+# Download release assets to calculate SHA256
+MACOS_ARM64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-macos-aarch64.zip"
+MACOS_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-macos-amd64.zip"  
+LINUX_ARM64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-linux-aarch64.zip"
+LINUX_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-linux-amd64.zip"
+
+# Calculate SHA256 hashes
+echo "Calculating SHA256 hashes..."
+MACOS_ARM64_SHA=$(curl -sL "$MACOS_ARM64_URL" | sha256sum | cut -d' ' -f1)
+MACOS_AMD64_SHA=$(curl -sL "$MACOS_AMD64_URL" | sha256sum | cut -d' ' -f1)
+LINUX_ARM64_SHA=$(curl -sL "$LINUX_ARM64_URL" | sha256sum | cut -d' ' -f1)
+LINUX_AMD64_SHA=$(curl -sL "$LINUX_AMD64_URL" | sha256sum | cut -d' ' -f1)
+
+# Update the formula
+cat > Formula/dictim.rb << EOF
+class Dictim < Formula
+  desc "Diagram-as-data library for converting between dictim syntax and D2/Graphviz formats"
+  homepage "https://github.com/judepayne/dictim"
+  version "$VERSION"
+  
+  if OS.mac? && Hardware::CPU.arm?
+    url "$MACOS_ARM64_URL"
+    sha256 "$MACOS_ARM64_SHA"
+  elsif OS.mac? && Hardware::CPU.intel?
+    url "$MACOS_AMD64_URL"
+    sha256 "$MACOS_AMD64_SHA"
+  elsif OS.linux? && Hardware::CPU.arm?
+    url "$LINUX_ARM64_URL"
+    sha256 "$LINUX_ARM64_SHA"
+  elsif OS.linux? && Hardware::CPU.intel?
+    url "$LINUX_AMD64_URL"
+    sha256 "$LINUX_AMD64_SHA"
+  end
+
+  def install
+    bin.install "dictim"
+  end
+
+  test do
+    system "#{bin}/dictim", "--version"
+  end
+end
+EOF
+
+# Commit and push changes
+git add Formula/dictim.rb
+git commit -m "Update dictim to version $VERSION"
+git push origin main
+
+echo "Homebrew formula updated successfully!"
