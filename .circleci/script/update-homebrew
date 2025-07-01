@@ -4,12 +4,12 @@ set -eo pipefail
 
 VERSION=$(cat resources/VERSION)
 REPO_URL="https://github.com/judepayne/dictim"
-HOMEBREW_REPO="git@github.com:judepayne/homebrew-tap.git"
+HOMEBREW_REPO="https://github.com/judepayne/homebrew-tap.git"
 
 echo "Updating Homebrew formula for version $VERSION"
 
-# Clone homebrew tap repository
-git clone $HOMEBREW_REPO /tmp/homebrew-tap
+# Clone homebrew tap repository using token authentication
+git clone https://${GITHUB_TOKEN}@github.com/judepayne/homebrew-tap.git /tmp/homebrew-tap
 cd /tmp/homebrew-tap
 
 # Configure git

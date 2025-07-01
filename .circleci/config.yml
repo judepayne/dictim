@@ -356,10 +356,6 @@ jobs:
       - image: cimg/base:stable
     working_directory: ~/project
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"
-            - "SHA256:hZmfTc7jAhTvijmCw+LToD5ZMzOjlvfnhqcyfQyPnQ8"
       - checkout
       - run:
           name: Install jq
