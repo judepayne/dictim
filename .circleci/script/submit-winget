@@ -28,7 +28,7 @@ BRANCH_NAME="dictim-${VERSION}"
 git checkout -b $BRANCH_NAME
 
 # Calculate SHA256 for Windows binary
-WINDOWS_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-windows-amd64.zip"
+WINDOWS_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-windows-amd64.exe"
 echo "Calculating SHA256 for Windows binary..."
 WINDOWS_SHA256=$(curl -sL "$WINDOWS_AMD64_URL" | sha256sum | cut -d' ' -f1)
 
@@ -49,7 +49,7 @@ EOF
 cat > "$MANIFEST_DIR/judepayne.dictim.installer.yaml" << EOF
 PackageIdentifier: judepayne.dictim
 PackageVersion: $VERSION
-InstallerType: zip
+InstallerType: portable
 Installers:
 - Architecture: x64
   InstallerUrl: $WINDOWS_AMD64_URL
