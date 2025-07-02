@@ -10,8 +10,12 @@ jobs:
 
     working_directory: ~/project
     steps:
-      # Checkout the code as the first step.
-      - checkout
+      # Checkout the code using HTTPS + token
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
       - restore_cache:
          keys:
            - v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
@@ -48,10 +52,11 @@ jobs:
       APP_PLATFORM: macos # used in release script
       APP_ARCH: aarch64 # used in release script
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"
-      - checkout
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
       - run:
           name: Get rid of erroneous git config
           command: |
@@ -105,10 +110,11 @@ jobs:
       DICTIM_STATIC: "true"
       DICTIM_MUSL: "true"
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"
-      - checkout
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
       - run:
           name: Get rid of erroneous git config
           command: |
@@ -171,10 +177,11 @@ jobs:
       APP_ARCH: aarch64 # used in release script
       DICTIM_STATIC: "true"
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"
-      - checkout
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
       - run:
           name: Get rid of erroneous git config
           command: |
@@ -231,10 +238,11 @@ jobs:
 
     working_directory: ~/project
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"
-      - checkout
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
       - restore_cache:
          keys:
            - v1-dependencies-{{ checksum "deps.edn" }}-{{ checksum "bb.edn" }}
@@ -281,10 +289,11 @@ jobs:
       APP_PLATFORM: windows
       APP_ARCH: amd64
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:ElsVr/y8Zm3dtiA3kXP9XB7phjKA//FhJpd6Q5dirzw"
-      - checkout
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
       - run:
           name: Get rid of erroneous git config
           command: |
@@ -356,7 +365,11 @@ jobs:
       - image: cimg/base:stable
     working_directory: ~/project
     steps:
-      - checkout
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
       - run:
           name: Install jq
           command: |
@@ -366,6 +379,21 @@ jobs:
           name: Update Homebrew Formula
           command: |
             .circleci/script/update-homebrew
+
+  submit-winget:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/project
+    steps:
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
+      - run:
+          name: Submit to WinGet
+          command: |
+            .circleci/script/submit-winget
 
 workflows:
   test-and-release-on-main:
@@ -402,6 +430,16 @@ workflows:
             branches:
               only: main
       - update-homebrew:
+          requires:
+            - mac
+            - linux
+            - linux-aarch64
+            - windows
+            - release-bb
+          filters:
+            branches:
+              only: main
+      - submit-winget:
           requires:
             - mac
             - linux
