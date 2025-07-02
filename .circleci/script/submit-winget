@@ -95,7 +95,8 @@ PR_BODY="This PR adds dictim version $VERSION to WinGet.
 
 dictim is a diagram-as-data library and CLI tool for converting between structured data and D2 diagram syntax."
 
-curl -X POST \
+echo "Creating pull request..."
+PR_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
   -H "Authorization: token $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github.v3+json" \
   https://api.github.com/repos/microsoft/winget-pkgs/pulls \
@@ -107,6 +108,34 @@ curl -X POST \
   "body": "$PR_BODY"
 }
 EOF
-)"
+)")
 
-echo "WinGet submission completed! PR created for dictim v$VERSION"
+# Extract HTTP status and response body
+HTTP_STATUS=$(echo $PR_RESPONSE | tr -d '\n' | sed -E 's/.*HTTPSTATUS:([0-9]{3})$/\1/')
+PR_BODY_RESPONSE=$(echo $PR_RESPONSE | sed -E 's/HTTPSTATUS:[0-9]{3}$//')
+
+echo "GitHub API HTTP Status: $HTTP_STATUS"
+
+if [ "$HTTP_STATUS" -eq 201 ]; then
+    # Extract PR URL from response
+    PR_URL=$(echo "$PR_BODY_RESPONSE" | grep -o '"html_url":"[^"]*' | sed 's/"html_url":"//')
+    echo "✅ Pull request created successfully!"
+    echo "PR URL: $PR_URL"
+    echo "WinGet submission completed! PR created for dictim v$VERSION"
+else
+    echo "❌ Failed to create pull request"
+    echo "HTTP Status: $HTTP_STATUS"
+    echo "Response: $PR_BODY_RESPONSE"
+    
+    # Check for common error conditions
+    if echo "$PR_BODY_RESPONSE" | grep -q "pull request already exists"; then
+        echo "Note: A pull request may already exist for this branch"
+    elif echo "$PR_BODY_RESPONSE" | grep -q "validation failed"; then
+        echo "Note: GitHub API validation failed - check token permissions"
+    elif echo "$PR_BODY_RESPONSE" | grep -q "Not Found"; then
+        echo "Note: Repository or branch not found - check branch was pushed correctly"
+    fi
+    
+    echo "Manual PR creation may be required via GitHub web interface"
+    exit 1
+fi
