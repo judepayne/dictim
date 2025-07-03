@@ -380,6 +380,21 @@ jobs:
           command: |
             .circleci/script/update-homebrew
 
+  update-scoop:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/project
+    steps:
+      - run:
+          name: Checkout code
+          command: |
+            git clone https://${GITHUB_TOKEN}@github.com/judepayne/dictim.git .
+            git checkout $CIRCLE_SHA1
+      - run:
+          name: Update Scoop Bucket
+          command: |
+            .circleci/script/update-scoop
+
   submit-winget:
     docker:
       - image: cimg/base:stable
@@ -439,7 +454,7 @@ workflows:
           filters:
             branches:
               only: main
-      - submit-winget:
+      - update-scoop:
           requires:
             - mac
             - linux
@@ -449,3 +464,15 @@ workflows:
           filters:
             branches:
               only: main
+      - submit-winget:
+          requires:
+            - mac
+            - linux
+            - linux-aarch64
+            - windows
+            - release-bb
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
