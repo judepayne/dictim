@@ -137,7 +137,7 @@
     :graph {:desc graph-help
             :alias :g}
     :version {:coerce :boolean
-              :desc "Returns the version of dictim."
+              :desc "Returns the version of this command line tool."
               :alias :v}
     :help {:coerce :boolean
            :desc "Displays this help."
