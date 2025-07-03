@@ -21,7 +21,7 @@ clojure -T:build uber
 
 VERSION=$(cat resources/VERSION)
 
-args=(-jar "bin/dictim_jvm.jar"
+args=(-jar "bin/dict_jvm.jar"
       -H:Name=bin/dict
       -H:+ReportExceptionStackTraces
       --features=clj_easy.graal_build_time.InitClojureClasses

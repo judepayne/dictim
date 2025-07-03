@@ -3,7 +3,7 @@
 
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn" :aliases [:native]}))
-(def uber-file (format "bin/dictim_jvm.jar"))
+(def uber-file (format "bin/dict_jvm.jar"))
 
 (defn clean [_]
   (b/delete {:path "target"}))
