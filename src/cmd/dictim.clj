@@ -29,7 +29,7 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :parse :keywordize :j :m :stringify :watch :layout :theme :d :scale :apply-tmp :template :graph :flatten :build :validate :version :help]})))
+  (cli/format-opts (merge spec {:order [:compile :compile-image :parse :keywordize :j :m :stringify :watch :layout :theme :d :scale :apply-tmp :template :graph :flatten :build :validate :version :help]})))
 
 
 (def compile-help
@@ -85,6 +85,16 @@
                      specified via the --output/ -o flag.")
 
 
+(def compile-image-help
+  "Compiles dictim to d2 and renders to SVG diagram.
+                     The value supplied to --compile-image may be either
+                       - a edn/ json dictim syntax string (in single quotes)
+                       - omitted in which case *std-in* is read
+                     Requires d2 to be installed and available on your path.
+                     Supports the same d2 options as watch mode: layout, theme, scale.
+                     Use with -o to specify output file, otherwise outputs to stdout.")
+
+
 (def graph-help
   "Converts a dictim graph spec to dictim.
                      applies a dictim template specified via the
@@ -134,6 +144,8 @@
             :alias :s}
     :apply-tmp {:desc apply-template-help
                 :alias :a}
+    :compile-image {:desc compile-image-help
+                    :alias :ci}
     :graph {:desc graph-help
             :alias :g}
     :version {:coerce :boolean
@@ -169,8 +181,16 @@
 
 (defn- from-edn [maybe-edn]
   (try
-    (when-let [dict (edn/read-string maybe-edn)]
-      dict)
+    (let [reader (java.io.PushbackReader. (java.io.StringReader. maybe-edn))
+          forms (loop [forms []]
+                  (let [form (try (edn/read reader) (catch Exception _ ::eof))]
+                    (if (= form ::eof)
+                      forms
+                      (recur (conj forms form)))))]
+      (cond
+        (empty? forms) nil
+        (= 1 (count forms)) (first forms)
+        :else forms))
     (catch Exception ex (do (.getName (class ex)) nil))))
 
 
@@ -386,6 +406,28 @@
   (apply-template-impl opts (handle-in (or (:apply-tmp opts) (:a opts)))))
 
 
+(defn- compile-image-impl [opts in]
+  (when-not (installed? path-to-d2)
+    (exception "d2 does not appear to be installed on your path."))
+  (let [[_ dict] (read-data in)
+        template-file (or (:template opts) (:t opts))
+        template (when template-file (second (read-data (slurp template-file))))
+        dict (if template (apply-dictim-template dict template) dict)
+        d2 (compile-fn dict)
+        layout (or (:layout opts) (:l opts))
+        theme (or (:theme opts) (:th opts))
+        scale (or (:scale opts) (:s opts))]
+    (d2->svg d2 :layout layout :theme theme :scale scale)))
+
+
+(defn- compile-image [opts]
+  (let [svg (compile-image-impl opts (handle-in (or (:compile-image opts) (:ci opts))))
+        output-file (or (:output opts) (:o opts))]
+    (if output-file
+      (spit output-file svg)
+      (println svg))))
+
+
 (defn- apply-template-watch [opts]
   (when-not (or (:template opts) (:t opts))
     (exception "An --template/-t file should be specified."))
@@ -505,6 +547,9 @@
         (and (or (:compile opts) (:c opts))
              (or (:watch opts) (:w opts)))
         (compile-watch opts)
+
+        (or (:compile-image opts) (:ci opts))
+        (compile-image opts)
         
         (or (:compile opts) (:c opts))
         (compile opts)
