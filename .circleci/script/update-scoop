@@ -17,7 +17,7 @@ git config user.name "CircleCI"
 git config user.email "jude@judep.org"
 
 # Calculate SHA256 for Windows binary
-WINDOWS_EXE_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-windows-amd64.exe"
+WINDOWS_EXE_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-windows-amd64.exe"
 echo "Calculating SHA256 for Windows binary..."
 WINDOWS_SHA256=$(curl -sL "$WINDOWS_EXE_URL" | sha256sum | cut -d' ' -f1)
 
@@ -30,17 +30,17 @@ cat > bucket/dictim.json << EOF
     "license": "MIT",
     "url": "$WINDOWS_EXE_URL",
     "hash": "sha256:$WINDOWS_SHA256",
-    "bin": "dictim.exe",
+    "bin": "dict.exe",
     "checkver": "github",
     "autoupdate": {
-        "url": "https://github.com/judepayne/dictim/releases/download/v\$version/dictim-\$version-windows-amd64.exe"
+        "url": "https://github.com/judepayne/dictim/releases/download/v\$version/dict-\$version-windows-amd64.exe"
     }
 }
 EOF
 
 # Commit and push changes
 git add bucket/dictim.json
-git commit -m "Update dictim to version $VERSION"
+git commit -m "Update dict to version $VERSION"
 git push origin main
 
 echo "Scoop bucket updated successfully!"

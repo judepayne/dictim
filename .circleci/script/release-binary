@@ -4,7 +4,7 @@ set -eo pipefail
 
 rm -rf /tmp/release
 mkdir -p /tmp/release
-cp bin/dictim /tmp/release
+cp bin/dict /tmp/release
 VERSION=$(cat resources/VERSION)
 
 pushd /tmp/release
@@ -13,10 +13,10 @@ pushd /tmp/release
 
 APP_ARCH=${APP_ARCH:-amd64}
 
-zip "dictim-$VERSION-$APP_PLATFORM-$APP_ARCH.zip" dictim
+zip "dict-$VERSION-$APP_PLATFORM-$APP_ARCH.zip" dict
 
-rm dictim
+rm dict
 
 popd
 
-bb release-artifact --file "/tmp/release/dictim-$VERSION-$APP_PLATFORM-$APP_ARCH.zip"
+bb release-artifact --file "/tmp/release/dict-$VERSION-$APP_PLATFORM-$APP_ARCH.zip"

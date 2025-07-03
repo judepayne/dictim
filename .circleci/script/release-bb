@@ -7,6 +7,6 @@ mkdir -p /tmp/release
 
 VERSION=$(cat resources/VERSION)
 
-cp dictim.jar /tmp/release
+cp dict.jar /tmp/release
 
-bb release-artifact --file "/tmp/release/dictim.jar"
+bb release-artifact --file "/tmp/release/dict.jar"

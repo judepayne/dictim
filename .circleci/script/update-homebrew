@@ -17,10 +17,10 @@ git config user.name "CircleCI"
 git config user.email "jude@judep.org"
 
 # Download release assets to calculate SHA256
-MACOS_ARM64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-macos-aarch64.zip"
-MACOS_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-macos-amd64.zip"  
-LINUX_ARM64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-linux-aarch64.zip"
-LINUX_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-linux-amd64.zip"
+MACOS_ARM64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-macos-aarch64.zip"
+MACOS_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-macos-amd64.zip"  
+LINUX_ARM64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-linux-aarch64.zip"
+LINUX_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-linux-amd64.zip"
 
 # Calculate SHA256 hashes
 echo "Calculating SHA256 hashes..."
@@ -53,18 +53,18 @@ class Dictim < Formula
   end
 
   def install
-    bin.install "dictim"
+    bin.install "dict"
   end
 
   test do
-    system "#{bin}/dictim", "--version"
+    system "#{bin}/dict", "--version"
   end
 end
 EOF
 
 # Commit and push changes
 git add Formula/dictim.rb
-git commit -m "Update dictim to version $VERSION"
+git commit -m "Update dict to version $VERSION"
 git push origin main
 
 echo "Homebrew formula updated successfully!"

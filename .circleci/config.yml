@@ -266,9 +266,9 @@ jobs:
             mkdir -p ~/.local/bin && curl -o- -L https://raw.githubusercontent.com/babashka/bbin/v0.2.1/bbin > ~/.local/bin/bbin && chmod +x ~/.local/bin/bbin
             echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.$(basename $SHELL)rc && exec $SHELL
       - run:
-          name: install dictim via bbin
+          name: install dict via bbin
           command: |
-            bbin install https://github.com/judepayne/dictim/releases/latest/download/dictim.jar
+            bbin install https://github.com/judepayne/dictim/releases/latest/download/dict.jar
       - run:
           name: run dictim command tests
           command: |

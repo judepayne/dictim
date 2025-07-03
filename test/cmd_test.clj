@@ -15,10 +15,10 @@
 
 (def dictim-cmd
   (get
-   {:bin "./bin/dictim"
-    :win "bin\\dictim.exe"
-    :bbin "dictim"
-    :bb "bb dictim.jar"}
+   {:bin "./bin/dict"
+    :win "bin\\dict.exe"
+    :bbin "dict"
+    :bb "bb dict.jar"}
    env))
 
 

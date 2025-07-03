@@ -27,7 +27,7 @@ git push origin master
 git pull origin master
 
 # Create branch for this submission
-BRANCH_NAME="dictim-${VERSION}"
+BRANCH_NAME="dict-${VERSION}"
 
 # Delete branch if it exists locally or remotely
 git branch -D $BRANCH_NAME 2>/dev/null || true
@@ -36,7 +36,7 @@ git push origin --delete $BRANCH_NAME 2>/dev/null || true
 git checkout -b $BRANCH_NAME
 
 # Calculate SHA256 for Windows binary
-WINDOWS_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dictim-$VERSION-windows-amd64.exe"
+WINDOWS_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-windows-amd64.exe"
 echo "Calculating SHA256 for Windows binary..."
 WINDOWS_SHA256=$(curl -sL "$WINDOWS_AMD64_URL" | sha256sum | cut -d' ' -f1)
 
@@ -89,12 +89,12 @@ EOF
 
 # Add files and create commit
 git add "$MANIFEST_DIR/"
-git commit -m "Add dictim version $VERSION"
+git commit -m "Add dict version $VERSION"
 
 # Push branch and create PR
 git push origin $BRANCH_NAME
 
-echo "WinGet submission completed for dictim v$VERSION!"
-echo "Branch 'dictim-$VERSION' has been pushed to your fork."
+echo "WinGet submission completed for dict v$VERSION!"
+echo "Branch 'dict-$VERSION' has been pushed to your fork."
 echo "Please create a pull request manually at:"
-echo "https://github.com/judepayne/winget-pkgs/compare/dictim-$VERSION"
+echo "https://github.com/judepayne/winget-pkgs/compare/dict-$VERSION"

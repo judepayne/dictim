@@ -15,7 +15,7 @@ bb uber
 
 call %GRAALVM_HOME%\bin\native-image.cmd ^
   "-jar" "bin\dictim_jvm.jar" ^
-  "-H:Name=bin\dictim" ^
+  "-H:Name=bin\dict" ^
   "-H:+ReportExceptionStackTraces" ^
   "--features=clj_easy.graal_build_time.InitClojureClasses" ^
   "--report-unsupported-elements-at-runtime" ^

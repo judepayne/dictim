@@ -13,7 +13,7 @@
   bin-cmd-test (shell "bb test/cmd_test.clj --cmd :bin")
   bb-cmd-test (shell "bb test/cmd_test.clj --cmd :bb")
   win-cmd-test (shell "bb test/cmd_test.clj --cmd :win")
-  build (shell "bb uberjar dictim.jar -m cmd.dictim")
+  build (shell "bb uberjar dict.jar -m cmd.dictim")
   release-artifact
   {:extra-paths [".build"]
    :extra-deps {io.github.borkdude/gh-release-artifact {:git/tag "v0.2.1" :git/sha "4a9a74f"}}
