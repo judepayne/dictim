@@ -1,6 +1,5 @@
 # dictim
 
-
 Mac+Linux+Windows builds[![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
 
 
