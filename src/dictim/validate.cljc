@@ -232,7 +232,9 @@
                       (map? (first opts)))
                 2 (let [[label attrs] opts]
                     (and (or (kstr? label) (nil? label))
-                         (valid? attrs)))
+                         (and
+                          (map? attrs)
+                          (every? valid-attr? attrs))))
                 false))))
 
 

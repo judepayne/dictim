@@ -29,7 +29,7 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :compile-image :parse :keywordize :j :m :stringify :watch :layout :theme :d :scale :apply-tmp :template :graph :flatten :build :validate :version :help]})))
+  (cli/format-opts (merge spec {:order [:compile :image :parse :keywordize :j :m :stringify :layout :theme :d :scale :apply-tmp :template :output :graph :flatten :build :validate :cw :pw :iw :aw :version :help]})))
 
 
 (def compile-help
@@ -63,14 +63,6 @@
                       --parse has various other supplemental flags: -k, -j & -m\n\n")
 
 
-(def watch-help
-  "When used on its own, Watches an edn/ json dictim syntax file
-                     and serves the resultant diagram in the default browser.
-                     watch requires d2 to be installed and available on your
-                     path. watch has sub option settings:
-                     (d2) layout, (d2) theme, scale and debug:")
-
-
 (def apply-template-help
   "Applies a dictim template to d2.
                      Parses suppled d2 into dictim (taking the usual optional
@@ -85,14 +77,20 @@
                      specified via the --output/ -o flag.")
 
 
-(def compile-image-help
+(def image-help
   "Compiles dictim to d2 and renders to SVG diagram.
-                     The value supplied to --compile-image may be either
+                     The value supplied to --image may be either
                        - a edn/ json dictim syntax string (in single quotes)
                        - omitted in which case *std-in* is read
                      Requires d2 to be installed and available on your path.
                      Supports the same d2 options as watch mode: layout, theme, scale.
-                     Use with -o to specify output file, otherwise outputs to stdout.")
+                     Use with -o to specify output file, otherwise outputs to stdout.
+
+                    image may be used with watch (--watch/ -w) in which
+                    case, the watched file will be recompiled whenever it changes.
+                    When used with watch:
+                    - With --output/-o: continuously updates the SVG file
+                    - Without --output: serves diagram in browser with live reload")
 
 
 (def graph-help
@@ -130,8 +128,6 @@
                 :desc "Converts edn format dictim keys to strings."}
     :r {:coerce :boolean
         :desc "Removes styles (attributes) from parsed d2, including any vars."}
-    :watch {:desc watch-help
-            :alias :w}
     :output {:desc ""
              :alias :o}
     :layout {:desc "d2 layout engine name; dagre/ elk/ tala."
@@ -144,8 +140,12 @@
             :alias :s}
     :apply-tmp {:desc apply-template-help
                 :alias :a}
-    :compile-image {:desc compile-image-help
-                    :alias :ci}
+    :image {:desc image-help
+            :alias :i}
+    :cw {:desc "Shorthand for -c -w (compile and watch)"}
+    :pw {:desc "Shorthand for -p -w (parse and watch)"}
+    :iw {:desc "Shorthand for -i -w (image and watch)"}
+    :aw (:desc "Shorthand for -a -w (apply template and watch)")
     :graph {:desc graph-help
             :alias :g}
     :version {:coerce :boolean
@@ -194,9 +194,30 @@
     (catch Exception ex (do (.getName (class ex)) nil))))
 
 
+(defn- looks-like-filename? [s]
+  "Heuristic to detect if a string looks like a filename rather than data"
+  (and (string? s)
+       (not (str/blank? s))
+       (or
+        ;; Contains common file extensions
+        (re-find #"\.(edn|json|d2|clj|txt)$" s)
+        ;; Contains path separators  
+        (re-find #"[/\\]" s)
+        ;; Looks like a relative path
+        (re-find #"^\.{1,2}/" s)
+        ;; Exists as a file (check safely)
+        (try
+          (and (fs/exists? s) (fs/regular-file? s))
+          (catch Exception _ false)))))
+
+
 (defn- handle-in [arg]
   (cond
     (true? arg)      (slurp *in*)
+
+    (looks-like-filename? arg)
+    (exception (str "It looks like you're trying to pass a filename '" arg "'. "
+                     "Use stdin redirection instead: Put '<' in front of the filename."))
      
     :else arg))
 
@@ -211,9 +232,12 @@
 
 (defn- compile-fn [dict]
   (cond
+    (symbol? dict)
+    (exception (str "'" dict "' isn't valid dictim syntax. Did you mean '..< " dict  "'?"))
+    
     (empty? dict)
     (exception "no dictim to compile")
-
+    
     (and (sequential? dict) (every? coll? dict))
     (apply c/d2 dict)
 
@@ -330,7 +354,7 @@
        (.getMessage ex)))))
 
 
-(defn- watch [opts]
+(defn- image-watch [opts]
   (let [file (or (:watch opts) (:w opts))
         layout (or (:layout opts) (:l opts))
         theme (or (:theme opts) (:th opts))
@@ -370,7 +394,7 @@
 
 (defn- parse [opts]
   (->>
-   (parse-impl opts (handle-in (or (:parse opts) {:p opts})))
+   (parse-impl opts (handle-in (or (:parse opts) (:p opts))))
    (parse-print opts)))
 
 
@@ -406,7 +430,7 @@
   (apply-template-impl opts (handle-in (or (:apply-tmp opts) (:a opts)))))
 
 
-(defn- compile-image-impl [opts in]
+(defn- image-impl [opts in]
   (when-not (installed? path-to-d2)
     (exception "d2 does not appear to be installed on your path."))
   (let [[_ dict] (read-data in)
@@ -420,8 +444,8 @@
     (d2->svg d2 :layout layout :theme theme :scale scale)))
 
 
-(defn- compile-image [opts]
-  (let [svg (compile-image-impl opts (handle-in (or (:compile-image opts) (:ci opts))))
+(defn- image [opts]
+  (let [svg (image-impl opts (handle-in (or (:image opts) (:i opts))))
         output-file (or (:output opts) (:o opts))]
     (if output-file
       (spit output-file svg)
@@ -544,12 +568,28 @@
         (or (:version opts) (:v opts))
         (println version)
 
+        (:cw opts)
+        (compile-watch (assoc opts :c true :w (:cw opts)))
+
+        (:pw opts)
+        (parse-watch (assoc opts :p true :w (:pw opts)))
+
+        (:iw opts)
+        (do (image-watch (assoc opts :i true :w (:iw opts))) @(promise))
+
+        (:aw opts)
+        (apply-template-watch (assoc opts :a true :w (:aw opts)))
+        
         (and (or (:compile opts) (:c opts))
              (or (:watch opts) (:w opts)))
         (compile-watch opts)
 
-        (or (:compile-image opts) (:ci opts))
-        (compile-image opts)
+        (and (or (:image opts) (:i opts))
+             (or (:watch opts) (:w opts)))
+        (do (image-watch opts) @(promise))
+
+        (or (:image opts) (:i opts))
+        (image opts)
         
         (or (:compile opts) (:c opts))
         (compile opts)
@@ -571,9 +611,6 @@
         (or (:graph opts) (:g opts))
         (graph opts)
 
-        (or (:watch opts) (:w opts))
-        (do (watch opts) @(promise))
-
         (or (:flatten opts) (:f opts))
         (flatten* opts)
 
@@ -590,7 +627,7 @@
         (validate opts)
 
         :else
-        (println (str "Error: Unknown option\n" (show-help cli-spec))))
+        (println (str "Error: Unknown option. Please consult the help.")))
       (catch Exception ex
         (println (str "Error: " (.getMessage ex))))
       (finally (System/exit 0)))))
