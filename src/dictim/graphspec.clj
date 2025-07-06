@@ -5,7 +5,7 @@
             [dictim.template :as tm]
             [malli.core :as m]
             [malli.error :as me])
-  (:refer-clojure :exclude [comparator]))
+  (:refer-clojure :exclude [comparator test]))
 
 
 ;; *****************************************
@@ -41,7 +41,7 @@
       (walk m)))
 
 
-(defn- normalize
+(defn normalize
   "keywordizes selected keys to make spec definition simpler"
   [graph-spec]
   (keywordize-select-keys graph-spec keys-to-keywordize))
@@ -98,84 +98,10 @@
 (def graph-spec (m/validator gs))
 
 
-(def spec1
-  {"nodes"
-   [{"id" "app12872",
-     "name" "Trade pad",
-     "owner" "Lakshmi",
-     "dept" "Finance",
-     "functions" ["Position Keeping" "Quoting"],
-     "tco" 1200000,
-     "process" "p.112"}
-    {"id" "app12873",
-     "name" "Data Source",
-     "owner" "India",
-     "dept" "Securities",
-     "functions" ["Booking" "Order Mgt"],
-     "tco" 1100000,
-     "process" "p.114"}
-    {"id" "app12874",
-     "name" "Crypto Bot",
-     "owner" "Joesph",
-     "dept" "Equities",
-     "functions" ["Accounting" "Booking"],
-     "tco" 500000,
-     "process" "p.112"}
-    {"id" "app12875",
-     "name" "Data Solar",
-     "owner" "Deepak",
-     "dept" "Securities",
-     "functions" ["Position Keeping" "Data Master"],
-     "tco" 1000000,
-     "process" "p.114"}
-    {"id" "app12876",
-     "name" "Data Solar",
-     "owner" "Lakshmi",
-     "dept" "Risk",
-     "functions" ["Accounting" "Data Master"],
-     "tco" 1700000,
-     "process" "p.114"}],
-   "edges"
-   [{"src" "app12874",
-     "dest" "app12875",
-     "data-type" "security reference"}
-    {"src" "app12874", "dest" "app12876", "data-type" "quotes"}
-    {"src" "app12875", "dest" "app12875", "data-type" "instructions"}
-    {"src" "app12874", "dest" "app12872", "data-type" "instructions"}
-    {"src" "app12875", "dest" "app12874", "data-type" "client master"}
-    {"src" "app12875", "dest" "app12874", "data-type" "allocations"}],
-   "node->key" "id",
-   "node->container" "dept",
-   "container->parent"
-   {"Finance" "2LOD",
-    "Risk" "2LOD",
-    "Securities" "FO",
-    "Equities" "FO"},
-   "node-template"
-   [["=" "dept" "Equities"] {"label" ["This dept is %s" "dept"], "style.fill" "blue"}
-    "else" {"label" ["%s" "dept"]}],
-   "edge-template" ["else" {"label" ["data type: %s" "data-type"]}],
-                                        ; "container->attrs" {"Securities" {"style.fill" "green"}}
-   "container->data" {"Securities" {"head" "Amit Singh"
-                                    "revenue $Bn" 1.1}
-                      "Equities" {"head" "Peter Nevitt"
-                                  "revenue $Bn" 0.55}
-                      "Risk" {"head" "Amineer Singh"
-                              "revenue $Bn" 0}
-                      "Finance" {"head" "Cynthia Parcelle"
-                                 "revenue $Bn" 0}
-                      "2LOD" {"head" "Markus Bauer"
-                              "revenue $Bn" 0}
-                      "FO" {"head" "Mia Fischer"
-                            "revenue $Bn" 2.37}}
-   "container-template" [[">" "revenue $Bn" 1] {"style.fill" "'#c47321'"}
-                         [">" "revenue $Bn" 0.5] {"style.fill" "'#ebb178'"}]})
-
-
 (defn- -graph-spec-errors
   "Returns validation errors in easy to read form."
   [spec]
-  (me/humanize (m/explain graph-spec-schema spec)))
+  (me/humanize (m/explain gs spec)))
 
 
 (defn graph-spec-errors
