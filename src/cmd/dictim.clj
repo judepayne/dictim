@@ -24,7 +24,7 @@
 
 
 (defn- exception [msg]
-  (throw (Exception. msg)))
+  (throw (ex-info msg {})))   ;; (Exception. msg) is stripped away by GraalVM
 
 
 (defn show-help
@@ -211,14 +211,37 @@
           (catch Exception _ false)))))
 
 
-(defn- handle-in [arg]
+#_(defn- handle-in [arg]
   (cond
     (true? arg)      (slurp *in*)
 
     (looks-like-filename? arg)
-    (exception (str "It looks like you're trying to pass a filename '" arg "'. "
+    (exception (str "It looks like you're trying to pass a filename '" arg "'.\n"
                      "Use stdin redirection instead: Put '<' in front of the filename."))
      
+    :else arg))
+
+
+(defn- stdin-has-data? []
+  "Check if stdin has data available without blocking"
+  (try
+    (let [available (.available System/in)]
+      (> available 0))
+    (catch Exception _ false)))
+
+
+(defn- handle-in [arg]
+  (cond
+    (true? arg)
+    (if (stdin-has-data?)
+      (slurp *in*)
+      (exception (str "This command requires input data.\n"
+                      "Use: command < file.edn -or- command <the-data>")))
+
+    (looks-like-filename? arg)
+    (exception (str "It looks like you're trying to pass a filename '" arg "'.\n"
+                    "Use stdin redirection instead: Put '<' in front of the filename."))
+
     :else arg))
 
 
@@ -553,11 +576,28 @@
   (validate-impl opts (handle-in (or (:validate opts) (:val opts)))))
 
 
+(defn- bad-watch-file?
+  "Watch option, but file to be watched doesn't exist?"
+  [opts]
+  (or
+   (and (:compile opts) (:w opts) (not (fs/exists? (:w opts))))
+   (and (:parse opts) (:w opts) (not (fs/exists? (:w opts))))
+   (and (:image opts) (:w opts) (not (fs/exists? (:w opts))))
+   (and (:apply-tmp opts) (:w opts) (not (fs/exists? (:w opts))))
+   (and (:cw opts) (not (fs/exists? (:cw opts))))
+   (and (:pw opts) (not (fs/exists? (:pw opts))))
+   (and (:iw opts) (not (fs/exists? (:iw opts))))
+   (and (:aw opts) (not (fs/exists? (:aw opts))))))
+
+
 (defn -main
   [& args]
   (let [opts (cli/parse-opts args cli-spec)]
     (try
       (cond
+        (bad-watch-file? opts)
+        (exception "File doesn't exist. NB: don't use stdin redirection ('<') with watch.")
+        
         (and (or (:keywordize opts) (:k opts))
              (or (:stringify opts) (:s opts)))
         (exception "-k/--keywordize and -s/--stringify are mutually exclusive.")
@@ -627,7 +667,7 @@
         (validate opts)
 
         :else
-        (println (str "Error: Unknown option. Please consult the help.")))
+        (println (str "Unknown option. Please consult the help.")))
       (catch Exception ex
-        (println (str "Error: " (.getMessage ex))))
+        (println (.getMessage ex)))
       (finally (System/exit 0)))))

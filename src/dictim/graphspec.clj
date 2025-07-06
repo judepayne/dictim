@@ -2,115 +2,204 @@
   (:require [dictim.graph.core :as g]
             [dictim.tests :as t]
             [dictim.utils :refer [error]]
-            [dictim.template :as tm]))
+            [dictim.template :as tm]
+            [malli.core :as m]
+            [malli.error :as me])
+  (:refer-clojure :exclude [comparator]))
 
 
 ;; *****************************************
 ;; *            validation                 *
 ;; *****************************************
 
+(def keys-to-keywordize #{"src" "dest" "nodes" "edges" "node->key" "node-template" "edge-template"
+                          "node->container" "container->parent" "container-template" "container->data"})
 
-(defn- get*
-  "Like get but indifferent to whether k is a keyword or a string."
-  [m k]
-  (if (keyword? k)
-    (or (k m) (get m (name k)))
-    (or (get m k) (get m (keyword k)))))
+(def vals-to-vector #{:nodes :edges :node-template :container-template :edge-template})
+
+(defn keywordize-select-keys
+  [m keys-to-keywordize]
+  (letfn
+      [(walk [x]
+         (cond
+           (map? x)
+           (into {}
+                 (map (fn [[k v]]
+                        (let [k' (if (and (string? k) (contains? keys-to-keywordize k))
+                                   (keyword k)
+                                   k)
+                              v' (if (contains? vals-to-vector k')
+                                   (into [] v)
+                                   v)]
+                          [k' (walk v')]))
+                      x))
+
+           (sequential? x)
+           (mapv walk x)
+
+           :else x))]
+      (walk m)))
 
 
-(defn- valid-style? [style]
-  (map? style))
+(defn- normalize
+  "keywordizes selected keys to make spec definition simpler"
+  [graph-spec]
+  (keywordize-select-keys graph-spec keys-to-keywordize))
 
 
-(defn- valid-label? [lbl]
-  ;; simple validation for label instructions. TODO improve
-  (or (map? lbl)
-      (and (vector? lbl)
-           (every? map? lbl))))
+(def kstr [:or :string :keyword])
+
+(def node [:map-of :any :any])
+
+(def edge
+  [:and
+   [:map-of :any :any] ; open map with any extra fields
+   [:fn {:error/message "edge must contain :src and :dest keys"}
+    (fn [m]
+      (and (contains? m :src)
+           (contains? m :dest)))]])
+
+(def node->key kstr)
+
+(def test
+  [:fn {:error/fn (fn [{:keys [value]} _] (str value " is an invalid test"))}
+   t/valid-test?])
+
+(def attr-map
+  [:map-of :any :any])  ;; permissive
+
+(def test-clauses
+  [:+ [:cat test attr-map]])
+
+(def node->container kstr)
+
+(def container->parent [:map-of :any :any])
+
+(def container->data [:map-of :any :any])
 
 
-(defn- spec-errors
+(def ^{:private true} gs
+  [:and
+   [:map
+    [:node->key kstr]
+    [:nodes [:sequential node]]
+    [:edges {:optional true} [:sequential edge]]
+    [:node-template {:optional true} test-clauses]
+    [:edge-template {:optional true} test-clauses]
+    [:container-template {:optional true} test-clauses]
+    [:node->container {:optional true} node->container]
+    [:container->data {:optional true} container->data]]
+
+   [:fn {:error/message "node->key must exist in every node"}
+    (fn [{:keys [nodes node->key]}]
+      (every? #(contains? % node->key) nodes))]])
+
+
+(def graph-spec (m/validator gs))
+
+
+(def spec1
+  {"nodes"
+   [{"id" "app12872",
+     "name" "Trade pad",
+     "owner" "Lakshmi",
+     "dept" "Finance",
+     "functions" ["Position Keeping" "Quoting"],
+     "tco" 1200000,
+     "process" "p.112"}
+    {"id" "app12873",
+     "name" "Data Source",
+     "owner" "India",
+     "dept" "Securities",
+     "functions" ["Booking" "Order Mgt"],
+     "tco" 1100000,
+     "process" "p.114"}
+    {"id" "app12874",
+     "name" "Crypto Bot",
+     "owner" "Joesph",
+     "dept" "Equities",
+     "functions" ["Accounting" "Booking"],
+     "tco" 500000,
+     "process" "p.112"}
+    {"id" "app12875",
+     "name" "Data Solar",
+     "owner" "Deepak",
+     "dept" "Securities",
+     "functions" ["Position Keeping" "Data Master"],
+     "tco" 1000000,
+     "process" "p.114"}
+    {"id" "app12876",
+     "name" "Data Solar",
+     "owner" "Lakshmi",
+     "dept" "Risk",
+     "functions" ["Accounting" "Data Master"],
+     "tco" 1700000,
+     "process" "p.114"}],
+   "edges"
+   [{"src" "app12874",
+     "dest" "app12875",
+     "data-type" "security reference"}
+    {"src" "app12874", "dest" "app12876", "data-type" "quotes"}
+    {"src" "app12875", "dest" "app12875", "data-type" "instructions"}
+    {"src" "app12874", "dest" "app12872", "data-type" "instructions"}
+    {"src" "app12875", "dest" "app12874", "data-type" "client master"}
+    {"src" "app12875", "dest" "app12874", "data-type" "allocations"}],
+   "node->key" "id",
+   "node->container" "dept",
+   "container->parent"
+   {"Finance" "2LOD",
+    "Risk" "2LOD",
+    "Securities" "FO",
+    "Equities" "FO"},
+   "node-template"
+   [["=" "dept" "Equities"] {"label" ["This dept is %s" "dept"], "style.fill" "blue"}
+    "else" {"label" ["%s" "dept"]}],
+   "edge-template" ["else" {"label" ["data type: %s" "data-type"]}],
+                                        ; "container->attrs" {"Securities" {"style.fill" "green"}}
+   "container->data" {"Securities" {"head" "Amit Singh"
+                                    "revenue $Bn" 1.1}
+                      "Equities" {"head" "Peter Nevitt"
+                                  "revenue $Bn" 0.55}
+                      "Risk" {"head" "Amineer Singh"
+                              "revenue $Bn" 0}
+                      "Finance" {"head" "Cynthia Parcelle"
+                                 "revenue $Bn" 0}
+                      "2LOD" {"head" "Markus Bauer"
+                              "revenue $Bn" 0}
+                      "FO" {"head" "Mia Fischer"
+                            "revenue $Bn" 2.37}}
+   "container-template" [[">" "revenue $Bn" 1] {"style.fill" "'#c47321'"}
+                         [">" "revenue $Bn" 0.5] {"style.fill" "'#ebb178'"}]})
+
+
+(defn- -graph-spec-errors
+  "Returns validation errors in easy to read form."
   [spec]
-  (let [sp (partition 2 spec)
-        valid-pair? (fn [acc [t o]]
-                      (let [acc* (if (t/valid-test? t) acc (conj acc (str t " is not a valid test.")))
-                            acc** (if (or (valid-style? o) (valid-label? o))
-                                    acc* (conj acc* (str o " is not valid.")))]
-                        acc**))]
-    (reduce valid-pair? nil sp)))
+  (me/humanize (m/explain graph-spec-schema spec)))
 
 
-(defn- graph-spec-errors
-  "Checks that the diagram spec is valid. Returns true if it is and throws
-   an exception with the validation errors found if not."
+(defn graph-spec-errors
+  "Returns a formatted string of validation errors for command line display."
   [spec]
-  (let [errs
-        (as-> nil errors
-          ;; map check
-          (if-not (map? spec)
-            (conj errors "The diagram spec must be a map.")
-            errors)
-          ;; check for incorrect keys
-          (if-not (every? #{:nodes "nodes" :edges "edges"
-                            :node->key "node->key" :node->container "node->container"
-                            :container->parent "container->parent" :node-template "node-template"
-                            :edge-template "edge-template" :container->attrs "container->attrs"
-                            :container-template "container-template"
-                            :container->data "container->data" :directives "directives"
-                            :template "template"}
-                          (keys spec))
-            (conj errors "The diagram spec contains unrecognized keys.")
-            errors)         
-          ;; mandatory keys check
-          (if-not (or (get spec "nodes") (:nodes spec))
-            (conj errors "The diagram spec must include a 'nodes' key.")
-            errors)
-          (if-not (or (get spec "node->key") (:node->key spec))
-            (conj errors "The diagram spec must include a 'node->key' key.")
-            errors)
-          ;; edge format check
-          (if-let [edges (or (get spec "edges") (:edges spec))]
-            (if-not (every? (fn [edge] (or (and (get edge "src") (get edge "dest"))
-                                           (and (:src edge) (:dest edge))))
-                            edges)
-              (conj errors "Every edge should include 'src' and 'dest' items.")
-              errors)
-            errors)
-          ;; container->parent check
-          (if-let [container->parent (or (get spec "container->parent")
-                                         (:container-parent spec))]
-            (if-not (map? container->parent)
-              (conj errors "The value of the 'container->parent' key should be a map.")
-              errors)
-            errors)
-          ;; container->attrs check
-          (if-let [container->attrs (or (get spec "container->attrs")
-                                        (:container-attrs spec))]
-            (if (or (get spec "container->data") (:container->data spec)
-                    (get spec "container-template") (:container-template spec))
-              (conj errors "only container->attrs *or* container->data + container-template should be specified.")
-              (if-not (map? container->attrs)
-                (conj errors "The value of the 'container->attrs' key should be a map.")
-                errors))
-            errors)
-          ;; container-template + container->data check
-          (if-let [container->data (or (get spec "container->data") (:container->data spec))]
-            (if-not (map? container->data)
-              (conj errors "The value of the 'container->data' key should be a map.")
-              errors))
-          (if-let [container-template (or (get spec "container-template") (:container-template spec))]
-            (apply conj errors (spec-errors container-template))
-            errors)
-          ;; node-template map check
-          (if-let [node-template (or (get spec "node-template") (:node-template spec))]
-            (apply conj errors (spec-errors node-template))
-            errors)
-          ;; edge-template map check
-          (if-let [edge-template (or (get spec "edge-template") (:edge-template spec))]
-            (apply conj errors (spec-errors edge-template))
-            errors))]
-    (when errs
-      (reverse errs))))
+  (when-let [errors (-graph-spec-errors spec)]
+    (let [format-error-list (fn [errors]
+                              (if (vector? errors)
+                                (clojure.string/join "; " errors)
+                                (str errors)))
+          error-lines (for [[field field-errors] errors]
+                        (cond
+                          (= field :malli/error)
+                          (str "Validation: " (format-error-list field-errors))
+                          
+                          (keyword? field)
+                          (str (name field) ": " (format-error-list field-errors))
+                          
+                          :else
+                          (str field ": " (format-error-list field-errors))))]
+      (str "Graph specification errors:\n"
+           (clojure.string/join "\n" 
+                                (map #(str "  • " %) error-lines))))))
+
 
 
 ;; *****************************************
@@ -145,12 +234,16 @@
         m'))))
 
 
+(defn- get*
+  "Like get but indifferent to whether k is a keyword or a string."
+  [m k]
+  (if (keyword? k)
+    (or (k m) (get m (name k)))
+    (or (get m k) (get m (keyword k)))))
+
 ;; *****************************************
 ;; *             Public API                *
 ;; *****************************************
-
-
-;; test *all* clauses and merge
 
 
 (defn graph-spec->dictim
@@ -205,12 +298,9 @@
   [spec & {:keys [validate?] :or {validate? true}}]
 
   (when validate?
-    (when-let [errors (graph-spec-errors spec)]
-      (let [error-msg
-            (apply str (interpose
-                        "\n - "
-                        (cons "Errors found during specram spec validation:" errors)))]
-        (throw (Exception. error-msg)))))
+    (let [spec (normalize spec)]
+      (when (not (graph-spec spec))
+        (throw (ex-info (graph-spec-errors spec) {})))))
 
   (let [nodes (get* spec :nodes)
         edges (get* spec :edges)

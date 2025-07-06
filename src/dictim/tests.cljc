@@ -159,7 +159,7 @@
   (and
    (sequential? t)
    (= "matches" (first t))
-   #_(get accessors (second t))
+   #_(boolean (get accessors (second t)))
    (try (re-pattern (nth t 2))
           true
           (catch Exception _ false))))
@@ -168,7 +168,6 @@
 (def ^{:private true} comparators
   {"=" =
    "!=" not=
-
    "contains" some
    "doesnt-contain" (complement some)
    ">" >
@@ -180,8 +179,8 @@
 (defn- comparison-test? [t]
   (and
    (sequential? t)
-   (get comparators (first t))
-   #_(get accessors (second t))))
+   (boolean (get comparators (first t)))
+   #_(boolean (get accessors (second t)))))
 
 
 (defn- nested-test? [nt]

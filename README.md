@@ -445,7 +445,9 @@ See the [wiki](https://github.com/judepayne/dictim/wiki/dictim-syntax) page for 
 - **[Examples](https://github.com/judepayne/dictim.cookbook)** - Real-world use cases
 
 
-## For Developers: Use as a Clojure/ babashka library in your app
+## Use as a Clojure/ Babashka library in your app
+
+[![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://book.babashka.org#badges)
 
 dict is built on the **dictim** Clojure library. If you're building Clojure applications, you can use dictim directly:
 
@@ -465,6 +467,7 @@ dict is built on the **dictim** Clojure library. If you're building Clojure appl
 ;; => "app: Web App\ndb: Database\napp -> db: queries"
 ```
 
+See the [Wiki](https://github.com/judepayne/dictim/wiki) for more details.
 
 ## Related Projects
 

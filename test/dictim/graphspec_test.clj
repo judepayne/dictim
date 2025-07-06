@@ -353,3 +353,126 @@
   (testing "directives are merged in. template is merged in but node-template, edge-template, container-template take precedence"
     (is (= (g/graph-spec->dictim spec3)
            dict3))))
+
+
+;; Narrowly failing specs for validation testing
+
+(def missing-nodes-spec
+  {"node->key" "id"
+   "edges" [{"src" "a" "dest" "b"}]})
+
+(def missing-node-key-spec
+  {"nodes" [{"id" "a"}]
+   "edges" [{"src" "a" "dest" "b"}]})
+
+(def invalid-node-key-spec
+  {"nodes" [{"id" "a"} {"name" "b"}]  ; Second node missing "id"
+   "node->key" "id"})
+
+(def wrong-edge-format-spec
+  {"nodes" [{"id" "a"} {"id" "b"}]
+   "node->key" "id"
+   "edges" [{"from" "a" "to" "b"}]})  ; Should be src/dest
+
+(def invalid-edge-missing-dest-spec
+  {"nodes" [{"id" "a"} {"id" "b"}]
+   "node->key" "id"
+   "edges" [{"src" "a"}]})  ; Missing dest
+
+(def wrong-nodes-type-spec
+  {"nodes" "not-a-vector"
+   "node->key" "id"})
+
+(def wrong-node-key-type-spec
+  {"nodes" [{"id" "a"}]
+   "node->key" 123})  ; Should be string or keyword
+
+
+(deftest test-validation-failures
+  (testing "Missing nodes field should fail"
+    (is (thrown? Exception (g/graph-spec->dictim missing-nodes-spec))))
+  
+  (testing "Missing node->key field should fail"
+    (is (thrown? Exception (g/graph-spec->dictim missing-node-key-spec))))
+  
+  (testing "Invalid node->key (missing from nodes) should fail"
+    (is (thrown? Exception (g/graph-spec->dictim invalid-node-key-spec))))
+  
+  (testing "Wrong edge format (from/to instead of src/dest) should fail"
+    (is (thrown? Exception (g/graph-spec->dictim wrong-edge-format-spec))))
+  
+  (testing "Edge missing dest field should fail"
+    (is (thrown? Exception (g/graph-spec->dictim invalid-edge-missing-dest-spec))))
+  
+  (testing "Wrong nodes type (string instead of vector) should fail"
+    (is (thrown? Exception (g/graph-spec->dictim wrong-nodes-type-spec))))
+  
+  (testing "Wrong node->key type (number instead of string/keyword) should fail"
+    (is (thrown? Exception (g/graph-spec->dictim wrong-node-key-type-spec)))))
+
+
+(deftest test-validation-error-messages
+  (testing "Validation errors contain helpful messages"
+    (let [error-msg (g/graph-spec-errors missing-nodes-spec)]
+      (is (string? error-msg))
+      (is (re-find #"Graph specification errors" error-msg)))
+    
+    (let [error-msg (g/graph-spec-errors wrong-edge-format-spec)]
+      (is (string? error-msg))
+      (is (re-find #"src.*dest" error-msg)))
+    
+    (let [error-msg (g/graph-spec-errors invalid-node-key-spec)]
+      (is (string? error-msg))
+      (is (re-find #"Graph specification errors" error-msg)))))
+
+
+;; Complex node-template validation tests
+
+(def valid-complex-node-template-spec
+  {"nodes" [{"id" "n1" "type" "service" "priority" 5}
+            {"id" "n2" "type" "database" "priority" 8}
+            {"id" "n3" "type" "service" "priority" 3}]
+   "node->key" "id"
+   "node-template" 
+   [;; Simple equality test
+    ["=" "type" "service"] {"style.fill" "blue"}
+    ;; Numeric comparison test  
+    [">" "priority" 7] {"style.stroke" "red"}
+    ;; Complex nested AND condition
+    ["and" 
+     ["=" "type" "service"]
+     ["<" "priority" 4]] {"class" "low-priority-service"}
+    ;; Complex nested OR condition
+    ["or"
+     ["=" "type" "database"] 
+     ["and" ["=" "type" "service"] [">" "priority" 6]]] {"style.border" "thick"}
+    ;; Deeply nested condition
+    ["and"
+     ["or" ["=" "type" "service"] ["=" "type" "api"]]
+     ["or" ["<" "priority" 3] [">" "priority" 9]]] {"class" "extreme-priority"}
+    ;; Catch-all else clause
+    "else" {"style.opacity" "0.8"}]})
+
+(def invalid-complex-node-template-spec
+  {"nodes" [{"id" "n1" "type" "service" "priority" 5}]
+   "node->key" "id" 
+   "node-template"
+   [;; This will cause an assertion error - keyword instead of string comparator
+    [:not-equal "type" "database"] {"style.fill" "green"}]})
+
+
+(deftest test-valid-complex-node-template
+  (testing "Complex node-template with nested conditions should validate and work"
+    (is (g/graph-spec valid-complex-node-template-spec))
+    (is (nil? (g/graph-spec-errors valid-complex-node-template-spec)))
+    (is (g/graph-spec->dictim valid-complex-node-template-spec))))
+
+
+(deftest test-invalid-complex-node-template  
+  (testing "Invalid node-template should pass schema validation but fail at processing"
+    ;; Malli schema validation passes (simplified template validation)
+    (is (g/graph-spec invalid-complex-node-template-spec))
+    (is (nil? (g/graph-spec-errors invalid-complex-node-template-spec)))
+    ;; But graph-spec->dictim should fail due to invalid template structure
+    (is (thrown-with-msg? AssertionError #"valid test" 
+                          (g/graph-spec->dictim invalid-complex-node-template-spec)))))
