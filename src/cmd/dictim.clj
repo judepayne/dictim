@@ -29,7 +29,7 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :cw :image :d :layout :theme :scale :sketch :pad :center :dark-theme :animate-interval :iw :parse :keywordize :j :m :pw :stringify :apply-tmp :aw :template :output :graph :gw :flatten :build :validate :r :version :help]})))
+  (cli/format-opts (merge spec {:order [:compile :cw :image :d :layout :theme :scale :sketch :pad :center :dark-theme :animate-interval :iw :parse :keywordize :j :m :pw :stringify :apply-tmp :aw :template :output :graph :gw :giw :flatten :build :validate :r :version :help]})))
 
 
 (def compile-help
@@ -101,7 +101,10 @@ applies a dictim template specified via the
 -j and -m options are also available.
 
 graph may be used with watch (--watch/ -w) in which
-case, the watched file will be recompiled whenever it changes.")
+case, the watched file will be recompiled whenever it changes.
+
+Can also be used with (--image/ -i) in which case, an
+image is either served (no --output specified) or written to disk.")
 
 
 (def flatten-help
@@ -160,7 +163,8 @@ can be used with the -j and -m options.")
              :alias :o}
     :graph {:desc graph-help
             :alias :g}
-    :gw {:desc "Shorthand for -g -w (graph spec and watch)\n​"}
+    :gw {:desc "Shorthand for -g -w (graph spec and watch)\n"}
+    :giw {:desc "shorthand for -g -i -w (graph spec, watch and generate image\n​"}
     :flatten {:desc flatten-help
               :alias :f}
     :build {:desc build-help
@@ -367,36 +371,84 @@ can be used with the -j and -m options.")
      out
      (str "d2 engine error: "(format-error d2 err)))))
 
+;; Extract common d2 option processing
+(defn- extract-d2-opts [opts]
+  (let [layout (or (:layout opts) (:l opts))
+        theme (or (:theme opts) (:th opts))
+        dark-theme (:dark-theme opts)
+        sketch (:sketch opts)
+        pad (:pad opts)
+        center (:center opts)
+        animate-interval (:animate-interval opts)
+        scale (or (:scale opts) (:s opts))]
+    (cond-> nil
+      layout (assoc :layout layout)
+      theme  (assoc :theme theme)
+      scale  (assoc :scale scale)
+      dark-theme (assoc :dark-theme dark-theme)
+      sketch (assoc :sketch sketch)
+      pad (assoc :pad pad)
+      center (assoc :center center)
+      animate-interval (assoc :animate-interval animate-interval))))
 
-(defn transform
-   "Transforms dictim data to HTML for browser serving.
-    
-    Takes dictim file contents (and optionally template contents), compiles to d2,
-    renders to SVG via d2, and wraps in HTML for live serving in the browser.
-    
-    Args:
-      debug? - when true, shows the intermediate d2 code in the browser
-      d2-opts - options passed to d2 (layout, theme, scale, etc.)
-      file-contents - string containing dictim data (JSON or EDN)
-      template-contents - optional string containing template data
-      
-    Returns:
-      HTML string containing the SVG diagram (and debug info if enabled)
-      or error message string if transformation fails"
+
+;; Generic transform base that handles the common pipeline
+(defn transform-base
+  "Base transformation: data → dictim → d2 → SVG → HTML
+
+  Takes a prepare-dictim-fn that handles data-specific processing:
+  (fn [data template d2-opts] -> [final-dictim final-d2-opts])"
+  [prepare-dictim-fn debug? d2-opts file-contents template-contents]
+  (try
+    (let [[_ data] (read-data file-contents)
+          [_ tmp] (when template-contents (read-data template-contents))
+          [dict final-d2-opts] (prepare-dictim-fn data tmp d2-opts)
+          d2 (compile-fn dict)]
+      (html [:div (d2->svg d2 final-d2-opts)]
+            [:div (when debug? (str "<b>d2:</b><br>" (str/replace d2 #"\n" "<br>")))]))
+    (catch Exception ex
+      (.getMessage ex))))
+
+
+;; Specialized transform functions
+(defn transform 
   ([debug? d2-opts file-contents]
    (transform debug? d2-opts file-contents nil))
-  
   ([debug? d2-opts file-contents template-contents]
-   (try
-     (let [[_ dict] (read-data file-contents)
-           [_ tmp] (when template-contents (read-data template-contents))
-           d2-opts (if template-contents (dissoc d2-opts :layout :theme) d2-opts)
-           dict (if template-contents (apply-dictim-template dict tmp) dict)
-           d2 (compile-fn dict)]
-       (html [:div (d2->svg d2 d2-opts)]
-             [:div (when debug? (str "<b>d2:</b><br>" (str/replace d2 #"\n" "<br>")))]))
-     (catch Exception ex
-       (.getMessage ex)))))
+   (transform-base
+     (fn [dict tmp d2-opts]
+       (let [final-dict (if tmp (apply-dictim-template dict tmp) dict)
+             final-d2-opts (if tmp (dissoc d2-opts :layout :theme) d2-opts)]
+         [final-dict final-d2-opts]))
+     debug? d2-opts file-contents template-contents)))
+
+(defn graph-transform 
+  ([debug? d2-opts file-contents]
+   (graph-transform debug? d2-opts file-contents nil))
+  ([debug? d2-opts file-contents template-contents]
+   (transform-base
+     (fn [grph tmp d2-opts]
+       (let [final-grph (if tmp (merge grph tmp) grph)
+             dict (g/graph-spec->dictim final-grph)]
+         [dict d2-opts]))
+     debug? d2-opts file-contents template-contents)))
+
+;; Generic image watch that works with any transform function
+(defn- generic-image-watch [transform-fn opts]
+  (let [file (or (:watch opts) (:w opts))
+        template (or (:template opts) (:t opts))
+        debug? (or (:d opts) false)
+        d2-opts (extract-d2-opts opts)]
+    (cond
+      (and template (fs/exists? template) (fs/exists? file) (installed? path-to-d2))
+      (serve/start (partial transform-fn debug? d2-opts) file template)
+
+      (and (fs/exists? file) (installed? path-to-d2))
+      (serve/start (partial transform-fn debug? d2-opts) file)
+
+      (fs/exists? file) (exception "d2 does not appear to be installed on your path.")
+
+      :else (exception "File does not exist"))))
 
 
 (defn- parse-print [opts dict]
@@ -453,36 +505,7 @@ can be used with the -j and -m options.")
 
 
 (defn- image-watch [opts]
-  (let [file (or (:watch opts) (:w opts))
-        layout (or (:layout opts) (:l opts))
-        theme (or (:theme opts) (:th opts))
-        dark-theme (:dark-theme opts)
-        sketch (:sketch opts)
-        pad (:pad opts)
-        center (:center opts)
-        animate-interval (:animate-interval opts)
-        template (or (:template opts) (:t opts))
-        scale (or (:scale opts) (:s opts))
-        debug? (or (:d opts) false)
-        d2-opts (cond-> nil
-                  layout (assoc :layout layout)
-                  theme  (assoc :theme theme)
-                  scale  (assoc :scale scale)
-                  dark-theme (:dark-theme opts)
-                  sketch (:sketch opts)
-                  pad (:pad opts)
-                  center (:center opts)
-                  animate-interval (:animate-interval opts))]
-    (cond
-      (and template (fs/exists? template) (fs/exists? file) (installed? path-to-d2))
-      (serve/start (partial transform debug? d2-opts) file template)
-      
-      (and (fs/exists? file) (installed? path-to-d2))
-      (serve/start (partial transform debug? d2-opts) file)
-
-      (fs/exists? file) (exception "d2 does not appear to be installed on your path.")
-      
-      :else (exception "File does not exist"))))
+    (generic-image-watch transform opts))
 
 
 (defn- image-impl [opts in]
@@ -528,6 +551,31 @@ can be used with the -j and -m options.")
     (fw/add-watch path f)
     (when tmp-path (fw/add-watch tmp-path f))
     @(promise)))
+
+
+(defn- graph-image-watch [opts]
+    (generic-image-watch graph-transform opts))
+
+
+(defn- graph-image-impl [opts in]
+  (when-not (installed? path-to-d2)
+    (exception "d2 does not appear to be installed on your path."))
+  (let [[_ grph] (read-data in)
+        template-file (or (:template opts) (:t opts))
+        template (when template-file (second (read-data (slurp template-file))))
+        grph (if template (merge grph template) grph)
+        dict (g/graph-spec->dictim grph)
+        d2 (compile-fn dict)
+        d2-opts (extract-d2-opts opts)]
+    (d2->svg d2 d2-opts)))
+
+
+(defn- graph-image [opts]
+  (let [svg (graph-image-impl opts (handle-in (or (:graph opts) (:g opts))))
+        output-file (or (:output opts) (:o opts))]
+    (if output-file
+      (spit output-file svg)
+      (println svg))))
 
 
 (defn- graph-impl [opts in]
@@ -686,6 +734,14 @@ can be used with the -j and -m options.")
         (:gw opts)
         (graph-watch (assoc opts :g true :w (:gw opts)))
 
+        (:giw opts)
+        (do (graph-image-watch (assoc opts :g true :i true :w (:giw opts))) @(promise))
+
+        (and (or (:graph opts) (:g opts))
+             (or (:image opts) (:i opts))
+             (or (:watch opts) (:w opts)))
+        (do (graph-image-watch opts) @(promise))
+
         (and (or (:graph opts) (:g opts))
              (or (:watch opts) (:w opts)))
         (graph-watch opts)
@@ -698,9 +754,7 @@ can be used with the -j and -m options.")
              (or (:watch opts) (:w opts)))
         (do (image-watch opts) @(promise))
 
-        (or (:image opts) (:i opts))
-        (image opts)
-        
+
         (or (:compile opts) (:c opts))
         (compile opts)
 
@@ -718,8 +772,15 @@ can be used with the -j and -m options.")
         (or (:apply-tmp opts) (:a opts))
         (apply-template opts)
 
+        (and (or (:graph opts) (:g opts))
+             (or (:image opts) (:i opts)))
+        (graph-image opts)
+
         (or (:graph opts) (:g opts))
         (graph opts)
+
+        (or (:image opts) (:i opts))
+        (image opts)
 
         (or (:flatten opts) (:f opts))
         (flatten* opts)

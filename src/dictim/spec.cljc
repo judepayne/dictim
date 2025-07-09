@@ -131,7 +131,7 @@
     [:container-template {:optional true} test-clauses]
     [:node->container {:optional true} node->container]
     [:container->data {:optional true} container->data]
-    [:template {:optonal true} test-clauses]
+    [:template {:optional true} test-clauses]
     [:directives {:optional true} directives]]
 
    [:fn {:error/message "node->key must exist in every node"}
