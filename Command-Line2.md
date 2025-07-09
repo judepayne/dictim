@@ -174,6 +174,65 @@ dict -i -t corporate.edn < system-data.json -o branded.svg
 dict -a -t corporate.edn existing.d2 | d2 - styled.svg
 ```
 
+### Working with Graphspecs
+
+Graphspecs are dictim's high-level format for expressing complex systems as structured data. Unlike regular dictim data, graphspecs preserve the full richness of your original data for longer in processing pipeline, so that you can set up styling rules with templates (for example):
+
+**Why use graphspecs?**
+
+Graphspecs work on complete data representations for nodes and edges, whereas converting directly to dictim often loses information during the transformation. This richer data model enables powerful processing features:
+
+- **Node templates** can access all node properties for conditional styling
+- **Edge templates** ditto
+- **Container mapping** can organize nodes into clusters based on any data field
+- **Better separation** between your data structure and its visual representation
+
+Graphspecs are particularly valuable when you're generating diagrams programmatically from databases, APIs, or other data sources that will be processed repeatedly.
+
+**Example graphspec (system.json):**
+```json
+{
+  "nodes": [
+    {"id": "app1", "name": "Web Service", "dept": "Engineering", "cost": 15000},
+    {"id": "app2", "name": "Database", "dept": "Infrastructure", "cost": 8000},
+    {"id": "app3", "name": "Cache", "dept": "Infrastructure", "cost": 3000}
+  ],
+  "edges": [
+    {"src": "app1", "dest": "app2", "data-type": "SQL queries", "frequency": "high"},
+    {"src": "app1", "dest": "app3", "data-type": "cache requests", "frequency": "medium"}
+  ],
+  "node->key": "id",
+  "node->container": "dept",
+  "node-template": [
+    [">", "cost", 10000], {"style.fill": "'red'"},
+    ["=", "dept", "Engineering"], {"style.fill": "'blue'"}
+  ],
+  "edge-template": [
+    ["=", "frequency", "high"], {"style.stroke-width": "3"}
+  ]
+}
+```
+
+**Convert to dictim and render:**
+```bash
+# Process graphspec to structured dictim
+dict -g < system.json -o system.edn
+
+# Render to diagram
+dict -i < system.edn -o system.svg
+
+# Or combine with templates
+dict -g -t corporate.edn < system.json -o styled-system.edn
+```
+
+**With watch mode for development:**
+```bash
+# Watch graphspec and template files
+dict -gw system.json -t corporate.edn -o system.edn
+```
+
+This workflow excels when building dashboards, documentation systems, or any scenario where diagrams are generated from live data sources.
+
 ### Live Development with Watch Mode
 
 Perfect for iterative diagram development:
@@ -212,7 +271,9 @@ dict -iw diagram.edn --layout elk --theme 2 --scale 1.5
 | `--parse` | `-p` | Convert D2 to structured data | `dict -p < diagram.d2` |
 | `--apply-tmp` | `-a` | Apply template to D2 | `dict -a -t style.edn < diagram.d2` |
 
+
 ### Bundled Options
+
 
 | Command | Description | Equivalent | Example |
 |---------|-------------|------------|---------|
@@ -220,6 +281,7 @@ dict -iw diagram.edn --layout elk --theme 2 --scale 1.5
 | `-pw` | Shorthand for `-p -w` (parse and watch) | `-p -w` | `dict -pw diagram.d2 -o output.edn` |
 | `-iw` | Shorthand for `-i -w` (image and watch) | `-i -w` | `dict -iw data.edn -o output.svg # (the -o can be ommitted)`|
 | `-aw` | Shorthand for `-a -w` (apply template and watch) | `-a -w` | `dict -aw diagram.d2 -t styles.edn -o output.d2` |
+| `-gw` | Shorthand for `-g -w` (graph spec and watch) | `-g -w` | `dict -gw graphspec.json -t styles.edn -o output.edn` |
 
 > **Note:** For `-iw`, the `-o` flag can be omitted. When omitted, an SVG file with the same name as the input file will be created.
 
@@ -427,6 +489,20 @@ dict -val < data.edn
 
 # Parse and reformat to check structure
 dict -p -j -m diagram.d2
+```
+
+**Validation errors:**
+```bash
+# Templates and graphspecs are validated in detail when they are used:
+dict -g < invalid-graphspec.json  # Shows specific validation failures
+dict -i -t invalid-template.edn < data.json  # Shows template validation errors
+```
+
+You can validate dictim data before processing it:
+
+```bash
+# Validate data before processing
+dict -val < data.edn
 ```
 
 **Template debugging:**

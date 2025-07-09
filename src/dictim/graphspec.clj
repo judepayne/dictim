@@ -3,130 +3,9 @@
             [dictim.tests :as t]
             [dictim.utils :refer [error]]
             [dictim.template :as tm]
-            [malli.core :as m]
-            [malli.error :as me])
+            [dictim.validate :as v]
+            [dictim.spec :as spec])
   (:refer-clojure :exclude [comparator test]))
-
-
-;; *****************************************
-;; *            validation                 *
-;; *****************************************
-
-(def keys-to-keywordize #{"src" "dest" "nodes" "edges" "node->key" "node-template" "edge-template"
-                          "node->container" "container->parent" "container-template" "container->data"})
-
-(def vals-to-vector #{:nodes :edges :node-template :container-template :edge-template})
-
-(defn keywordize-select-keys
-  [m keys-to-keywordize]
-  (letfn
-      [(walk [x]
-         (cond
-           (map? x)
-           (into {}
-                 (map (fn [[k v]]
-                        (let [k' (if (and (string? k) (contains? keys-to-keywordize k))
-                                   (keyword k)
-                                   k)
-                              v' (if (contains? vals-to-vector k')
-                                   (into [] v)
-                                   v)]
-                          [k' (walk v')]))
-                      x))
-
-           (sequential? x)
-           (mapv walk x)
-
-           :else x))]
-      (walk m)))
-
-
-(defn normalize
-  "keywordizes selected keys to make spec definition simpler"
-  [graph-spec]
-  (keywordize-select-keys graph-spec keys-to-keywordize))
-
-
-(def kstr [:or :string :keyword])
-
-(def node [:map-of :any :any])
-
-(def edge
-  [:and
-   [:map-of :any :any] ; open map with any extra fields
-   [:fn {:error/message "edge must contain :src and :dest keys"}
-    (fn [m]
-      (and (contains? m :src)
-           (contains? m :dest)))]])
-
-(def node->key kstr)
-
-(def test
-  [:fn {:error/fn (fn [{:keys [value]} _] (str value " is an invalid test"))}
-   t/valid-test?])
-
-(def attr-map
-  [:map-of :any :any])  ;; permissive
-
-(def test-clauses
-  [:+ [:cat test attr-map]])
-
-(def node->container kstr)
-
-(def container->parent [:map-of :any :any])
-
-(def container->data [:map-of :any :any])
-
-
-(def ^{:private true} gs
-  [:and
-   [:map
-    [:node->key kstr]
-    [:nodes [:sequential node]]
-    [:edges {:optional true} [:sequential edge]]
-    [:node-template {:optional true} test-clauses]
-    [:edge-template {:optional true} test-clauses]
-    [:container-template {:optional true} test-clauses]
-    [:node->container {:optional true} node->container]
-    [:container->data {:optional true} container->data]]
-
-   [:fn {:error/message "node->key must exist in every node"}
-    (fn [{:keys [nodes node->key]}]
-      (every? #(contains? % node->key) nodes))]])
-
-
-(def graph-spec (m/validator gs))
-
-
-(defn- -graph-spec-errors
-  "Returns validation errors in easy to read form."
-  [spec]
-  (me/humanize (m/explain gs spec)))
-
-
-(defn graph-spec-errors
-  "Returns a formatted string of validation errors for command line display."
-  [spec]
-  (when-let [errors (-graph-spec-errors spec)]
-    (let [format-error-list (fn [errors]
-                              (if (vector? errors)
-                                (clojure.string/join "; " errors)
-                                (str errors)))
-          error-lines (for [[field field-errors] errors]
-                        (cond
-                          (= field :malli/error)
-                          (str "Validation: " (format-error-list field-errors))
-                          
-                          (keyword? field)
-                          (str (name field) ": " (format-error-list field-errors))
-                          
-                          :else
-                          (str field ": " (format-error-list field-errors))))]
-      (str "Graph specification errors:\n"
-           (clojure.string/join "\n" 
-                                (map #(str "  • " %) error-lines))))))
-
-
 
 ;; *****************************************
 ;; *                Specs                  *
@@ -191,7 +70,14 @@
      :template a default dictim template to be applied to the dictim (i.e. after
        node-template, edge-template & container-template have been applied *during*
        the formation of the dictim). attributes set by those templates are not
-       overridden by the application of :template
+       overridden by the application of :template. A template applied to the resultant
+       dicitm is a very different beast to applied as a node-template or edge-template
+       since it no longer has the full data descriptions in nodes and edges available
+       to it. A template therefore might look like this:
+       :template [[\"and\" [\"=\" \"element-type\" \"shape\"]
+                           [\"matches\" \"label\" \"S.+\"]]
+                 {:class \"lemony\"}]
+       quite is quite different to the below :node-template example
 
    This function makes no assumptions about whether the of the diagram spec are strings
    or keywords (both work). Similarly keywords and strings both work in specifying the
@@ -221,12 +107,10 @@
    All nodes, edges and containers (specified by :container->data) are arbitrary (nested) maps.
    The key names: 'key' 'label' 'attrs' 'children' 'keys' & 'element-type' must be avoided
    as they are reserved for dictim elements."
-  [spec & {:keys [validate?] :or {validate? true}}]
+  [spec & {:keys [validate? output-format] :or {validate? true output-format :d2}}]
 
   (when validate?
-    (let [spec (normalize spec)]
-      (when (not (graph-spec spec))
-        (throw (ex-info (graph-spec-errors spec) {})))))
+    (spec/validate-graphspec spec output-format))
 
   (let [nodes (get* spec :nodes)
         edges (get* spec :edges)

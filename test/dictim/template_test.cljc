@@ -173,3 +173,9 @@
     (is (true? (tests/test-elem ["=" :a "sky"] m)))
     (is (true? (tests/test-elem ["contains" :b 2] m)))
     (is (true? (tests/test-elem [">" :c 3] m)))))
+
+
+(def invalid-template1
+  '(["and" ["=" "element-type" "shape"]
+     ["or" ["=" "key" "app14181"] ["=" "key" "app14027"]]] {:class "lemony"}
+    ["and" ["=" "element-type" "shape"]] {:style {:fill "'#f7f6f5'"}}))

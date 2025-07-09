@@ -1,3 +1,20 @@
+    # 0.9.1
+    - new readme to focus project as CLI first, Clojure library second
+	- renamed CLI to 'dict' rather than 'dictim'
+	- added validation for graphspecs and templates
+	- extenesive improvements/ rationalization of CLI functionality
+	- Fixed all errors with CLI - better exception handling. Aim to be complete
+	- With the --image option added d2 passthroughs: pad, center, dark-theme, sketch & animate-interval
+	- New command-line.md reference page for the wiki, replacing old
+	- Added WindowsARM64 support for CLI
+	TODO
+	- Add -i flags to graphspec
+	- Rewrite dictim syntax page - polish
+	- Rearrange wiki, breaking into general, CLI related and Clojure library related.
+	- Check all links on documentation pages, ensure they're real
+	- add a real example to readme calling some public api that we can diagram
+	- bump version and go through all checks.
+	
     # 0.9.0.4
 	- compatibility with d2 v0.7.0
 	- `suspend/unsuspend`

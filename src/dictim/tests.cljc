@@ -221,20 +221,24 @@
    *elem* may be either a dictim element or a map."
   [test]
   (let [[comparator accessor v] test
-        v-found (if-let [f (get accessors accessor)]  ;; dictim element
+        v-found (if-let [f (get accessors accessor)] ;; dictim element
                   (f *elem*)
                   (if (vector? accessor)
                     (get-in *elem* accessor) ;; assume a nested map                    
-                    (get *elem* accessor))) ;; assume a map
+                    (get *elem* accessor)))  ;; assume a map
         comp (get comparators comparator (constantly nil))]
     (cond
       (contains? #{"contains" "doesnt-contain"} comparator)
       (if (sequential? v-found)
         (comp #(= v %) v-found)
         (throw (error (str "contains/ doesnt-contain can only be used on sequential"
-                           " items in test: " test))))
+                           " items in test: " test ". Failed on element: " *elem*))))
       
-      :else (comp v-found v))))
+      :else (try
+              (comp v-found v)
+              (catch Exception ex
+                (throw (error (str "This test " test " error'd when applied to this element: "
+                                   *elem*))))))))
 
 
 (defn- or* [forms]

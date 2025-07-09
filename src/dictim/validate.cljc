@@ -17,6 +17,15 @@
 (def ^:dynamic ^:private output nil)
 
 
+;; a dynamic var to hold the validation context
+(def ^:dynamic ^:private validation-context nil)
+
+
+;; validation rules, keyed off the validtion context
+(def ^:private validation-context-rules
+  {})  ;;no rules in this namespace at present
+
+
 ;; a dynamic var to whether we are inside a d2 'style'.
 (def ^:dynamic ^:private in-style? false)
 
@@ -169,13 +178,13 @@
             (and (map? v)
                  (atd2/key? k))    (let [elem (peek @elem-q)]
                  (when (atd2/in-context? k ctx elem)
-                   (and (atd2/validate-attrs elem k (keys v))
+                   (and (atd2/validate-attrs elem k (keys v) validation-context)
                         (binding [*non-d2-pre?* false]
                           (every? #(valid-d2-attr? % (conj ctx k)) v)))))
             
             (atd2/key? k)      (let [elem (peek @elem-q)]
                                  (when (atd2/in-context? k ctx elem)
-                                   (atd2/validate-attr elem k v)))
+                                   (atd2/validate-attr elem k v validation-context)))
 
             
             (and *non-d2-pre?*
@@ -325,14 +334,27 @@
                       v)))))
 
 
+(defn valid-attrs?
+  "validates attrs"
+  ([attrs output-format] (valid-attrs? attrs output-format nil))
+  ([attrs output-format val-ctx]
+   {:pre [(contains? #{:d2 :dot} output-format)]}
+
+   (binding [validation-context val-ctx
+             output output-format]
+     (valid? attrs))))
+
+
 (defn all-valid?
   "Validates a collection of dictim elements.
    Throws an error at the first non valid element. Returns nil
    if all elements pass validation.
    output-format is either :d2 or :dot"
-  [elems output-format]
-  {:pre [(contains? #{:d2 :dot} output-format)]}
+  ([elems output-format] (all-valid? elems output-format nil))
+  ([elems output-format val-ctx]
+   {:pre [(contains? #{:d2 :dot} output-format)]}
 
-  (binding [output output-format]
-    (and (seq elems)
-         (every? valid? elems))))
+   (binding [validation-context val-ctx
+             output output-format]
+     (and (seq elems)
+          (every? valid? elems)))))

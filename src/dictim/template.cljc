@@ -4,7 +4,8 @@
     dictim.template
   (:require [dictim.utils :as utils :refer [elem-type elements?]]
             [clojure.string :as str]
-            [dictim.tests :as tests])
+            [dictim.tests :as tests]
+            [dictim.spec :as spec])
   (:refer-clojure :exclude [key keys test]))
 
 
@@ -85,8 +86,12 @@
    directives is a map of attrs to be added at the top level e.g. `{\"classes\"...}`
    If there are directives in the original dict, the new directives will be merge over them
    if merge? is true, otherwise they will be overwritten."
-  [dict {:keys [template directives merge? new-priority? all-matching-clauses?]
-           :or {merge? false new-priority? true all-matching-clauses? false}}]
+  [dict {:keys [template directives merge? new-priority? all-matching-clauses? validate? output-format]
+           :or {merge? false new-priority? true all-matching-clauses? false validate? true output-format :d2}}]
+
+  (when (and validate? template (not (fn? template)))
+    (spec/validate-template template output-format))
+  
   (let [attrs-fn (if (fn? template)
                    template
                    (if all-matching-clauses? (tests/test-fn-merge template) (tests/test-fn template)))

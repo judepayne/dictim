@@ -59,6 +59,8 @@ scoop bucket add judepayne https://github.com/judepayne/scoop-judepayne
 scoop install dictim
 ```
 
+Note: d2 is installed as a dependency by Homebrew, but is not available on Scoop, so please install it as per the [instructions](https://github.com/terrastruct/d2/blob/master/docs/INSTALL.md).
+
 **Linux/Manual Installation**
 ```bash
 # Download from releases (amd64)
@@ -357,6 +359,7 @@ dict -i -t corporate-styles.edn < system.edn -o branded-diagram.svg
 | `-h, --help` | Display help information | `dict --help` |
 
 **Bundled Options:**
+
 | Command | Description | Equivalent |
 |---------|-------------|------------|
 | `-cw` | Compile and watch | `-c -w` |

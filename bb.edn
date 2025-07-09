@@ -1,6 +1,7 @@
 {:paths ["src" "resources"]
  :deps {io.github.babashka/instaparse-bb {:git/sha "059045f6a8450bda74eb30136ddd2c5475f788d1"}
-        io.github.judepayne/dictim.graph {:git/tag "0.1.5" :git/sha "67f4507"}}
+        io.github.judepayne/dictim.graph {:git/tag "0.1.5" :git/sha "67f4507"}
+        metosin/malli                    {:mvn/version "0.19.1"}}
  :tasks
  {test:bb {:extra-paths ["test"]
            :extra-deps {io.github.cognitect-labs/test-runner
@@ -32,5 +33,6 @@
                                        "src/dictim/tests.cljc"
                                        "src/dictim/template.cljc"
                                        "src/dictim/graphspec.clj"
-                                       "src/dictim/walk.cljc"]}}
+                                       "src/dictim/walk.cljc"
+                                       "src/dictim/spec.cljc"]}}
   uber (clojure "-T:build uber")}}

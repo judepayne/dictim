@@ -321,6 +321,33 @@
 
 ;; ********* Validation *************
 
+;; *** Validation contexts **
+;; validation context are 'overrides' to the normal per attribute
+;; validation-fn, to be used when the context is different
+(defn nested-strings?
+    "Returns true if x is:
+     (i) a string (ii) vector/nested vector of strings, recursively"
+    [x]
+    (cond
+      (string? x)
+      true
+
+      (keyword? x)
+      true
+
+      (vector? x)
+      (every? nested-strings? x)
+
+      :else
+      false))
+
+
+(def validation-context-db
+  {:template ;; the template context
+   ;; templates have more powerful labels than normal d2 attrs. They can do string interpolation
+   {"label" {:validate-fn (fn [v] (nested-strings? v))}}})
+
+
 (defn- validation-error [k v elem]
   (let [d2key (->d2-key k)
         attr-name (d2-value d2key)
@@ -339,13 +366,17 @@
         (err (str "Unknown attribute: '" k "' in " elem))))))
 
 
-(defn- validation-fn [k]
-  (let [d2key (->d2-key k)]
-    (-> (get d2-attributes-db (d2-value d2key)) :validate-fn)))
+(defn- validation-fn [k ctx]
+  (let [d2key (d2-value (->d2-key k))]
+    (if-let [overrides (get (validation-context-db ctx) d2key)]
+      (or (:validate-fn overrides)
+          (-> (get d2-attributes-db d2key) :validate-fn))
+      
+      (-> (get d2-attributes-db d2key) :validate-fn))))
 
 
-(defn validate-attr [elem k v]
-  (if-let [f (validation-fn k)]
+(defn validate-attr [elem k v ctx]
+  (if-let [f (validation-fn k ctx)]
     (try
       (if (f v)
         true
@@ -355,7 +386,7 @@
     (validation-error k v elem)))
 
 
-(defn validate-attrs [elem k vs]
+(defn validate-attrs [elem k vs ctx]
   (if (= "style" k)
     ;; For style, validate that each key is a valid style attribute
     (every?
@@ -367,7 +398,7 @@
      vs)
     ;; For other attributes, use the original logic
     (every?
-     (fn [v] (validate-attr elem k v))
+     (fn [v] (validate-attr elem k v ctx))
      vs)))
 
 

@@ -321,6 +321,7 @@
      "data type: client master"]
     ["FO.Equities.app12874"
      "->"
+
      "2LOD.Finance.app12872"
      "data type: instructions"]
     ["FO.Securities.app12875"
@@ -411,50 +412,34 @@
     (is (thrown? Exception (g/graph-spec->dictim wrong-node-key-type-spec)))))
 
 
-(deftest test-validation-error-messages
-  (testing "Validation errors contain helpful messages"
-    (let [error-msg (g/graph-spec-errors missing-nodes-spec)]
-      (is (string? error-msg))
-      (is (re-find #"Graph specification errors" error-msg)))
-    
-    (let [error-msg (g/graph-spec-errors wrong-edge-format-spec)]
-      (is (string? error-msg))
-      (is (re-find #"missing required key" error-msg)))
-    
-    (let [error-msg (g/graph-spec-errors invalid-node-key-spec)]
-      (is (string? error-msg))
-      (is (re-find #"Graph specification errors" error-msg)))))
-
-
 ;; Complex node-template validation tests
 
 (def valid-complex-node-template-spec
-  (g/normalize
-   {"nodes" [{"id" "n1" "type" "service" "priority" 5}
-             {"id" "n2" "type" "database" "priority" 8}
-             {"id" "n3" "type" "service" "priority" 3}]
-    "node->key" "id"
-    "node-template" 
-    [ ;; Simple equality test
-     ["=" "type" "service"] {"style.fill" "blue"}
-     ;; Numeric comparison test  
-     [">" "priority" 7] {"style.stroke" "red"}
-     ;; Complex nested AND condition
-     ["and" 
-      ["=" "type" "service"]
-      ["<" "priority" 4]] {"class" "low-priority-service"}
-     ;; Complex nested OR condition
-     ["or"
-      ["=" "type" "database"] 
-      ["and" ["=" "type" "service"] [">" "priority" 6]]] {"style.border" "thick"}
-     ;; Deeply nested condition
-     ["and"
-      ["or" ["=" "type" "service"] ["=" "type" "api"]]
-      ["or" ["<" "priority" 3] [">" "priority" 9]]] {"class" "extreme-priority"}
-     ;; Catch-all else clause
-     "else" {"style.opacity" "0.8"}]}))
+  {"nodes" [{"id" "n1" "type" "service" "priority" 5}
+            {"id" "n2" "type" "database" "priority" 8}
+            {"id" "n3" "type" "service" "priority" 3}]
+   "node->key" "id"
+   "node-template" 
+   [ ;; Simple equality test
+    ["=" "type" "service"] {"style.fill" "blue"}
+    ;; Numeric comparison test  
+    [">" "priority" 7] {"style.stroke" "red"}
+    ;; Complex nested AND condition
+    ["and" 
+     ["=" "type" "service"]
+     ["<" "priority" 4]] {"class" "low-priority-service"}
+    ;; Complex nested OR condition
+    ["or"
+     ["=" "type" "database"] 
+     ["and" ["=" "type" "service"] [">" "priority" 6]]] {"style.stroke-width" 5}
+    ;; Deeply nested condition
+    ["and"
+     ["or" ["=" "type" "service"] ["=" "type" "api"]]
+     ["or" ["<" "priority" 3] [">" "priority" 9]]] {"class" "extreme-priority"}
+    ;; Catch-all else clause
+    "else" {"style.opacity" "0.8"}]})
 
 
 (deftest test-valid-complex-node-template
   (testing "Complex node-template with nested conditions should validate and work"
-    (is (g/graph-spec valid-complex-node-template-spec))))
+    (is (g/graph-spec->dictim valid-complex-node-template-spec))))
