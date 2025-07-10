@@ -177,7 +177,7 @@ can be used with the -j and -m options.")
               :desc "Returns the version of this command line tool."
               :alias :v}
     :help {:coerce :boolean
-           :desc "Displays this help."
+           :desc "Displays this help.\nhttps://github.com/judepayne/dictim for more."
            :alias :h}}
    :error-fn
    (fn [{:keys [spec type cause msg option]}]

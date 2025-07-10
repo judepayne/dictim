@@ -86,6 +86,13 @@ sudo mv dict-linux-arm64 /usr/local/bin/dict
 
 **Other Platforms**
 
+As a babashka uberjar with bbin, please see the [Wiki](https://github.com/judepayne/dictim/wiki) page.
+
+
+*or*
+
+download the appropriate release and put on your path.
+
 Check the [releases page](https://github.com/judepayne/dictim/releases/latest) if none of these options work for you.
 
 ### Your First Diagram
