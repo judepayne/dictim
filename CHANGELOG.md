@@ -8,7 +8,7 @@
 	- New command-line.md reference page for the wiki, replacing old
 	- Added WindowsARM64 support for CLI
     - Add -i flags to graphspec
-	- Rewrite dictim syntax page
+	- Rewrite dictim syntax wiki page
 	- Rearrange wiki, breaking into general, CLI related and Clojure library related.
     - Move to 3 digit version numbers from here on in!
 	

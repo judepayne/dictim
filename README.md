@@ -1,9 +1,14 @@
-<div style="text-align: center"><img src="img/dictim_banner.png" style="width: 700px;"></div>
+<div style="center">
 
-<div style="text-align: center">
-CI status [![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main) | Release [![Latest Release](https://img.shields.io/github/v/release/judepayne/dictim)](https://github.com/judepayne/dictim/releases) | License [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) | [Wiki](https://github.com/judepayne/dictim/wiki)
+<img src="img/dictim_banner.png" style="width: 900px;">
+
+[Wiki](https://github.com/judepayne/dictim/wiki)
+
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
+[![Latest Release](https://img.shields.io/github/v/release/judepayne/dictim)](https://github.com/judepayne/dictim/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) | 
+
 </div>
-
 
 # dictim
 
@@ -490,7 +495,7 @@ dict is built on the **dictim** Clojure library. If you're building Clojure appl
 
 ```clojure
 ;; deps.edn
-{:deps {io.github.judepayne/dictim {:git/tag "v0.9.0.4" :git/sha "831aad5"}}}
+{:deps {io.github.judepayne/dictim {:git/tag "0.9.1" :git/sha "08ff5b3"}}}
 ```
 
 **Example Use:**
