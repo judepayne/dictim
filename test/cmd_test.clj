@@ -156,6 +156,8 @@ ABC4 -> 1STR: rates trade data
         result (apply shell {:out :string :in (slurp input-path)} 
                       dictim-cmd cmd-parts)
         output (:out result)]
+    ;; Ensure outputs directory exists
+    (.mkdirs (io/file "test/cmd/outputs"))
     (spit output-path output)
     (assert (trim= output (slurp expected-path))
             (str "Test failed: " test-name))))
@@ -170,6 +172,8 @@ ABC4 -> 1STR: rates trade data
         result (apply shell {:out :string :in (slurp input-path)} 
                       dictim-cmd all-args)
         output (:out result)]
+    ;; Ensure outputs directory exists
+    (.mkdirs (io/file "test/cmd/outputs"))
     (spit output-path output)
     (assert (trim= output (slurp expected-path))
             (str "Test failed: " test-name))))
