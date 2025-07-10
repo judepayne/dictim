@@ -1,4 +1,4 @@
-<div style="center">
+<div align="center">
 
 <img src="img/dictim_banner.png" style="width: 950px;">
 
