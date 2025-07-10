@@ -8,6 +8,7 @@ release_notes.md
 target/
 sample*
 !test/dictim/d2/samples/
+!test/cmd/inputs/sample.d2
 bin/
 tmp*
 todo*
