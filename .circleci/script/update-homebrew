@@ -17,10 +17,10 @@ git config user.name "CircleCI"
 git config user.email "jude@judep.org"
 
 # Download release assets to calculate SHA256
-MACOS_ARM64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-macos-aarch64.zip"
-MACOS_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-macos-amd64.zip"  
-LINUX_ARM64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-linux-aarch64.zip"
-LINUX_AMD64_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-linux-amd64.zip"
+MACOS_ARM64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-macos-aarch64.zip"
+MACOS_AMD64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-macos-amd64.zip"  
+LINUX_ARM64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-linux-aarch64.zip"
+LINUX_AMD64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-linux-amd64.zip"
 
 # Calculate SHA256 hashes
 echo "Calculating SHA256 hashes..."

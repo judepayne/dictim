@@ -269,7 +269,24 @@ jobs:
           name: install dict via bbin
           command: |
             VERSION=$(cat resources/VERSION)
-            bbin install https://github.com/judepayne/dictim/releases/download/v$VERSION/dict.jar
+            echo "Installing dict.jar version: $VERSION"
+            echo "URL: https://github.com/judepayne/dictim/releases/download/$VERSION/dict.jar"
+            
+            # Wait a bit for GitHub to process the release
+            echo "Waiting 30 seconds for GitHub to process the release..."
+            sleep 30
+            
+            # Check if the file exists before trying to install
+            echo "Checking if dict.jar exists at the release URL..."
+            if curl -f -L -I "https://github.com/judepayne/dictim/releases/download/$VERSION/dict.jar"; then
+              echo "dict.jar found, proceeding with installation..."
+              bbin install https://github.com/judepayne/dictim/releases/download/$VERSION/dict.jar
+            else
+              echo "ERROR: dict.jar not found at release URL"
+              echo "Available releases:"
+              curl -s "https://api.github.com/repos/judepayne/dictim/releases" | jq -r '.[].tag_name' | head -5
+              exit 1
+            fi
       - run:
           name: run dictim command tests
           command: |

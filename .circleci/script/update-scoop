@@ -17,12 +17,12 @@ git config user.name "CircleCI"
 git config user.email "jude@judep.org"
 
 # Calculate SHA256 for Windows AMD64 binary
-WINDOWS_AMD64_ZIP_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-windows-amd64.zip"
+WINDOWS_AMD64_ZIP_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-windows-amd64.zip"
 echo "Calculating SHA256 for Windows AMD64 binary..."
 WINDOWS_AMD64_SHA256=$(curl -sL "$WINDOWS_AMD64_ZIP_URL" | sha256sum | cut -d' ' -f1)
 
 # Calculate SHA256 for Windows ARM64 binary
-WINDOWS_ARM64_ZIP_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-windows-arm64.zip"
+WINDOWS_ARM64_ZIP_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-windows-arm64.zip"
 echo "Calculating SHA256 for Windows ARM64 binary..."
 WINDOWS_ARM64_SHA256=$(curl -sL "$WINDOWS_ARM64_ZIP_URL" | sha256sum | cut -d' ' -f1)
 
@@ -49,10 +49,10 @@ cat > bucket/dictim.json << EOF
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/judepayne/dictim/releases/download/v\$version/dict-\$version-windows-amd64.zip"
+                "url": "https://github.com/judepayne/dictim/releases/download/\$version/dict-\$version-windows-amd64.zip"
             },
             "arm64": {
-                "url": "https://github.com/judepayne/dictim/releases/download/v\$version/dict-\$version-windows-arm64.zip"
+                "url": "https://github.com/judepayne/dictim/releases/download/\$version/dict-\$version-windows-arm64.zip"
             }
         }
     }
