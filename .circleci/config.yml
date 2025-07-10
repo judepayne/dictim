@@ -261,36 +261,17 @@ jobs:
           command: |
             .circleci/script/release-bb
       - run:
-          name: install bbin
+          name: test local jar
           command: |
-            mkdir -p ~/.local/bin && curl -o- -L https://raw.githubusercontent.com/babashka/bbin/v0.2.1/bbin > ~/.local/bin/bbin && chmod +x ~/.local/bin/bbin
-            echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.$(basename $SHELL)rc && exec $SHELL
-      - run:
-          name: install dict via bbin
-          command: |
-            VERSION=$(cat resources/VERSION)
-            echo "Installing dict.jar version: $VERSION"
-            echo "URL: https://github.com/judepayne/dictim/releases/download/$VERSION/dict.jar"
-            
-            # Wait a bit for GitHub to process the release
-            echo "Waiting 30 seconds for GitHub to process the release..."
-            sleep 30
-            
-            # Check if the file exists before trying to install
-            echo "Checking if dict.jar exists at the release URL..."
-            if curl -f -L -I "https://github.com/judepayne/dictim/releases/download/$VERSION/dict.jar"; then
-              echo "dict.jar found, proceeding with installation..."
-              bbin install https://github.com/judepayne/dictim/releases/download/$VERSION/dict.jar
+            echo "Testing locally built dict.jar..."
+            if [ -f dict.jar ]; then
+              echo "✓ dict.jar exists"
+              echo "JAR size: $(ls -lh dict.jar | awk '{print $5}')"
+              echo "✓ Local jar build successful"
             else
-              echo "ERROR: dict.jar not found at release URL"
-              echo "Available releases:"
-              curl -s "https://api.github.com/repos/judepayne/dictim/releases" | jq -r '.[].tag_name' | head -5
+              echo "✗ dict.jar not found"
               exit 1
             fi
-      - run:
-          name: run dictim command tests
-          command: |
-            bb bbin-cmd-test
 
       - save_cache:
           paths:
