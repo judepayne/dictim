@@ -487,12 +487,12 @@ workflows:
   test-and-release-on-main:
     jobs:
       - test
-      # - mac:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
+      - mac:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
       # - linux:
       #     requires:
       #       - test
