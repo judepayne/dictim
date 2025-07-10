@@ -493,55 +493,55 @@ workflows:
           filters:
             branches:
               only: main
-      # - linux:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - linux-aarch64:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - windows:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - windows-arm64:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - release-bb:
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only: main
-      # - update-homebrew:
-      #     requires:
-      #       - mac
-      #       - linux
-      #       - linux-aarch64
-      #       - windows
-      #       - windows-arm64
-      #       - release-bb
-      #     filters:
-      #       branches:
-      #         only: main
-      # - update-scoop:
-      #     requires:
-      #       - mac
-      #       - linux
-      #       - linux-aarch64
-      #       - windows
-      #       - windows-arm64
-      #       - release-bb
-      #     filters:
-      #       branches:
-      #         only: main
+      - linux:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - linux-aarch64:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - windows:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - windows-arm64:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - release-bb:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - update-homebrew:
+          requires:
+            - mac
+            - linux
+            - linux-aarch64
+            - windows
+            - windows-arm64
+            - release-bb
+          filters:
+            branches:
+              only: main
+      - update-scoop:
+          requires:
+            - mac
+            - linux
+            - linux-aarch64
+            - windows
+            - windows-arm64
+            - release-bb
+          filters:
+            branches:
+              only: main
