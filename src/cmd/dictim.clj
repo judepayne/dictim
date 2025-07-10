@@ -230,25 +230,24 @@ can be used with the -j and -m options.")
           (catch Exception _ false)))))
 
 
-(defn- stdin-has-data? []
-  "Check if stdin has data available without blocking"
-  (try
-    (let [available (.available System/in)]
-      (> available 0))
-    (catch Exception _ false)))
+;; removed as much causing stdin to be read in a non blocking fashion, which is
+;; fine for files, but not useful behaviour when waiting for data from an api (for ex.)
+#_(defn- stdin-has-data? []
+    "Check if stdin has data available without blocking"
+    (try
+      (let [available (.available System/in)]
+        (> available 0))
+      (catch Exception _ false)))
 
 
 (defn- handle-in [arg]
   (cond
-    (true? arg)
-    (if (stdin-has-data?)
-      (slurp *in*)
-      (exception (str "This command requires input data.\n"
-                      "Use: command < file.edn -or- command <the-data>")))
-
     (looks-like-filename? arg)
     (exception (str "It looks like you're trying to pass a filename '" arg "'.\n"
                     "Use stdin redirection instead: Put '<' in front of the filename."))
+
+    (true? arg)   (slurp *in*)
+
 
     :else arg))
 

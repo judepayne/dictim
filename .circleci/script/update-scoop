@@ -16,31 +16,52 @@ cd /tmp/scoop-judepayne
 git config user.name "CircleCI"
 git config user.email "jude@judep.org"
 
-# Calculate SHA256 for Windows binary
-WINDOWS_EXE_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-windows-amd64.exe"
-echo "Calculating SHA256 for Windows binary..."
-WINDOWS_SHA256=$(curl -sL "$WINDOWS_EXE_URL" | sha256sum | cut -d' ' -f1)
+# Calculate SHA256 for Windows AMD64 binary
+WINDOWS_AMD64_ZIP_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-windows-amd64.zip"
+echo "Calculating SHA256 for Windows AMD64 binary..."
+WINDOWS_AMD64_SHA256=$(curl -sL "$WINDOWS_AMD64_ZIP_URL" | sha256sum | cut -d' ' -f1)
 
-# Update the manifest
+# Calculate SHA256 for Windows ARM64 binary
+WINDOWS_ARM64_ZIP_URL="$REPO_URL/releases/download/v$VERSION/dict-$VERSION-windows-arm64.zip"
+echo "Calculating SHA256 for Windows ARM64 binary..."
+WINDOWS_ARM64_SHA256=$(curl -sL "$WINDOWS_ARM64_ZIP_URL" | sha256sum | cut -d' ' -f1)
+
+# Update the manifest with dual architecture support
 cat > bucket/dictim.json << EOF
 {
     "version": "$VERSION",
     "description": "Diagram-as-data library for converting between dictim syntax and D2 formats",
     "homepage": "https://github.com/judepayne/dictim",
     "license": "MIT",
-    "url": "$WINDOWS_EXE_URL",
-    "hash": "sha256:$WINDOWS_SHA256",
-    "bin": "dict.exe",
+    "architecture": {
+        "64bit": {
+            "url": "$WINDOWS_AMD64_ZIP_URL",
+            "hash": "sha256:$WINDOWS_AMD64_SHA256",
+            "bin": "dict.exe"
+        },
+        "arm64": {
+            "url": "$WINDOWS_ARM64_ZIP_URL",
+            "hash": "sha256:$WINDOWS_ARM64_SHA256",
+            "bin": "dict-arm64.exe"
+        }
+    },
     "checkver": "github",
     "autoupdate": {
-        "url": "https://github.com/judepayne/dictim/releases/download/v\$version/dict-\$version-windows-amd64.exe"
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/judepayne/dictim/releases/download/v\$version/dict-\$version-windows-amd64.zip"
+            },
+            "arm64": {
+                "url": "https://github.com/judepayne/dictim/releases/download/v\$version/dict-\$version-windows-arm64.zip"
+            }
+        }
     }
 }
 EOF
 
 # Commit and push changes
 git add bucket/dictim.json
-git commit -m "Update dict to version $VERSION"
+git commit -m "Update dict to version $VERSION with dual architecture support"
 git push origin main
 
 echo "Scoop bucket updated successfully!"

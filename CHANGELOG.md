@@ -7,13 +7,10 @@
 	- With the --image option added d2 passthroughs: pad, center, dark-theme, sketch & animate-interval
 	- New command-line.md reference page for the wiki, replacing old
 	- Added WindowsARM64 support for CLI
-	TODO
-	- Add -i flags to graphspec
-	- Rewrite dictim syntax page - polish
+    - Add -i flags to graphspec
+	- Rewrite dictim syntax page
 	- Rearrange wiki, breaking into general, CLI related and Clojure library related.
-	- Check all links on documentation pages, ensure they're real
-	- add a real example to readme calling some public api that we can diagram
-	- bump version and go through all checks.
+    - Move to 3 digit version numbers from here on in!
 	
     # 0.9.0.4
 	- compatibility with d2 v0.7.0

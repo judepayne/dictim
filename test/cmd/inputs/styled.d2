@@ -1,0 +1,25 @@
+frontend: React App {
+  shape: rectangle
+  style.fill: "#87CEEB"
+  style.border: "2px solid blue"
+}
+
+api: REST API {
+  shape: hexagon
+  style.fill: "#98FB98"
+  style.stroke-width: 3
+}
+
+database: PostgreSQL {
+  shape: cylinder
+  style.fill: "#FFB6C1"
+}
+
+frontend -> api: HTTP requests {
+  style.stroke: "green"
+  style.stroke-width: 2
+}
+api -> database: SQL queries {
+  style.stroke: "red"
+  style.stroke-dash: 5
+}

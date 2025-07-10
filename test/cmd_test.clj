@@ -60,6 +60,7 @@
 
 (require '[babashka.process :refer [shell]])
 (require '[clojure.edn :refer [read-string]])
+(require '[clojure.string :as str])
 
 ;; test that dictim is installed
 (assert (:out (shell {:out :string} dictim-cmd "-v")))
@@ -139,3 +140,77 @@ ABC4 -> 1STR: rates trade data
 
 (assert (trim= (:out (shell {:out :string :in dict2-flat} dictim-cmd "-b"))
                dict2-built))
+
+
+;; ============================================================================
+;; FILE-BASED TESTS
+;; ============================================================================
+
+(require '[clojure.java.io :as io])
+
+(defn test-with-files [test-name input-file command expected-file]
+  (let [input-path (str "test/cmd/inputs/" input-file)
+        output-path (str "test/cmd/outputs/" test-name "-output")
+        expected-path (str "test/cmd/expected_outputs/" expected-file)
+        cmd-parts (str/split command #" ")
+        result (apply shell {:out :string :in (slurp input-path)} 
+                      dictim-cmd cmd-parts)
+        output (:out result)]
+    (spit output-path output)
+    (assert (trim= output (slurp expected-path))
+            (str "Test failed: " test-name))))
+
+(defn test-with-files-and-template [test-name input-file template-file command expected-file]
+  (let [input-path (str "test/cmd/inputs/" input-file)
+        template-path (str "test/cmd/inputs/" template-file)
+        output-path (str "test/cmd/outputs/" test-name "-output")
+        expected-path (str "test/cmd/expected_outputs/" expected-file)
+        cmd-parts (str/split command #" ")
+        all-args (concat cmd-parts [template-path])
+        result (apply shell {:out :string :in (slurp input-path)} 
+                      dictim-cmd all-args)
+        output (:out result)]
+    (spit output-path output)
+    (assert (trim= output (slurp expected-path))
+            (str "Test failed: " test-name))))
+
+(defn test-validation-error [test-name input-file]
+  (let [input-path (str "test/cmd/inputs/" input-file)
+        result (shell {:out :string :err :string :continue true
+                       :in (slurp input-path)} 
+                      dictim-cmd "-val")]
+    ;; Should contain "invalid" in the output for validation error
+    (assert (re-find #"invalid" (:out result))
+            (str "Test failed: " test-name " - expected validation error"))))
+
+(defn cleanup-outputs []
+  (doseq [file (file-seq (io/file "test/cmd/outputs"))]
+    (when (.isFile file)
+      (.delete file))))
+
+;; Test 1: Basic Graphspec Processing
+(test-with-files "basic-graphspec" "basic-graphspec.json" "-g" "basic-graphspec.edn")
+
+;; Test 2: Graphspec with Node Template
+(test-with-files "graphspec-with-template" "graphspec-with-template.json" "-g" "graphspec-with-template.edn")
+
+;; Test 3: Template Application to D2
+(test-with-files-and-template "template-application" "sample.d2" "styling-template.edn" "-a -t" "templated.d2")
+
+;; Test 4: Compilation with Template
+(test-with-files-and-template "compilation-with-template" "simple-dictim.edn" "simple-template.edn" "-c -t" "compiled-with-template.d2")
+
+;; Test 5: Validation (Valid Input)
+(test-with-files "validation-success" "valid-dictim.edn" "-val" "validation-success.txt")
+
+;; Test 6: Validation (Invalid Input)
+(test-validation-error "validation-error" "invalid-dictim.edn")
+
+;; Test 7: Parse with Style Removal
+(test-with-files "parse-style-removal" "styled.d2" "-p -r" "clean-structure.edn")
+
+;; Test 8: String Key Conversion
+(test-with-files "string-key-conversion" "keyword-dictim.edn" "-st" "string-keys.edn")
+
+;; Clean up output files
+(cleanup-outputs)

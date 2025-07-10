@@ -5,11 +5,13 @@ CI status [![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dic
 </div>
 
 
-**dictim** is [d2](https://d2lang.com)'s datafied companion.
+# dictim
+
+#### **d2's datafied companion**
 
 The dictim project is both a command line tool and clojure library that leverage the underlying power of d2 to transform your data into diagrams.
 
-The command line tool (**dict**) converts structured data into d2 or beautiful diagrams directly. Generate diagrams from json or [edn](https://github.com/edn-format/edn), parse existing d2 back into data, and automate diagram creation in your workflows.
+The command line tool (**dict**) converts structured data into [d2]((https://d2lang.com)) or beautiful diagrams directly. Generate diagrams from json or [edn](https://github.com/edn-format/edn), parse existing d2 back into data, and automate diagram creation in your workflows.
 
 <table style="border: none; border-collapse: collapse; width: 100%;" cellpadding="15" cellspacing="0">
 <tr>
@@ -18,13 +20,16 @@ The command line tool (**dict**) converts structured data into d2 or beautiful d
 ```bash
 # Transform data into a diagram in seconds with the '--image' option
 
-dict -i '["app" "Web App"]["db" "Database"]["app" "->" "db" "queries"]' > diagram.svg
+dict -i '["app" "Web App"]["db" "Database"] \
+         ["app" "->" "db" "queries"]' > diagram.svg
 ```
 
 </td>
 <td style="border: none; vertical-align: top; width: 45%;">
 
+<div style="text-align: center;">
 <img src="img/top-example.svg" style="max-width: 180px; height: 280px;">
+</div>
 
 </td>
 </tr>
@@ -80,20 +85,22 @@ Check the [releases page](https://github.com/judepayne/dictim/releases/latest) i
 
 ### Your First Diagram
 
-Create a simple data file:
+Create a simple json file:
 ```bash
-echo '["user" "User" {"shape" "person"}]
-      ["system" "System" {"shape" "rectangle"}] 
-      ["user" "->" "system" "interacts" {"style.stroke" "blue"}]' > simple.edn
+echo '[
+  ["user", "User", {"shape": "person"}],
+  ["system", "System", {"shape": "rectangle"}], 
+  ["user", "->", "system", "interacts", {"style.stroke": "blue"}]
+]' > simple.json
 ```
 
 Transform it to d2:
 ```bash
-dict -c simple.edn
+dict -c simple.json
 ```
 
-**simple.edn**
-```edn title="simple.edn"
+**Output:**
+```d2
 user: User {shape: person}
 system: System {shape: rectangle}
 user -> system: interacts {style.stroke: blue}
@@ -101,15 +108,41 @@ user -> system: interacts {style.stroke: blue}
 
 Render with d2:
 ```bash
-dict -c < simple.edn | d2 - simple.svg
+dict -c < simple.json | d2 - simple.svg
 ```
 
 Or just directly:
 ```bash
-dict -i < simple.edn > simple.svg
+dict -i < simple.json > simple.svg
 ```
 
 ## Real-World Examples
+
+### Transforming data from a REST API
+
+```bash
+# Try this now!
+curl -s "https://restcountries.com/v3.1/region/europe?fields=name,capital" | \
+  jq -r '.[0:6] | map({country: .name.common, capital: (.capital // ["Unknown"])[0]}) | 
+         [["Europe", "European Region"]] + 
+         (map([.country, .country])) + 
+         (map([.capital, .capital])) + 
+         (map(["Europe", "->", .country, "contains"])) + 
+         (map([.country, "->", .capital, "capital city"])) | @json' | \
+  dict -i > europe.svg && open europe.svg
+```
+
+<div style="text-align: center;">
+<div style="width: 900px; margin: 0 auto;">
+
+<img src="img/europe.svg" style="width: 900px;">
+
+</div>
+</div>
+
+> [!Tip]
+> Point your AI tool to the dictim syntax [page](https://github.com/judepayne/dictim/wiki/dictim-syntax) and the command line [page](https://github.com/judepayne/dictim/wiki/Command-Line) and it should do great at authoring these little transformer scripts, jq statements.
+> Build up a library!
 
 ### System architecture
 
@@ -191,7 +224,8 @@ Generate an infrastructure diagram:
 dict -i --theme 3 < infrastructure.json > devops-pipeline.svg
 ```
 
-![](img/devops-pipeline.svg)
+<img src="img/devops-pipeline.svg">
+
 
 ### Git Branch Analysis
 
@@ -287,7 +321,7 @@ curl "http://jaeger:16686/api/traces?service=api-gateway&limit=1" | \
   dict -c | d2 --layout elk - trace.svg
 ```
 
-![](img/jaeger-sequence.svg)
+<img src="img/jaeger-sequence.svg">
 
 ### d2 Conversion
 
@@ -472,11 +506,11 @@ dict is built on the **dictim** Clojure library. If you're building Clojure appl
 
 See the [Wiki](https://github.com/judepayne/dictim/wiki) for more details.
 
-## Related Projects
+### Related Projects
 
 - **[dictim.graph](https://github.com/judepayne/dictim.graph)** - Convert graph data structures
 - **[dictim.cookbook](https://github.com/judepayne/dictim.cookbook)** - Example diagrams and patterns  
-- **[dictim.server](https://github.com/judepayne/dictim.server)** - HTTP API microservice```
+- **[dictim.server](https://github.com/judepayne/dictim.server)** - HTTP API microservice
 
 See the **[API Documentation](https://github.com/judepayne/dictim/wiki/API-Reference)** for complete library usage.
 

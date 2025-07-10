@@ -1,0 +1,6 @@
+{:template
+ [["=" "key" "user"] {:shape "person" :style.fill "lightblue"}
+  ["=" "key" "database"] {:shape "cylinder" :style.fill "lightgray"}
+  ["=" "element-type" "conn"] {:style.stroke "blue"}]
+ :directives
+ {:direction "right"}}

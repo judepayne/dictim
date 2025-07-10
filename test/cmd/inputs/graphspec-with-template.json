@@ -1,0 +1,17 @@
+{
+  "node->key": "id",
+  "nodes": [
+    {"id": "web", "name": "Web Server", "type": "server", "status": "healthy"},
+    {"id": "api", "name": "API Gateway", "type": "gateway", "status": "warning"},
+    {"id": "db", "name": "Database", "type": "database", "status": "healthy"}
+  ],
+  "edges": [
+    {"src": "web", "dest": "api", "connection": "rest"},
+    {"src": "api", "dest": "db", "connection": "sql"}
+  ],
+  "node-template": [
+    ["=", "type", "database"], {"shape": "cylinder"},
+    ["=", "status", "healthy"], {"style.fill": "lightgreen"},
+    ["=", "status", "warning"], {"style.fill": "yellow"}
+  ]
+}

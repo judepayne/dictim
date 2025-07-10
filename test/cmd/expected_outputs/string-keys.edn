@@ -1,0 +1,5 @@
+(["frontend" "React App" {"shape" "rectangle"}]
+ ["api" "REST API" {"shape" "hexagon"}]
+ ["database" "PostgreSQL" {"shape" "cylinder"}]
+ ["frontend" "->" "api" "HTTP"]
+ ["api" "->" "database" "SQL"])

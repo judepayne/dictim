@@ -1,0 +1,5 @@
+(["frontend"]
+ ["backend"]
+ ["database"]
+ ["frontend" "->" "backend"]
+ ["backend" "->" "database"])

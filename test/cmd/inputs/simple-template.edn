@@ -1,0 +1,5 @@
+{:template
+ [["=" "key" "app"] {:style.fill "blue"}
+  ["=" "key" "db"] {:shape "cylinder"}]
+ :directives
+ {:direction "down"}}

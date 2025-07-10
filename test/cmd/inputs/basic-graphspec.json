@@ -1,0 +1,12 @@
+{
+  "node->key": "id",
+  "nodes": [
+    {"id": "frontend", "name": "Frontend App", "type": "web"},
+    {"id": "backend", "name": "Backend API", "type": "service"},
+    {"id": "database", "name": "Main Database", "type": "storage"}
+  ],
+  "edges": [
+    {"src": "frontend", "dest": "backend", "protocol": "http"},
+    {"src": "backend", "dest": "database", "protocol": "sql"}
+  ]
+}

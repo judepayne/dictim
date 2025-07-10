@@ -229,10 +229,23 @@
         comp (get comparators comparator (constantly nil))]
     (cond
       (contains? #{"contains" "doesnt-contain"} comparator)
-      (if (sequential? v-found)
+      (cond
+        (sequential? v-found)
         (comp #(= v %) v-found)
-        (throw (error (str "contains/ doesnt-contain can only be used on sequential"
-                           " items in test: " test ". Failed on element: " *elem*))))
+        
+        (and (map? v-found) (map? v))
+        (let [contains-fn (fn [found-map test-map]
+                            (every? (fn [[k v]] (= (get found-map k) v)) test-map))]
+          (if (= comparator "contains")
+            (contains-fn v-found v)
+            (not (contains-fn v-found v))))
+        
+        (nil? v-found)
+        (= comparator "doesnt-contain") ; nil doesn't contain anything
+        
+        :else
+        (throw (error (str "contains/ doesnt-contain can only be used on sequential items or maps"
+                           " in test: " test ". Failed on element: " *elem*))))
       
       :else (try
               (comp v-found v)
