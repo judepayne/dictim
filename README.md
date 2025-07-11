@@ -502,7 +502,7 @@ dict is built on the **dictim** Clojure library. If you're building Clojure appl
 
 ```clojure
 ;; deps.edn
-{:deps {io.github.judepayne/dictim {:git/tag "v0.9.1" :git/sha "e24352d"}}}
+{:deps {io.github.judepayne/dictim {:git/tag "0.9.1" :git/sha "08ff5b3"}}}
 ```
 
 **Example Use:**

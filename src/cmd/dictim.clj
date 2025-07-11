@@ -27,6 +27,9 @@
   (throw (ex-info msg {})))   ;; (Exception. msg) is stripped away by GraalVM. ex-info fine
 
 
+(defn- f [] (println "I do nothing"))
+
+
 (defn show-help
   [spec]
   (cli/format-opts (merge spec {:order [:compile :cw :image :d :layout :theme :scale :sketch :pad :center :dark-theme :animate-interval :iw :parse :keywordize :j :m :pw :stringify :apply-tmp :aw :template :output :graph :gw :giw :flatten :build :validate :r :version :help]})))

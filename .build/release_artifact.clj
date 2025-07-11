@@ -25,11 +25,11 @@
             str/trim)]
     (if (and ght (contains? #{"master" "main"} branch))
       (do (assert file "File name must be provided")
-          (println (str "On main branch. Publishing asset. " "v" current-version ))
+          (println (str "On main branch. Publishing asset. " current-version ))
           (ghr/overwrite-asset {:org "judepayne"
                                 :repo "dictim"
                                 :file file
-                                :tag (str "v" current-version)
+                                :tag current-version
                                 :draft true
                                 :overwrite true #_(str/ends-with? current-version "SNAPSHOT")
                                 :sha256 true}))
