@@ -1,4 +1,5 @@
 API.md
+.DS_Store
 *.jar
 out*
 release_notes.md

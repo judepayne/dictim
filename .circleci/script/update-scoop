@@ -21,12 +21,8 @@ WINDOWS_AMD64_ZIP_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-window
 echo "Calculating SHA256 for Windows AMD64 binary..."
 WINDOWS_AMD64_SHA256=$(curl -sL "$WINDOWS_AMD64_ZIP_URL" | sha256sum | cut -d' ' -f1)
 
-# Calculate SHA256 for Windows ARM64 binary
-WINDOWS_ARM64_ZIP_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-windows-arm64.zip"
-echo "Calculating SHA256 for Windows ARM64 binary..."
-WINDOWS_ARM64_SHA256=$(curl -sL "$WINDOWS_ARM64_ZIP_URL" | sha256sum | cut -d' ' -f1)
 
-# Update the manifest with dual architecture support
+# Update the manifest
 cat > bucket/dictim.json << EOF
 {
     "version": "$VERSION",
@@ -38,11 +34,6 @@ cat > bucket/dictim.json << EOF
             "url": "$WINDOWS_AMD64_ZIP_URL",
             "hash": "sha256:$WINDOWS_AMD64_SHA256",
             "bin": "dict.exe"
-        },
-        "arm64": {
-            "url": "$WINDOWS_ARM64_ZIP_URL",
-            "hash": "sha256:$WINDOWS_ARM64_SHA256",
-            "bin": "dict-arm64.exe"
         }
     },
     "checkver": "github",
@@ -50,9 +41,6 @@ cat > bucket/dictim.json << EOF
         "architecture": {
             "64bit": {
                 "url": "https://github.com/judepayne/dictim/releases/download/\$version/dict-\$version-windows-amd64.zip"
-            },
-            "arm64": {
-                "url": "https://github.com/judepayne/dictim/releases/download/\$version/dict-\$version-windows-arm64.zip"
             }
         }
     }
@@ -61,7 +49,7 @@ EOF
 
 # Commit and push changes
 git add bucket/dictim.json
-git commit -m "Update dict to version $VERSION with dual architecture support"
+git commit -m "Update dict to version $VERSION"
 git push origin main
 
 echo "Scoop bucket updated successfully!"

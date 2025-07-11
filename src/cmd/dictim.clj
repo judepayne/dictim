@@ -24,7 +24,7 @@
 
 
 (defn- exception [msg]
-  (throw (ex-info msg {})))   ;; (Exception. msg) is stripped away by GraalVM
+  (throw (ex-info msg {})))   ;; (Exception. msg) is stripped away by GraalVM. ex-info fine
 
 
 (defn show-help
