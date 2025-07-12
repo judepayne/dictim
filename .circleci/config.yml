@@ -403,30 +403,40 @@ workflows:
           requires:
             - test
           filters:
+	    tags:
+	      only: /.*/
             branches:
               only: main
       - linux:
           requires:
             - test
           filters:
+	    tags:
+	      only: /.*/	  
             branches:
               only: main
       - linux-aarch64:
           requires:
             - test
           filters:
+	    tags:
+	      only: /.*/	  
             branches:
               only: main
       - windows:
           requires:
             - test
           filters:
+	    tags:
+	      only: /.*/	  
             branches:
               only: main
       - release-bb:
           requires:
             - test
           filters:
+	    tags:
+	      only: /.*/	  
             branches:
               only: main
       - update-homebrew:
@@ -437,6 +447,8 @@ workflows:
             - windows
             - release-bb
           filters:
+	    tags:
+	      only: /.*/	  
             branches:
               only: main
       - update-scoop:
@@ -447,5 +459,7 @@ workflows:
             - windows
             - release-bb
           filters:
+	    tags:
+	      only: /.*/	  
             branches:
               only: main

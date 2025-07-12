@@ -18,9 +18,6 @@ The dictim project is both a command line tool and clojure library that leverage
 
 The command line tool (**dict**) converts structured data into [d2]((https://d2lang.com)) or beautiful diagrams directly. Generate diagrams from json or [edn](https://github.com/edn-format/edn), parse existing d2 back into data, and automate diagram creation in your workflows.
 
-<table style="border: none; border-collapse: collapse; width: 100%;" cellpadding="15" cellspacing="0">
-<tr>
-<td style="border: none; vertical-align: middle; width: 55%; padding-right: 50px;">
 
 ```bash
 # Transform data into a diagram in seconds with the '--image' option
@@ -29,16 +26,8 @@ dict -i '["app" "Web App"]["db" "Database"] \
          ["app" "->" "db" "queries"]' > diagram.svg
 ```
 
-</td>
-<td style="border: none; vertical-align: top; width: 45%;">
-
-<div style="text-align: center;">
 <img src="img/top-example.svg" style="max-width: 180px; height: 280px;">
-</div>
 
-</td>
-</tr>
-</table>
 
 ## Why dict?
 
@@ -158,10 +147,6 @@ curl -s "https://restcountries.com/v3.1/region/europe?fields=name,capital" | \
 
 ### System architecture
 
-<table style="border: none; border-collapse: collapse; width: 100%;" cellpadding="15" cellspacing="0">
-<tr>
-<td style="border: none; vertical-align: middle; width: 55%; padding-right: 50px;">
-
 **edn**
 ```edn
 [["frontend" "React Frontend" {"shape" "rectangle"}]
@@ -173,14 +158,9 @@ curl -s "https://restcountries.com/v3.1/region/europe?fields=name,capital" | \
  ["api" "->" "database" "SQL queries"]]
 ```
 
-</td>
-<td style="border: none; vertical-align: top; width: 45%;">
-
 <img src="img/system-architecture.svg" style="width: 450px;">
 
-</td>
-</tr>
-</table>
+
 
 ### DevOps Pipeline
 
