@@ -621,6 +621,11 @@ can be used with the -j and -m options.")
   (str/trim (slurp (io/file "resources" "VERSION"))))
 
 
+
+(def ^:private d2_version
+  (str/trim (slurp (io/file "resources" "D2_VERSION"))))
+
+
 (defn- dictim-flat-print [opts dict]
   (cond-> dict
     (:j opts)            (-> (json/to-json {:pretty (:m opts)}) println)
@@ -719,7 +724,7 @@ can be used with the -j and -m options.")
         (println (show-help cli-spec))
 
         (or (:version opts) (:v opts))
-        (println version)
+        (println (str "Version: " version "  (d2 compatibility: " d2_version ")"))
 
         (:cw opts)
         (compile-watch (assoc opts :c true :w (:cw opts)))
