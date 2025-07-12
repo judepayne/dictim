@@ -2,11 +2,12 @@
 
 <img src="img/dictim_banner.png" style="width: 950px;">
 
-[Wiki](https://github.com/judepayne/dictim/wiki) | d2 compatibility: 0.7.0
+[Wiki](https://github.com/judepayne/dictim/wiki)
 
 CI [![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
 Release [![Latest Release](https://img.shields.io/github/v/release/judepayne/dictim)](https://github.com/judepayne/dictim/releases)
 License [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<small>d2 compatibility</small>**0.7.0**
 
 </div>
 
