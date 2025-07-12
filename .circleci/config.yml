@@ -39,6 +39,14 @@ jobs:
           name: run bb tests
           command: |
             bb test:bb
+      - run:
+          name: build babashka uberjar
+          command: |
+            bb build
+      - run:
+          name: test babashka uberjar
+          command: |
+            bb bb-cmd-test
       - save_cache:
           paths:
             - ~/.m2
