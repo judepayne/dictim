@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="img/dictim_banner.png" style="width: 950px;">
+<img src="img/dictim_banner.png" style="width: 990px;">
 
 [Wiki](https://github.com/judepayne/dictim/wiki)
 
