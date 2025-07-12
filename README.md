@@ -7,7 +7,7 @@
 CI [![CircleCI](https://dl.circleci.com/status-badge/img/gh/judepayne/dictim/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/judepayne/dictim/tree/main)
 Release [![Latest Release](https://img.shields.io/github/v/release/judepayne/dictim)](https://github.com/judepayne/dictim/releases)
 License [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<sub>d2 compatibility: **0.7.0**</sub>
+<small>d2 compatibility: **0.7.0**</small>
 
 </div>
 
