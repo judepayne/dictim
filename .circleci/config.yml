@@ -403,42 +403,42 @@ workflows:
           requires:
             - test
           filters:
-	    tags:
-	      only: /.*/
+            tags:
+              only: /.*/
             branches:
-              only: main
+              ignore: /.*/
       - linux:
           requires:
             - test
           filters:
-	    tags:
-	      only: /.*/	  
+            tags:
+              only: /.*/
             branches:
-              only: main
+              ignore: /.*/
       - linux-aarch64:
           requires:
             - test
           filters:
-	    tags:
-	      only: /.*/	  
+            tags:
+              only: /.*/
             branches:
-              only: main
+              ignore: /.*/
       - windows:
           requires:
             - test
           filters:
-	    tags:
-	      only: /.*/	  
+            tags:
+              only: /.*/
             branches:
-              only: main
+              ignore: /.*/
       - release-bb:
           requires:
             - test
           filters:
-	    tags:
-	      only: /.*/	  
+            tags:
+              only: /.*/
             branches:
-              only: main
+              ignore: /.*/
       - update-homebrew:
           requires:
             - mac
@@ -447,10 +447,10 @@ workflows:
             - windows
             - release-bb
           filters:
-	    tags:
-	      only: /.*/	  
+            tags:
+              only: /.*/
             branches:
-              only: main
+              ignore: /.*/
       - update-scoop:
           requires:
             - mac
@@ -459,7 +459,7 @@ workflows:
             - windows
             - release-bb
           filters:
-	    tags:
-	      only: /.*/	  
+            tags:
+              only: /.*/
             branches:
-              only: main
+              ignore: /.*/
