@@ -37,94 +37,94 @@
 
 (def compile-help
   "Compiles supplied dictim to d2
-The value supplied to --compile may be either
-  - a edn/ json dictim syntax string (in single quotes)
-  - ommitted in which case *std-in* is read
+                           The value supplied to --compile may be either
+                             - a edn/ json dictim syntax string (in single quotes)
+                             - ommitted in which case *std-in* is read
 
-An edn/ json template file may be specified via
---template/ -t which causes the template to be applied
-during compilation.
+                           An edn/ json template file may be specified via
+                           --template/ -t which causes the template to be applied
+                           during compilation.
 
-compile may be used with watch (--watch/ -w) in which
-case, the watched file will be recompiled whenever it
-changes. If a --template/-t file is also specified then
-that file will also be watched. When used with watch, an
-output file must be specified via the --output/ -o flag.")
+                           compile may be used with watch (--watch/ -w) in which
+                           case, the watched file will be recompiled whenever it
+                           changes. If a --template/-t file is also specified then
+                           that file will also be watched. When used with watch, an
+                           output file must be specified via the --output/ -o flag.")
 
 
 (def parse-help
   "Parses supplied d2 into dictim
-The value supplied to --parse may be either
-  - a d2 string (in single quotes)
-  - ommitted in which case *std-in* is read
+                           The value supplied to --parse may be either
+                             - a d2 string (in single quotes)
+                             - ommitted in which case *std-in* is read
 
-parse may be used with watch (--watch/ -w) in which
-case, the watched file will be recompiled whenever it
-changes. When used with watch, an output file must be
-specified via the --output/ -o flag.
---parse has various other supplemental flags: -k, -j & -m\n\n")
+                           parse may be used with watch (--watch/ -w) in which
+                           case, the watched file will be recompiled whenever it
+                           changes. When used with watch, an output file must be
+                           specified via the --output/ -o flag.
+                           --parse has various other supplemental flags: -k, -j & -m\n\n")
 
 
 (def apply-template-help
   "Applies a dictim template to d2.
-Parses suppled d2 into dictim (taking the usual optional
-supplemental flags for parse), merges in a dictim template
-specified via the --template/ -t otpion, and compiles the
-result back into d2.
+                           Parses suppled d2 into dictim (taking the usual optional
+                           supplemental flags for parse), merges in a dictim template
+                           specified via the --template/ -t otpion, and compiles the
+                           result back into d2.
 
-apply-tmp may be used with watch (--watch/ -w) in which
-case, the watched file will be round-tripped whenever it
-changes. The specified template file will also be
-watched. When used with watch, an output file must be
-specified via the --output/ -o flag.")
+                           apply-tmp may be used with watch (--watch/ -w) in which
+                           case, the watched file will be round-tripped whenever it
+                           changes. The specified template file will also be
+                           watched. When used with watch, an output file must be
+                           specified via the --output/ -o flag.")
 
 
 (def image-help
   "Compiles dictim to d2 and renders to SVG diagram.
-The value supplied to --image may be either
-  - a edn/ json dictim syntax string (in single quotes)
-  - omitted in which case *std-in* is read
-Requires d2 to be installed and available on your path.
-Supports the same d2 options as watch mode: layout, theme, scale.
-Use with -o to specify output file, otherwise outputs to stdout.
+                           The value supplied to --image may be either
+                             - a edn/ json dictim syntax string (in single quotes)
+                             - omitted in which case *std-in* is read
+                           Requires d2 to be installed and available on your path.
+                           Supports the same d2 options as watch mode: layout, theme, scale.
+                           Use with -o to specify output file, otherwise outputs to stdout.
 
-image may be used with watch (--watch/ -w) in which
-case, the watched file will be recompiled whenever it changes.
-When used with watch:
-- With --output/-o: continuously updates the SVG file
-- Without --output: serves diagram in browser with live reload
---image has various sub options, most of which are passed through
-to d2:")
+                           image may be used with watch (--watch/ -w) in which
+                           case, the watched file will be recompiled whenever it changes.
+                           When used with watch:
+                           - With --output/-o: continuously updates the SVG file
+                           - Without --output: serves diagram in browser with live reload
+                           --image has various sub options, most of which are passed through
+                           to d2:")
 
 
 (def graph-help
   "Converts a dictim graph spec to dictim.
-applies a dictim template specified via the
---template/ -t option.
--j and -m options are also available.
+                           applies a dictim template specified via the
+                           --template/ -t option.
+                           -j and -m options are also available.
 
-graph may be used with watch (--watch/ -w) in which
-case, the watched file will be recompiled whenever it changes.
+                           graph may be used with watch (--watch/ -w) in which
+                           case, the watched file will be recompiled whenever it changes.
 
-Can also be used with (--image/ -i) in which case, an
-image is either served (no --output specified) or written to disk.")
+                           Can also be used with (--image/ -i) in which case, an
+                           image is either served (no --output specified) or written to disk.")
 
 
 (def flatten-help
   "Flattens supplied dictim to dictim.flat syntax.
-can be used with the -j and -m options.")
+                           can be used with the -j and -m options.")
 
 
 (def build-help
   "Builds supplied dictim.flat syntax into dictim syntax.
-can be used with the -j and -m options.")
+                           can be used with the -j and -m options.")
 
 
 (def cli-spec
   {:spec
    {:compile {:desc compile-help
               :alias :c}
-    :cw {:desc "Shorthand for -c -w (compile and watch)\n​"}
+    :cw {:desc "Shorthand for -c -w (compile and watch)\n                           ​"}
     :image {:desc image-help
             :alias :i}
     :d {:coerce :boolean
@@ -145,7 +145,7 @@ can be used with the -j and -m options.")
                  :coerce :int}
     :animate-interval {:desc "    (d2) Animate through boards at interval (milliseconds)."
                        :coerce :int} 
-    :iw {:desc "Shorthand for -i -w (image and watch)\n​"}
+    :iw {:desc "Shorthand for -i -w (image and watch)\n                           ​"}
     :parse {:desc parse-help
             :alias :p}
     :keywordize {:alias :k
@@ -154,20 +154,20 @@ can be used with the -j and -m options.")
         :desc "    Converts the output of parse to dictim syntax json."}
     :m {:coerce :boolean
         :desc "    Additional to  -j: prettifies the json output of parse."}
-    :pw {:desc "Shorthand for -p -w (parse and watch)\n​"}
+    :pw {:desc "Shorthand for -p -w (parse and watch)\n                           ​"}
     :stringify {:alias :st
-                :desc "Converts edn format dictim keys to strings.\n​"}
+                :desc "Converts edn format dictim keys to strings.\n                           ​"}
     :apply-tmp {:desc apply-template-help
                 :alias :a}
-    :aw {:desc "Shorthand for -a -w (apply template and watch)\n​"}
+    :aw {:desc "Shorthand for -a -w (apply template and watch)\n                           ​"}
     :template {:desc "Path to an edn/ json template file."
                :alias :t}
-    :output {:desc "Specifies the file to output to in watch mode.\n​"
+    :output {:desc "Specifies the file to output to in watch mode.\n                           ​"
              :alias :o}
     :graph {:desc graph-help
             :alias :g}
-    :gw {:desc "Shorthand for -g -w (graph spec and watch)\n"}
-    :giw {:desc "shorthand for -g -i -w (graph spec, watch and generate image\n​"}
+    :gw {:desc "Shorthand for -g -w (graph spec and watch)\n                           "}
+    :giw {:desc "shorthand for -g -i -w (graph spec, watch and generate image\n                           ​"}
     :flatten {:desc flatten-help
               :alias :f}
     :build {:desc build-help
@@ -180,7 +180,7 @@ can be used with the -j and -m options.")
               :desc "Returns the version of this command line tool."
               :alias :v}
     :help {:coerce :boolean
-           :desc "Displays this help.\nhttps://github.com/judepayne/dictim for more."
+           :desc "Displays this help.\n                           https://github.com/judepayne/dictim for more."
            :alias :h}}
    :error-fn
    (fn [{:keys [spec type cause msg option]}]
@@ -619,7 +619,6 @@ can be used with the -j and -m options.")
 
 (def ^:private version
   (str/trim (slurp (io/file "resources" "VERSION"))))
-
 
 
 (def ^:private d2_version
