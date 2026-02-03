@@ -105,11 +105,12 @@
 
 
 ;; the defmethods are defined by the 'check' macro in dictim.macros
+;; TODO - why rest? holdover from old [:list x y x]  format?
 (check :list li
-  (and (or (and (every? #(or (ctr? %) (shape? %) (quikshape? %)) (rest li))
-                (every? valid? (rest li)))
+       (and (or (and (every? #(or (ctr? %) (shape? %) (quikshape? %)) (rest li))
+                     (every? valid? (rest li)))
                 (every? kstr? (rest li)))
-             (every? (complement list?) (rest li))))
+            (every? (complement list?) (rest li))))
 
 
 (defn- key-parts [s]
