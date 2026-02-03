@@ -30,7 +30,7 @@
                                 :repo "dictim"
                                 :file file
                                 :tag current-version
-                                :draft true
+                                :draft false
                                 :overwrite true #_(str/ends-with? current-version "SNAPSHOT")
                                 :sha256 true}))
       (println "Skipping release artifact (no GITHUB_TOKEN or not on main branch)"))

@@ -18,16 +18,14 @@ git config user.email "jude@judep.org"
 
 # Download release assets to calculate SHA256
 MACOS_ARM64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-macos-aarch64.zip"
-MACOS_AMD64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-macos-amd64.zip"  
 LINUX_ARM64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-linux-aarch64.zip"
 LINUX_AMD64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-linux-amd64.zip"
 
 # Calculate SHA256 hashes
 echo "Calculating SHA256 hashes..."
-MACOS_ARM64_SHA=$(curl -sL "$MACOS_ARM64_URL" | sha256sum | cut -d' ' -f1)
-MACOS_AMD64_SHA=$(curl -sL "$MACOS_AMD64_URL" | sha256sum | cut -d' ' -f1)
-LINUX_ARM64_SHA=$(curl -sL "$LINUX_ARM64_URL" | sha256sum | cut -d' ' -f1)
-LINUX_AMD64_SHA=$(curl -sL "$LINUX_AMD64_URL" | sha256sum | cut -d' ' -f1)
+MACOS_ARM64_SHA=$(curl -fsL "$MACOS_ARM64_URL" | sha256sum | cut -d' ' -f1)
+LINUX_ARM64_SHA=$(curl -fsL "$LINUX_ARM64_URL" | sha256sum | cut -d' ' -f1)
+LINUX_AMD64_SHA=$(curl -fsL "$LINUX_AMD64_URL" | sha256sum | cut -d' ' -f1)
 
 # Update the formula
 cat > Formula/dictim.rb << EOF
@@ -41,9 +39,6 @@ class Dictim < Formula
   if OS.mac? && Hardware::CPU.arm?
     url "$MACOS_ARM64_URL"
     sha256 "$MACOS_ARM64_SHA"
-  elsif OS.mac? && Hardware::CPU.intel?
-    url "$MACOS_AMD64_URL"
-    sha256 "$MACOS_AMD64_SHA"
   elsif OS.linux? && Hardware::CPU.arm?
     url "$LINUX_ARM64_URL"
     sha256 "$LINUX_ARM64_SHA"

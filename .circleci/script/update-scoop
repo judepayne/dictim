@@ -19,7 +19,7 @@ git config user.email "jude@judep.org"
 # Calculate SHA256 for Windows AMD64 binary
 WINDOWS_AMD64_ZIP_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-windows-amd64.zip"
 echo "Calculating SHA256 for Windows AMD64 binary..."
-WINDOWS_AMD64_SHA256=$(curl -sL "$WINDOWS_AMD64_ZIP_URL" | sha256sum | cut -d' ' -f1)
+WINDOWS_AMD64_SHA256=$(curl -fsL "$WINDOWS_AMD64_ZIP_URL" | sha256sum | cut -d' ' -f1)
 
 
 # Update the manifest
