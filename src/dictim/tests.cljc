@@ -2,7 +2,7 @@
     ^{:author "judepayne"}
     dictim.tests
   (:require [dictim.utils :as utils :refer [elem-type kstr? direction?
-                                            take-til-last error]])
+                                            take-til-last error deep-merge]])
   (:refer-clojure :exclude [key keys test]))
 
 
@@ -247,11 +247,13 @@
         (throw (error (str "contains/ doesnt-contain can only be used on sequential items or maps"
                            " in test: " test ". Failed on element: " *elem*))))
       
-      :else (try
-              (comp v-found v)
-              (catch Exception ex
-                (throw (error (str "This test " test " error'd when applied to this element: "
-                                   *elem*))))))))
+      :else (if (nil? v-found)
+              (= comparator "!=")
+              (try
+                (comp v-found v)
+                (catch Exception ex
+                  (throw (error (str "This test " test " error'd when applied to this element: "
+                                     *elem*)))))))))
 
 
 (defn- or* [forms]
@@ -325,9 +327,9 @@
    (when styles
      (if (test (first styles))
        (if (next styles)
-         (merge result (second styles) (merge-results (next (next styles))))
+         (deep-merge result (second styles) (merge-results (next (next styles))))
          (throw (IllegalArgumentException. "test clauses must be an even number")))
-       (merge result (merge-results (next (next styles))))))))
+       (deep-merge result (merge-results (next (next styles))))))))
 
 
 (defn test-fn

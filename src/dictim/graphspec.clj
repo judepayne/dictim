@@ -29,7 +29,7 @@
 
 (defn- spec-fn [tests]
   (fn [elem]
-    (let [m ((t/test-fn tests) elem)
+    (let [m ((t/test-fn-merge tests) elem)
           m' (into {}
                    (map
                     (fn [[k v]] (if (vector? v) [k (interpolate elem v)] [k v]))
@@ -143,5 +143,5 @@
                              container->parent (assoc :cluster->parent container->parent))
         dictim (g/graph->dictim nodes edges dictim-fn-params)]
     (if template
-      (tm/apply-template dictim {:template template :directives directives :merge? true :new-priority? false})
+      (tm/apply-template dictim {:template template :directives directives :merge? true :new-priority? false :all-matching-clauses? true})
       (if directives (cons directives dictim) dictim))))

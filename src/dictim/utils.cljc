@@ -268,3 +268,11 @@
   "Returns true if the key of the attr is commented out."
   [[k v]]
   (and (string? k) (str/starts-with? k "#")))
+
+
+(defn deep-merge [v & vs]
+  (letfn [(rec-merge [v1 v2]
+            (if (and (map? v1) (map? v2))
+              (merge-with deep-merge v1 v2)
+              v2))]
+    (reduce rec-merge v (remove nil? vs))))

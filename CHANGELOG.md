@@ -1,4 +1,8 @@
-    # 0.9.1
+# 0.9.2
+    - changed graphspec to merge styles by default
+
+
+# 0.9.1
     - new readme to focus project as CLI first, Clojure library second
 	- renamed CLI to 'dict' rather than 'dictim'
 	- added validation for graphspecs and templates

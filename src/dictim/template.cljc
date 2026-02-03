@@ -2,7 +2,7 @@
     ^{:author "judepayne"
       :doc "Namespace for handling dictim templates"}
     dictim.template
-  (:require [dictim.utils :as utils :refer [elem-type elements?]]
+  (:require [dictim.utils :as utils :refer [elem-type elements? deep-merge]]
             [clojure.string :as str]
             [dictim.tests :as tests]
             [dictim.spec :as spec])
@@ -35,16 +35,6 @@
   "Similar to clojure.walk/prewalk but for dictim."
   [f element]
   (walk-dictim (partial prewalk-dictim f) identity (f element)))
-
-
-(defn deep-merge [v & vs]
-  (letfn [(rec-merge [v1 v2]
-            (if (and (map? v1) (map? v2))
-              (merge-with deep-merge v1 v2)
-              v2))]
-    (if (some identity vs)
-      (reduce #(rec-merge %1 %2) v vs)
-      v)))
 
 
 (defn- prep-directives

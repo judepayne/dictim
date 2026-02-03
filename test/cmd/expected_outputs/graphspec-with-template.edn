@@ -1,5 +1,5 @@
 (["web" {"style.fill" "lightgreen"}]
  ["api" {"style.fill" "yellow"}]
- ["db" {"shape" "cylinder"}]
+ ["db" {"style.fill" "lightgreen", "shape" "cylinder"}]
  ["web" "->" "api"]
  ["api" "->" "db"])
