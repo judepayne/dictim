@@ -483,7 +483,7 @@ dict is built on the **dictim** Clojure library. If you're building Clojure appl
 
 ```clojure
 ;; deps.edn
-{:deps {io.github.judepayne/dictim {:git/tag "0.9.2" :git/sha "7aa0307"}}}
+{:deps {io.github.judepayne/dictim {:git/tag "0.9.3" :git/sha "7aa0307"}}}
 ```
 
 **Example Use:**
