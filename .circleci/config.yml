@@ -406,7 +406,10 @@ jobs:
 workflows:
   test-and-release-on-main:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              only: /.*/
       - mac:
           requires:
             - test
