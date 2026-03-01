@@ -49,7 +49,10 @@ EOF
 
 # Commit and push changes
 git add bucket/dictim.json
-git commit -m "Update dict to version $VERSION"
-git push origin main
-
-echo "Scoop bucket updated successfully!"
+if git diff --cached --quiet; then
+  echo "Scoop bucket already up to date, nothing to commit."
+else
+  git commit -m "Update dict to version $VERSION"
+  git push origin main
+  echo "Scoop bucket updated successfully!"
+fi

@@ -59,7 +59,10 @@ EOF
 
 # Commit and push changes
 git add Formula/dictim.rb
-git commit -m "Update dict to version $VERSION"
-git push origin main
-
-echo "Homebrew formula updated successfully!"
+if git diff --cached --quiet; then
+  echo "Homebrew formula already up to date, nothing to commit."
+else
+  git commit -m "Update dict to version $VERSION"
+  git push origin main
+  echo "Homebrew formula updated successfully!"
+fi

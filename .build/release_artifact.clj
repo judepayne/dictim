@@ -1,6 +1,9 @@
 (ns release-artifact
   (:require
    [borkdude.gh-release-artifact :as ghr]
+   [borkdude.gh-release-artifact.internal :as ghr-internal]
+   [babashka.http-client :as http]
+   [cheshire.core :as cheshire]
    [clojure.java.shell :refer [sh]]
    [clojure.string :as str]))
 
@@ -14,6 +17,23 @@
           :out
           str/trim)))
 
+(defn extract-release-notes [version]
+  (let [changelog (slurp "CHANGELOG.md")
+        pattern (re-pattern (str "(?s)#\\s+" (java.util.regex.Pattern/quote version) "\\s*\\n(.*?)(?=\\n#\\s|\\z)"))
+        match (re-find pattern changelog)]
+    (when match (str/trim (second match)))))
+
+(defn set-release-notes [org repo tag notes]
+  (let [token (System/getenv "GITHUB_TOKEN")
+        release (ghr-internal/release-for {:org org :repo repo :tag tag})
+        release-id (:id release)
+        url (str "https://api.github.com/repos/" org "/" repo "/releases/" release-id)]
+    (http/patch url
+                {:headers {"Authorization" (str "token " token)
+                           "Accept" "application/vnd.github.v3+json"
+                           "Content-Type" "application/json"}
+                 :body (cheshire/generate-string {:body notes})})))
+
 (defn release [{:keys [file]}]
   (let [ght (System/getenv "GITHUB_TOKEN")
         _ (when ght (println "Github token found"))
@@ -25,13 +45,16 @@
             str/trim)]
     (if (and ght (contains? #{"master" "main"} branch))
       (do (assert file "File name must be provided")
-          (println (str "On main branch. Publishing asset. " current-version ))
+          (println (str "On main branch. Publishing asset. " current-version))
           (ghr/overwrite-asset {:org "judepayne"
                                 :repo "dictim"
                                 :file file
                                 :tag current-version
                                 :draft false
-                                :overwrite true #_(str/ends-with? current-version "SNAPSHOT")
-                                :sha256 true}))
+                                :overwrite true
+                                :sha256 true})
+          (when-let [notes (extract-release-notes current-version)]
+            (println "Setting release notes...")
+            (set-release-notes "judepayne" "dictim" current-version notes)))
       (println "Skipping release artifact (no GITHUB_TOKEN or not on main branch)"))
     nil))
