@@ -16,16 +16,16 @@ cd /tmp/homebrew-tap
 git config user.name "CircleCI"
 git config user.email "jude@judep.org"
 
-# Download release assets to calculate SHA256
+# Asset URLs
 MACOS_ARM64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-macos-aarch64.zip"
 LINUX_ARM64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-linux-aarch64.zip"
 LINUX_AMD64_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-linux-amd64.zip"
 
-# Calculate SHA256 hashes
-echo "Calculating SHA256 hashes..."
-MACOS_ARM64_SHA=$(curl -fsL "$MACOS_ARM64_URL" | sha256sum | cut -d' ' -f1)
-LINUX_ARM64_SHA=$(curl -fsL "$LINUX_ARM64_URL" | sha256sum | cut -d' ' -f1)
-LINUX_AMD64_SHA=$(curl -fsL "$LINUX_AMD64_URL" | sha256sum | cut -d' ' -f1)
+# Fetch pre-calculated SHA256 hashes from uploaded .sha256 files
+echo "Fetching SHA256 hashes..."
+MACOS_ARM64_SHA=$(curl -fsL "$MACOS_ARM64_URL.sha256")
+LINUX_ARM64_SHA=$(curl -fsL "$LINUX_ARM64_URL.sha256")
+LINUX_AMD64_SHA=$(curl -fsL "$LINUX_AMD64_URL.sha256")
 
 # Update the formula
 cat > Formula/dictim.rb << EOF
