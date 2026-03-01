@@ -216,5 +216,22 @@ ABC4 -> 1STR: rates trade data
 ;; Test 8: String Key Conversion
 (test-with-files "string-key-conversion" "keyword-dictim.edn" "-st" "string-keys.edn")
 
+;; ============================================================================
+;; INLINE DATA TESTS
+;; ============================================================================
+
+;; Test 9: Inline JSON with / in values should not be rejected (Bug 1 fix)
+(let [result (shell {:out :string}
+                    dictim-cmd "-g"
+                    "{\"node->key\": \"id\", \"nodes\": [{\"id\": \"web/01\"}], \"edges\": []}")]
+  (assert (trim= (:out result) "([\"web/01\"])")
+          "Test failed: inline JSON with / in value should be treated as data"))
+
+;; Test 10: Filename-like input should produce a clean error, not a class cast exception
+(doseq [input ["myfolder/myfile.json" "./relative/path.json" "myfile.edn"]]
+  (let [result (shell {:out :string :continue true} dictim-cmd "-g" input)]
+    (assert (not (re-find #"cannot be cast" (:out result)))
+            (str "Test failed: filename-like input '" input "' produced a class cast error"))))
+
 ;; Clean up output files
 (cleanup-outputs)

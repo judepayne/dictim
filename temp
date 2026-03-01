@@ -1,0 +1,85 @@
+{
+  "node->key": "service_id",
+  "node->container": "team",
+  "nodes": [
+    {
+      "service_id": "user-service",
+      "name": "User Management",
+      "type": "microservice", 
+      "language": "java",
+      "team": "user-mgmt",
+      "cpu_cores": 4,
+      "memory_gb": 8,
+      "requests_per_second": 1200,
+      "error_rate": 0.02,
+      "status": "healthy"
+    },
+    {
+      "service_id": "order-service", 
+      "name": "Order Processing",
+      "type": "microservice",
+      "language": "python",
+      "team": "commerce",
+      "cpu_cores": 8,
+      "memory_gb": 16,
+      "requests_per_second": 800,
+      "error_rate": 0.05,
+      "status": "warning"
+    },
+    {
+      "service_id": "user-db",
+      "name": "User Database",
+      "type": "database",
+      "engine": "postgresql",
+      "team": "data",
+      "size_gb": 500,
+      "connections": 45,
+      "status": "healthy"
+    }
+  ],
+  "edges": [
+    {
+      "src": "user-service",
+      "dest": "user-db",
+      "protocol": "tcp",
+      "port": 5432,
+      "latency_ms": 15,
+      "frequency": "high"
+    },
+    {
+      "src": "order-service", 
+      "dest": "user-service",
+      "protocol": "http",
+      "port": 8080,
+      "latency_ms": 45,
+      "frequency": "medium"
+    }
+  ],
+  "node-template": [
+    ["=", "type", "microservice"], {"shape": "rectangle"},
+    ["=", "type", "database"], {"shape": "cylinder"},
+    [">", "error_rate", 0.03], {"style.fill": "red"},
+    ["=", "status", "healthy"], {"style.fill": "lightgreen"},
+    ["=", "status", "warning"], {"style.fill": "yellow"}
+  ],
+  "edge-template": [
+    ["=", "frequency", "high"], {"style.stroke-width": "3"},
+    [">", "latency_ms", 30], {"style.stroke": "orange"},
+    ["=", "protocol", "https"], {"style.stroke": "green"}
+  ],
+  "container->data": {
+    "user-mgmt": {"budget": 500000, "headcount": 6},
+    "commerce": {"budget": 800000, "headcount": 10},
+    "data": {"budget": 300000, "headcount": 4}
+  },
+  "container-template": [
+    [">", "budget", 600000], {"style.fill": "lightblue"},
+    [">", "headcount", 8], {"style.stroke": "red"}
+  ],
+  "directives": {
+    "direction": "right",
+    "classes": {
+      "critical": {"style": {"stroke": "red"}}
+    }
+  }
+}

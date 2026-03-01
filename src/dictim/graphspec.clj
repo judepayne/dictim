@@ -64,6 +64,7 @@
      :container->attrs a map of the container (name) to a map of (e.g. d2) attributes *or*
      :container-template see below *and*
      :container->data a map of the container (name) to a map of data representing it.
+     (if both container->attrs and container-template/container->data are present, container->attrs wins)
      :node->container a key applied to each node to determine which container it is in
      :container->parent a map with containers mapped to their parent containers.
      :directives a map of dictim directives to be added to the dictim

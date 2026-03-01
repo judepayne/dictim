@@ -32,7 +32,13 @@
 
 (defn show-help
   [spec]
-  (cli/format-opts (merge spec {:order [:compile :cw :image :d :layout :theme :scale :sketch :pad :center :dark-theme :animate-interval :iw :parse :keywordize :j :m :pw :stringify :apply-tmp :aw :template :output :graph :gw :giw :flatten :build :validate :r :version :help]})))
+  (str
+   "dict - the dictim command line tool.\n\n"
+   "Data may be passed inline (in single quotes) or via stdin redirection.\n"
+   "To pass a file's contents use stdin redirection, e.g: dict -g < myfile.json\n"
+   "Passing a filename directly without '<' will be treated as inline data, not read from disk.\n\n"
+   "Options:\n"
+   (cli/format-opts (merge spec {:order [:compile :cw :image :d :layout :theme :scale :sketch :pad :center :dark-theme :animate-interval :iw :parse :keywordize :j :m :pw :stringify :apply-tmp :aw :template :output :graph :gw :giw :flatten :build :validate :r :version :help]}))))
 
 
 (def compile-help
@@ -216,23 +222,6 @@
     (catch Exception ex (do (.getName (class ex)) nil))))
 
 
-(defn- looks-like-filename? [s]
-  "Heuristic to detect if a string looks like a filename rather than data"
-  (and (string? s)
-       (not (str/blank? s))
-       (or
-        ;; Contains common file extensions
-        (re-find #"\.(edn|json|d2|clj|txt)$" s)
-        ;; Contains path separators  
-        (re-find #"[/\\]" s)
-        ;; Looks like a relative path
-        (re-find #"^\.{1,2}/" s)
-        ;; Exists as a file (check safely)
-        (try
-          (and (fs/exists? s) (fs/regular-file? s))
-          (catch Exception _ false)))))
-
-
 ;; removed as much causing stdin to be read in a non blocking fashion, which is
 ;; fine for files, but not useful behaviour when waiting for data from an api (for ex.)
 #_(defn- stdin-has-data? []
@@ -244,30 +233,23 @@
 
 
 (defn- handle-in [arg]
-  (cond
-    (looks-like-filename? arg)
-    (exception (str "It looks like you're trying to pass a filename '" arg "'.\n"
-                    "Use stdin redirection instead: Put '<' in front of the filename."))
-
-    (true? arg)   (slurp *in*)
-
-
-    :else arg))
+  (if (true? arg)
+    (slurp *in*)
+    arg))
 
 
 (defn- read-data [data]
   (if-let [dict (from-json data)]
     [:json dict]
     (if-let [dict (from-edn data)]
-      [:edn dict]
+      (if (symbol? dict)
+        (exception (str "'" dict "' is not valid dictim syntax."))
+        [:edn dict])
       (exception "invalid edn/ json!"))))
 
 
 (defn- compile-fn [dict]
   (cond
-    (symbol? dict)
-    (exception (str "'" dict "' isn't valid dictim syntax. Did you mean '..< " dict  "'?"))
-    
     (empty? dict)
     (exception "no dictim to compile")
     
@@ -292,7 +274,7 @@
 
 (defn- compile-impl [opts in]
   (let [[_ dict] (read-data in)
-        template-file (or (:template opts) (:m opts))
+        template-file (or (:template opts) (:t opts))
         template (when template-file (second (read-data (slurp template-file))))]
     (if template
       (-> (apply-dictim-template dict template) compile-fn println)
@@ -583,7 +565,7 @@
 (defn- graph-impl [opts in]
   (let [[_ grph] (read-data in)]
     (try
-      (let [template-file (or (:template opts) (:m opts))
+      (let [template-file (or (:template opts) (:t opts))
             template (when template-file
                        (try
                          (second (read-data (slurp template-file)))

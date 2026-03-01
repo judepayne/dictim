@@ -1,3 +1,11 @@
+# 0.9.3
+    - Fixed bug: `-t`/`--template` flag in `compile` and `graph` commands was incorrectly falling back to the `-m` (pretty-print) flag instead of `-t`
+    - Removed `looks-like-filename?` guard from input handling; inline data containing `/` (e.g. node keys like `"web/01"`) no longer incorrectly rejected
+    - Improved error messages: filename-like strings passed without `<` redirection now produce a clean "not valid dictim syntax" message rather than a raw Java class cast exception
+    - Added help text header to `dict -h` output explaining stdin redirection convention
+    - Graphspec documentation improvements: documented `container->attrs`, `node->container`, `container->parent`, key indifference (strings vs keywords), and precedence of `container->attrs` over `container-template`/`container->data`
+    - Command-Line documentation: added "Passing Data to dict" section, fixed numerous examples that incorrectly omitted `<` for stdin redirection
+
 # 0.9.2
     - changed graphspec to merge styles by default
 
