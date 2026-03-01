@@ -16,10 +16,11 @@ cd /tmp/scoop-judepayne
 git config user.name "CircleCI"
 git config user.email "jude@judep.org"
 
-# Calculate SHA256 for Windows AMD64 binary
+# Fetch pre-calculated SHA256 for Windows AMD64 binary from the uploaded .sha256 file
 WINDOWS_AMD64_ZIP_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-windows-amd64.zip"
+WINDOWS_AMD64_SHA256_URL="$REPO_URL/releases/download/$VERSION/dict-$VERSION-windows-amd64.zip.sha256"
 echo "Calculating SHA256 for Windows AMD64 binary..."
-WINDOWS_AMD64_SHA256=$(curl -fsL "$WINDOWS_AMD64_ZIP_URL" | sha256sum | cut -d' ' -f1)
+WINDOWS_AMD64_SHA256=$(curl -fsL "$WINDOWS_AMD64_SHA256_URL")
 
 
 # Update the manifest
