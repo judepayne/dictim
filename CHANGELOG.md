@@ -1,3 +1,9 @@
+# 0.9.4
+    - Fixed malli graphspec validation: container->attrs now properly validated as a map of valid d2 attr maps
+    - Fixed malli graphspec validation: odd-count template clauses now correctly rejected with a clear error message
+    - Added container->attrs to the set of keys normalised during graphspec validation
+    - Improved test coverage for graphspec validation
+
 # 0.9.3
     - Fixed bug: `-t`/`--template` flag in `compile` and `graph` commands was incorrectly falling back to the `-m` (pretty-print) flag instead of `-t`
     - Removed `looks-like-filename?` guard from input handling; inline data containing `/` (e.g. node keys like `"web/01"`) no longer incorrectly rejected

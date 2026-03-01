@@ -443,3 +443,125 @@
 (deftest test-valid-complex-node-template
   (testing "Complex node-template with nested conditions should validate and work"
     (is (g/graph-spec->dictim valid-complex-node-template-spec))))
+
+
+;; ============================================================================
+;; container->attrs tests
+;; ============================================================================
+
+(def spec-container-attrs-string-keys
+  {"node->key" "id"
+   "node->container" "dept"
+   "nodes" [{"id" "a" "dept" "Engineering"}
+             {"id" "b" "dept" "Infrastructure"}]
+   "edges" [{"src" "a" "dest" "b"}]
+   "container->attrs" {"Engineering"     {"style.fill" "lightblue"}
+                       "Infrastructure"  {"style.fill" "lightgreen"}}})
+
+(def spec-container-attrs-keyword-keys
+  {:node->key :id
+   :node->container :dept
+   :nodes [{:id "a" :dept "Engineering"}
+            {:id "b" :dept "Infrastructure"}]
+   :edges [{:src "a" :dest "b"}]
+   :container->attrs {"Engineering"    {:style.fill "lightblue"}
+                      "Infrastructure" {:style.fill "lightgreen"}}})
+
+(deftest container-attrs-string-keys
+  (testing "container->attrs with string keys validates and produces dictim"
+    (is (g/graph-spec->dictim spec-container-attrs-string-keys))))
+
+(deftest container-attrs-keyword-keys
+  (testing "container->attrs with keyword keys validates and produces dictim"
+    (is (g/graph-spec->dictim spec-container-attrs-keyword-keys))))
+
+(deftest container-attrs-takes-precedence
+  (testing "container->attrs wins over container-template + container->data when both present"
+    (let [spec (assoc spec-container-attrs-string-keys
+                      "container->data"     {"Engineering" {"size" 10}}
+                      "container-template"  [[">" "size" 5] {"style.fill" "red"}])
+          result (g/graph-spec->dictim spec)
+          ;; Engineering container should have lightblue (from container->attrs)
+          ;; not red (from container-template)
+          engineering-container (first (filter #(= "Engineering" (first %)) result))]
+      (is (some #{"lightblue"} (tree-seq coll? seq engineering-container))))))
+
+
+;; ============================================================================
+;; Odd-count template clause tests
+;; ============================================================================
+
+(def odd-count-node-template-spec
+  {"nodes" [{"id" "a" "type" "service"}]
+   "node->key" "id"
+   "node-template" [["=" "type" "service"] {"style.fill" "blue"}
+                    ["=" "type" "database"]]})  ; missing attrs for last test
+
+(def odd-count-edge-template-spec
+  {"nodes" [{"id" "a"} {"id" "b"}]
+   "node->key" "id"
+   "edges" [{"src" "a" "dest" "b" "priority" "high"}]
+   "edge-template" [["=" "priority" "high"]]})  ; missing attrs
+
+(deftest odd-count-node-template-fails
+  (testing "node-template with odd number of clauses should fail validation"
+    (is (thrown? Exception (g/graph-spec->dictim odd-count-node-template-spec)))))
+
+(deftest odd-count-edge-template-fails
+  (testing "edge-template with odd number of clauses should fail validation"
+    (is (thrown? Exception (g/graph-spec->dictim odd-count-edge-template-spec)))))
+
+
+;; ============================================================================
+;; Additional coverage
+;; ============================================================================
+
+(def no-edges-spec
+  {"node->key" "id"
+   "nodes" [{"id" "a"} {"id" "b"}]})
+
+(deftest no-edges-is-valid
+  (testing "a graphspec with no edges is valid"
+    (is (g/graph-spec->dictim no-edges-spec))))
+
+(def no-containers-spec
+  {"node->key" "id"
+   "nodes" [{"id" "a"} {"id" "b"}]
+   "edges" [{"src" "a" "dest" "b"}]})
+
+(deftest no-containers-is-valid
+  (testing "a graphspec with no containers is valid"
+    (is (g/graph-spec->dictim no-containers-spec))))
+
+(def container-parent-no-data-spec
+  {"node->key" "id"
+   "node->container" "dept"
+   "nodes" [{"id" "a" "dept" "frontend-team"}
+             {"id" "b" "dept" "backend-team"}]
+   "edges" [{"src" "a" "dest" "b"}]
+   "container->parent" {"frontend-team" "Engineering"
+                        "backend-team"  "Engineering"}})
+
+(deftest container-parent-without-data-is-valid
+  (testing "container->parent without container->data or container->attrs is valid"
+    (is (g/graph-spec->dictim container-parent-no-data-spec))))
+
+(def directives-only-spec
+  {"node->key" "id"
+   "nodes" [{"id" "a"} {"id" "b"}]
+   "edges" [{"src" "a" "dest" "b"}]
+   "directives" {"direction" "right"}})
+
+(deftest directives-only-is-valid
+  (testing "a graphspec with only directives is valid"
+    (is (g/graph-spec->dictim directives-only-spec))))
+
+(def invalid-container-attrs-spec
+  {"node->key" "id"
+   "nodes" [{"id" "a" "dept" "Engineering"}]
+   "node->container" "dept"
+   "container->attrs" "not-a-map"})  ; should be a map
+
+(deftest invalid-container-attrs-fails
+  (testing "container->attrs with non-map value should fail validation"
+    (is (thrown? Exception (g/graph-spec->dictim invalid-container-attrs-spec)))))

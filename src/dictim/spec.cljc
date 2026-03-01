@@ -17,7 +17,7 @@
 
 (def keys-to-keywordize #{"src" "dest" "nodes" "edges" "node->key" "node-template" "edge-template"
                           "node->container" "container->parent" "container-template" "container->data"
-                          "template" "directives"})
+                          "container->attrs" "template" "directives"})
 
 (def vals-to-vector #{:nodes :edges :node-template :container-template :edge-template :template})
 
@@ -76,34 +76,37 @@
 ;; all errors
 (defn- validate-test-clauses
   [clauses]
-  (let [pairs (partition 2 clauses)]
-    (reduce
-     (fn [acc [test attr]]
-       (and acc
-            (t/valid-test? test)
-            (try
-              (validate-d2-attrs attr)
-              (catch Exception e false))))
-     true
-     pairs)))
+  (and (even? (count clauses))
+       (let [pairs (partition 2 clauses)]
+         (reduce
+          (fn [acc [test attr]]
+            (and acc
+                 (t/valid-test? test)
+                 (try
+                   (validate-d2-attrs attr)
+                   (catch Exception e false))))
+          true
+          pairs))))
 
 (defn- test-clauses-errors
   [clauses]
-  (let [pairs (partition 2 clauses)
-        errors
-        (->> (reduce
-              (fn [acc [test attr]]
-                (let [test-error (when (not (t/valid-test? test)) (str test " is an invalid test."))
-                      attr-error (try
-                                   (validate-d2-attrs attr)
-                                   nil
-                                   (catch Exception e
-                                     (.getMessage e)))]
-                  (conj acc test-error attr-error)))
-              '()
-              pairs)
-             (filter (complement nil?)))]
-    (apply str (interpose "\n" errors))))
+  (if (odd? (count clauses))
+    "template clauses must come in test/attrs pairs - odd number of elements found"
+    (let [pairs (partition 2 clauses)
+          errors
+          (->> (reduce
+                (fn [acc [test attr]]
+                  (let [test-error (when (not (t/valid-test? test)) (str test " is an invalid test."))
+                        attr-error (try
+                                     (validate-d2-attrs attr)
+                                     nil
+                                     (catch Exception e
+                                       (.getMessage e)))]
+                    (conj acc test-error attr-error)))
+                '()
+                pairs)
+               (filter (complement nil?)))]
+      (apply str (interpose "\n" errors)))))
 
 (def test-clauses
   [:fn {:error/fn (fn [{:keys [value]} _] (test-clauses-errors value))}
@@ -114,6 +117,11 @@
 (def container->parent [:map-of :any :any])
 
 (def container->data [:map-of :any :any])
+
+(def container->attrs
+  [:map-of :any
+   [:fn {:error/fn (fn [{:keys [value]} _] (str "Invalid container attrs: " value))}
+    validate-d2-attrs]])
 
 (def directives
   [:fn {:error/fn (fn [{:keys [value]} _] (str "Invalid directives: " value))}
@@ -130,8 +138,9 @@
     [:edge-template {:optional true} test-clauses]
     [:container-template {:optional true} test-clauses]
     [:node->container {:optional true} node->container]
-    [:container->data {:optional true} container->data]
-    [:template {:optional true} test-clauses]
+     [:container->data {:optional true} container->data]
+     [:container->attrs {:optional true} container->attrs]
+     [:template {:optional true} test-clauses]
     [:directives {:optional true} directives]]
 
    [:fn {:error/message "node->key must exist in every node"}
